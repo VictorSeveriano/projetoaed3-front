@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import ConfirmationModal from './ConfirmationModal';
 import Input from './Input';
 import Select from './Select';
 import Button from './Button';
@@ -14,6 +15,9 @@ const ReservaModal = ({ isOpen, onClose, carro, localizacoes, onSuccess }) => {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const isDirty = form.dataInicio !== '' || form.dataFim !== '' || (carro && form.localRetirada !== carro.localizacao) || form.localDevolucao !== '';
 
   useEffect(() => {
     if (isOpen && carro) {
@@ -27,6 +31,14 @@ const ReservaModal = ({ isOpen, onClose, carro, localizacoes, onSuccess }) => {
   const handleFormChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setRota(null); setFormError('');
+  };
+
+  const handleCloseRequest = () => {
+    if (isDirty && !successMsg && !formLoading) {
+      setShowExitConfirm(true);
+    } else {
+      onClose();
+    }
   };
 
   const calcularRota = async () => {
@@ -62,15 +74,16 @@ const ReservaModal = ({ isOpen, onClose, carro, localizacoes, onSuccess }) => {
   };
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleCloseRequest}
       title={`Reservar: ${carro?.marca} ${carro?.modelo}`}
       size="lg"
       footer={
         !successMsg && (
           <div className="reserva-form__actions">
-            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button variant="ghost" onClick={handleCloseRequest}>Cancelar</Button>
             <Button id="btn-confirmar-reserva" onClick={confirmarReserva} loading={formLoading}>
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><Check size={16} /> Confirmar Reserva</span>
             </Button>
@@ -113,6 +126,20 @@ const ReservaModal = ({ isOpen, onClose, carro, localizacoes, onSuccess }) => {
         </div>
       )}
     </Modal>
+    <ConfirmationModal
+      isOpen={showExitConfirm}
+      onClose={() => setShowExitConfirm(false)}
+      onConfirm={() => {
+        setShowExitConfirm(false);
+        onClose();
+      }}
+      title="Sair da reserva?"
+      message="Existem dados preenchidos nesta reserva. Se você sair agora, esses dados poderão não ser salvos."
+      confirmText="Sair sem salvar"
+      cancelText="Continuar preenchendo"
+      variant="warning"
+    />
+    </>
   );
 };
 

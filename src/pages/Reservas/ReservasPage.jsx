@@ -4,6 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import reservasService from '../../services/reservas.service';
 import { formatarData, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff } from 'lucide-react';
@@ -12,6 +13,8 @@ const ReservasPage = () => {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelando, setCancelando] = useState(null);
+  const [reservaToCancel, setReservaToCancel] = useState(null);
+  const [cancelError, setCancelError] = useState('');
 
   const carregar = async () => {
     setLoading(true);
@@ -23,18 +26,21 @@ const ReservasPage = () => {
 
   useEffect(() => { carregar(); }, []);
 
-  const handleCancelar = async (id) => {
-    if (!window.confirm('Deseja cancelar esta reserva?')) return;
-    setCancelando(id);
+  const handleCancelar = async () => {
+    if (!reservaToCancel) return;
+    setCancelando(reservaToCancel);
+    setCancelError('');
     try {
-      await reservasService.cancelar(id);
+      await reservasService.cancelar(reservaToCancel);
       await carregar();
+      setReservaToCancel(null);
     } catch (err) {
-      alert(err.response?.data?.message || 'Erro ao cancelar reserva.');
+      setCancelError(err.response?.data?.message || 'Erro ao cancelar reserva.');
     } finally { setCancelando(null); }
   };
 
   return (
+    <>
     <div className="page animate-fade-in">
       <Header title="Reservas" subtitle="Gerencie todas as reservas do sistema" />
 
@@ -87,8 +93,7 @@ const ReservasPage = () => {
                           id={`btn-cancelar-${r.id}`}
                           variant="danger"
                           size="sm"
-                          loading={cancelando === r.id}
-                          onClick={() => handleCancelar(r.id)}
+                          onClick={() => setReservaToCancel(r.id)}
                         >
                           Cancelar
                         </Button>
@@ -102,6 +107,19 @@ const ReservasPage = () => {
         </div>
       )}
     </div>
+      
+      <ConfirmationModal
+        isOpen={!!reservaToCancel}
+        onClose={() => { setReservaToCancel(null); setCancelError(''); }}
+        onConfirm={handleCancelar}
+        title="Cancelar reserva?"
+        message={cancelError || "Tem certeza que deseja cancelar esta reserva? Essa ação poderá não ser desfeita."}
+        confirmText="Cancelar reserva"
+        cancelText="Voltar"
+        variant="danger"
+        loading={!!cancelando}
+      />
+    </>
   );
 };
 
