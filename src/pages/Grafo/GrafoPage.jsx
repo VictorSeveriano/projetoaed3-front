@@ -3,6 +3,7 @@ import Header from '../../components/layout/Header';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import grafoService from '../../services/grafo.service';
+import { Compass, ArrowDown, ArrowRight, TriangleAlert, Search, CheckCircle2, Ruler } from 'lucide-react';
 
 const NODE_POSITIONS = {
   'Centro':       { x: 300, y: 200 },
@@ -77,7 +78,7 @@ const GrafoPage = () => {
   useEffect(() => {
     grafoService.obterGrafo()
       .then((r) => setGrafoData(r.data))
-      .catch(() => setError('Erro ao carregar grafo.'))
+      .catch(() => setError('Erro ao carregar locais.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -97,17 +98,16 @@ const GrafoPage = () => {
   return (
     <div className="page animate-fade-in">
       <Header
-        title="Grafo de Localidades"
-        subtitle="Algoritmo de Dijkstra — Menor Caminho entre Localizações"
+        title="Rotas"
+        subtitle="Consulte e calcule os melhores trajetos entre os locais disponíveis."
       />
 
       <div className="grafo-layout">
         {/* Painel de controle */}
         <div className="grafo-panel">
-          <h2 className="grafo-panel__title">🧭 Calcular Rota</h2>
+          <h2 className="grafo-panel__title"><Compass size={24} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: '6px' }} /> Calcular Rota</h2>
           <p className="grafo-panel__desc">
-            Selecione a origem e o destino. O sistema usará o <strong>Algoritmo de Dijkstra</strong> 
-            para encontrar o menor caminho.
+            Selecione a origem e o destino. O sistema calculará a melhor rota e a menor distância para o trajeto.
           </p>
 
           <div className="grafo-panel__form">
@@ -119,7 +119,7 @@ const GrafoPage = () => {
               </select>
             </div>
 
-            <div className="grafo-panel__arrow">↓</div>
+            <div className="grafo-panel__arrow"><ArrowDown size={20} /></div>
 
             <div className="input-group">
               <label className="input-label" htmlFor="destino">Destino</label>
@@ -129,17 +129,17 @@ const GrafoPage = () => {
               </select>
             </div>
 
-            {error && <div className="form-error">⚠️ {error}</div>}
+            {error && <div className="form-error" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><TriangleAlert size={16} /> {error}</div>}
 
             <Button id="btn-dijkstra" onClick={calcular} loading={calcLoading} className="w-full">
-              🔍 Executar Dijkstra
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><Search size={16} /> Calcular Rota</span>
             </Button>
           </div>
 
           {/* Resultado */}
           {resultado && (
             <div className="rota-result animate-fade-in">
-              <h3 className="rota-result__title">✅ Menor Caminho Encontrado</h3>
+              <h3 className="rota-result__title"><CheckCircle2 size={20} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: '6px' }} /> Melhor Rota Encontrada</h3>
               <div className="rota-result__info">
                 <div><span className="rota-label">Origem:</span> <strong>{resultado.origem}</strong></div>
                 <div><span className="rota-label">Destino:</span> <strong>{resultado.destino}</strong></div>
@@ -148,7 +148,7 @@ const GrafoPage = () => {
                 {resultado.caminho?.map((no, i) => (
                   <React.Fragment key={no}>
                     <span className="rota-node">{no}</span>
-                    {i < resultado.caminho.length - 1 && <span className="rota-arrow">↓</span>}
+                    {i < resultado.caminho.length - 1 && <span className="rota-arrow" style={{ display: 'inline-flex', alignItems: 'center', margin: '0 4px' }}><ArrowRight size={14} /></span>}
                   </React.Fragment>
                 ))}
               </div>
@@ -160,27 +160,24 @@ const GrafoPage = () => {
 
           {/* Info do grafo */}
           <div className="grafo-info">
-            <h3 className="grafo-info__title">📐 Estrutura do Grafo</h3>
+            <h3 className="grafo-info__title"><Ruler size={20} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: '6px' }} /> Informações dos Locais</h3>
             <div className="grafo-info__stats">
               <div className="grafo-stat">
                 <span className="grafo-stat__value">{vertices.length}</span>
-                <span className="grafo-stat__label">Vértices</span>
+                <span className="grafo-stat__label">Locais</span>
               </div>
               <div className="grafo-stat">
                 <span className="grafo-stat__value">{grafoData?.arestas?.length || 0}</span>
-                <span className="grafo-stat__label">Arestas</span>
+                <span className="grafo-stat__label">Trajetos</span>
               </div>
             </div>
-            <p className="grafo-info__complexity">
-              Complexidade Dijkstra: <code>O((V + E) log V)</code>
-            </p>
           </div>
         </div>
 
         {/* Visualizacao do grafo */}
         <div className="grafo-visual-wrapper">
           {loading ? (
-            <Loading message="Carregando grafo..." />
+            <Loading message="Carregando mapa..." />
           ) : (
             <GrafoVisualizacao grafoData={grafoData} resultado={resultado} />
           )}

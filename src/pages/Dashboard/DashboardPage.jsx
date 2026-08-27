@@ -1,42 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
-import Card from '../../components/ui/Card';
-import Loading from '../../components/ui/Loading';
-import carrosService from '../../services/carros.service';
-import reservasService from '../../services/reservas.service';
-import localizacoesService from '../../services/localizacoes.service';
+import StatCard from '../../components/ui/StatCard';
+import ChartCard from '../../components/ui/ChartCard';
+import dashboardService from '../../services/dashboard.service';
+import { formatarMoeda } from '../../utils/formatters';
+import { Car, CheckCircle, Calendar, MapPin, DollarSign, Target } from 'lucide-react';
+import { 
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+} from 'recharts';
 
-const StatCard = ({ icon, label, value, color = 'primary', loading }) => (
-  <div className={`stat-card stat-card--${color}`}>
-    <div className="stat-card__icon">{icon}</div>
-    <div className="stat-card__content">
-      <span className="stat-card__value">{loading ? '...' : value}</span>
-      <span className="stat-card__label">{label}</span>
-    </div>
-  </div>
-);
+const CustomTooltip = ({ active, payload, label, formatter }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="chart-tooltip">
+        <p className="chart-tooltip__label">{label}</p>
+        <p className="chart-tooltip__value">
+          {formatter ? formatter(payload[0].value) : payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const DashboardPage = () => {
-  const [stats, setStats] = useState({ carros: 0, disponiveis: 0, reservasAtivas: 0, localizacoes: 0 });
+  const [stats, setStats] = useState({ totalCarros: 0, totalReservas: 0, reservasAtivas: 0, receitaTotal: 0 });
+  const [graficos, setGraficos] = useState({ reservas: [], locais: [], carros: [], receitas: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [carrosRes, disponiveisRes, reservasRes, locRes] = await Promise.all([
-          carrosService.listarTodos(),
-          carrosService.listarDisponiveis(),
-          reservasService.listarTodas(),
-          localizacoesService.listarTodas(),
+        setLoading(true);
+        setError(false);
+        const [resumoRes, reservasRes, locaisRes, carrosRes, receitasRes] = await Promise.all([
+          dashboardService.getResumo(),
+          dashboardService.getReservas(),
+          dashboardService.getLocais(),
+          dashboardService.getCarros(),
+          dashboardService.getReceitas()
         ]);
-        setStats({
-          carros:         carrosRes.data?.length ?? 0,
-          disponiveis:    disponiveisRes.data?.length ?? 0,
-          reservasAtivas: (reservasRes.data ?? []).filter((r) => r.status === 'ATIVA').length,
-          localizacoes:   locRes.data?.length ?? 0,
+        
+        setStats(resumoRes.data || {});
+        setGraficos({
+          reservas: reservasRes.data || [],
+          locais: locaisRes.data || [],
+          carros: carrosRes.data || [],
+          receitas: receitasRes.data || []
         });
       } catch (err) {
         console.error('Erro ao carregar dashboard:', err);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -48,60 +63,97 @@ const DashboardPage = () => {
     <div className="page animate-fade-in">
       <Header
         title="Dashboard"
-        subtitle="Visao geral do sistema de reservas"
+        subtitle="Visão geral das reservas e utilização da frota"
       />
 
       <div className="stats-grid">
-        <StatCard icon="🚗" label="Total de Carros"     value={stats.carros}         color="primary" loading={loading} />
-        <StatCard icon="✅" label="Carros Disponíveis"  value={stats.disponiveis}     color="success" loading={loading} />
-        <StatCard icon="📋" label="Reservas Ativas"     value={stats.reservasAtivas}  color="warning" loading={loading} />
-        <StatCard icon="📍" label="Localizações"        value={stats.localizacoes}    color="accent"  loading={loading} />
+        <StatCard icon={<Car size={28} />} label="Total de Carros" value={stats.totalCarros} color="primary" loading={loading} />
+        <StatCard icon={<Calendar size={28} />} label="Total Reservas" value={stats.totalReservas} color="accent" loading={loading} />
+        <StatCard icon={<Target size={28} />} label="Reservas Ativas" value={stats.reservasAtivas} color="warning" loading={loading} />
+        <StatCard icon={<DollarSign size={28} />} label="Receita Total" value={formatarMoeda(stats.receitaTotal || 0)} color="success" loading={loading} />
       </div>
 
-      <div className="dashboard-info">
-        <Card className="dashboard-info__card">
-          <Card.Header>
-            <h2 className="card-section-title">🗺️ Grafo de Localidades</h2>
-          </Card.Header>
-          <Card.Body>
-            <p className="dashboard-info__text">
-              O sistema utiliza um <strong>Grafo com Lista de Adjacência</strong> para representar
-              as conexões entre localidades. O <strong>Algoritmo de Dijkstra</strong> é aplicado
-              para calcular a rota mais curta entre pontos de retirada e devolução durante o
-              processo de reserva.
-            </p>
-            <div className="graph-preview">
-              {[
-                { from: 'Centro', to: 'Shopping',    km: 5  },
-                { from: 'Centro', to: 'Rodoviária',  km: 7  },
-                { from: 'Shopping', to: 'Aeroporto', km: 12 },
-                { from: 'Rodoviária', to: 'Praia',   km: 10 },
-                { from: 'Praia', to: 'Universidade', km: 8  },
-              ].map((edge, i) => (
-                <div key={i} className="graph-edge">
-                  <span className="graph-edge__node">{edge.from}</span>
-                  <span className="graph-edge__weight">──{edge.km}km──▶</span>
-                  <span className="graph-edge__node">{edge.to}</span>
-                </div>
-              ))}
-            </div>
-          </Card.Body>
-        </Card>
+      <div className="dashboard-grid">
+        <ChartCard 
+          title="Reservas por Mês" 
+          loading={loading} 
+          error={error} 
+          empty={!graficos.reservas.some(d => d.quantidade > 0)}
+          className="dashboard-grid__full"
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={graficos.reservas} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+              <XAxis dataKey="mes" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+              <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+              <Tooltip content={<CustomTooltip formatter={(val) => `${val} reserva(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Bar dataKey="quantidade" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-        <Card className="dashboard-info__card">
-          <Card.Header>
-            <h2 className="card-section-title">⚡ Tecnologias</h2>
-          </Card.Header>
-          <Card.Body>
-            <ul className="tech-list">
-              <li className="tech-item"><span className="tech-item__icon">⚛️</span> React + Vite (Frontend)</li>
-              <li className="tech-item"><span className="tech-item__icon">🟢</span> Node.js + Express (Backend)</li>
-              <li className="tech-item"><span className="tech-item__icon">📐</span> Grafo com Lista de Adjacência</li>
-              <li className="tech-item"><span className="tech-item__icon">🧭</span> Algoritmo de Dijkstra</li>
-              <li className="tech-item"><span className="tech-item__icon">🏗️</span> Controller → Service → Repository</li>
-            </ul>
-          </Card.Body>
-        </Card>
+        <ChartCard 
+          title="Locais mais Solicitados" 
+          loading={loading} 
+          error={error} 
+          empty={graficos.locais.length === 0}
+        >
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={graficos.locais} layout="vertical" margin={{ top: 10, right: 30, left: 30, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
+              <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+              <YAxis dataKey="nome" type="category" stroke="#94a3b8" tick={{ fill: '#f1f5f9', fontSize: 12 }} width={80} />
+              <Tooltip content={<CustomTooltip formatter={(val) => `${val} vez(es)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Bar dataKey="quantidade" fill="#06b6d4" radius={[0, 4, 4, 0]} maxBarSize={30} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard 
+          title="Carros mais Reservados" 
+          loading={loading} 
+          error={error} 
+          empty={graficos.carros.length === 0}
+        >
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={graficos.carros} layout="vertical" margin={{ top: 10, right: 30, left: 30, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
+              <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
+              <YAxis dataKey="nome" type="category" stroke="#94a3b8" tick={{ fill: '#f1f5f9', fontSize: 12 }} width={100} />
+              <Tooltip content={<CustomTooltip formatter={(val) => `${val} reserva(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Bar dataKey="quantidade" fill="#10b981" radius={[0, 4, 4, 0]} maxBarSize={30} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard 
+          title="Recebimentos Mensais" 
+          loading={loading} 
+          error={error} 
+          empty={!graficos.receitas.some(d => d.valor > 0)}
+          className="dashboard-grid__full"
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={graficos.receitas} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+              <defs>
+                <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+              <XAxis dataKey="mes" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+              <YAxis 
+                stroke="#94a3b8" 
+                tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                tickFormatter={(value) => `R$ ${value}`} 
+                width={80}
+              />
+              <Tooltip content={<CustomTooltip formatter={(val) => formatarMoeda(val)} />} />
+              <Area type="monotone" dataKey="valor" stroke="#10b981" fillOpacity={1} fill="url(#colorValor)" strokeWidth={3} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
     </div>
   );

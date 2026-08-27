@@ -6,6 +6,7 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import reservasService from '../../services/reservas.service';
 import { formatarData, STATUS_LABELS } from '../../utils/formatters';
+import { CalendarOff } from 'lucide-react';
 
 const ReservasPage = () => {
   const [reservas, setReservas] = useState([]);
@@ -41,7 +42,7 @@ const ReservasPage = () => {
         <Loading message="Carregando reservas..." />
       ) : reservas.length === 0 ? (
         <EmptyState
-          icon="📋"
+          icon={<CalendarOff size={48} strokeWidth={1.5} />}
           title="Nenhuma reserva encontrada"
           description="Vá até Carros e realize sua primeira reserva."
         />

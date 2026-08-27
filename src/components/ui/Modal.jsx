@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
-const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
@@ -9,7 +10,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
         className={`modal modal--${size}`}
@@ -23,8 +24,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
           <button className="modal__close" onClick={onClose} aria-label="Fechar modal">✕</button>
         </div>
         <div className="modal__body">{children}</div>
+        {footer && <div className="modal__footer">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

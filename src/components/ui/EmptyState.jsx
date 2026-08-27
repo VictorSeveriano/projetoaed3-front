@@ -1,6 +1,7 @@
 import React from 'react';
+import { Inbox } from 'lucide-react';
 
-const EmptyState = ({ icon = '📭', title, description, action }) => (
+const EmptyState = ({ icon = <Inbox size={48} strokeWidth={1.5} />, title, description, action }) => (
   <div className="empty-state">
     <span className="empty-state__icon">{icon}</span>
     <h3 className="empty-state__title">{title}</h3>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { CarFront, TriangleAlert } from 'lucide-react';
 
 const LoginPage = () => {
   const [form, setForm] = useState({ usuario: '', senha: '' });
@@ -43,7 +44,7 @@ const LoginPage = () => {
       <div className="login-card animate-fade-in">
         {/* Logo */}
         <div className="login-logo">
-          <span className="login-logo__icon">🚗</span>
+          <span className="login-logo__icon"><CarFront size={48} aria-hidden="true" /></span>
           <h1 className="login-logo__title">ReservaCar</h1>
           <p className="login-logo__subtitle">Sistema de Reservas | AED3</p>
         </div>
@@ -80,8 +81,8 @@ const LoginPage = () => {
           </div>
 
           {error && (
-            <div className="login-error" role="alert">
-              ⚠️ {error}
+            <div className="login-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <TriangleAlert size={16} /> {error}
             </div>
           )}
 
