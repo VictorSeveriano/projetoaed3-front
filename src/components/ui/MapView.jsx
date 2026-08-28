@@ -32,7 +32,7 @@ const MapView = ({ locations = [], origin = null, destination = null, polyline =
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  // Centro padrão: Grande Vitória - ES
+  // Ponto central: Grande Vitória - ES
   const CENTER_ES = { lat: -20.2760, lng: -40.3520 };
   const DEFAULT_ZOOM = 11;
 

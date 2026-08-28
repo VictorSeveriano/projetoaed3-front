@@ -24,7 +24,7 @@ const CarroCard = ({ carro, onReservar }) => {
         <h3 className="carro-card__name">{carro.marca} {carro.modelo}</h3>
         <p className="carro-card__year">{carro.ano} · {carro.categoria}</p>
         <div className="carro-card__details">
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={16} /> {carro.localizacao}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={carro.localizacao}><MapPin size={16} style={{ flexShrink: 0 }} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{carro.localizacao}</span></span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IdCard size={16} /> {carro.placa}</span>
         </div>
         <p className="carro-card__price">{formatarMoeda(carro.precoDiaria)}<span>/dia</span></p>
