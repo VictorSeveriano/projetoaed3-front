@@ -26,7 +26,8 @@ const LoginPage = () => {
       await login(form.usuario, form.senha);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Credenciais invalidas.');
+      const errorMessage = err.response?.data?.message || (err.message === 'Network Error' ? 'Erro de conexão com o servidor.' : 'Credenciais inválidas.');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
