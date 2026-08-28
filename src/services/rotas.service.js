@@ -55,6 +55,14 @@ const rotasService = {
     const { data } = await api.get('/rotas/locais');
     return data.data;
   },
+
+  /**
+   * Calcula a agência mais próxima de um CEP/Endereço ou Coordenada.
+   */
+  async calcularMaisProximo(cepOuEndereco, lat, lng) {
+    const { data } = await api.post('/rotas/mais-proximo', { cepOuEndereco, lat, lng });
+    return data.data;
+  },
 };
 
 export default rotasService;

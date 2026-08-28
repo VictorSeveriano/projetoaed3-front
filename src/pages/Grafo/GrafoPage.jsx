@@ -7,7 +7,6 @@ import MapView from '../../components/ui/MapView';
 import rotasService from '../../services/rotas.service';
 import {
   Compass,
-  ArrowDown,
   ArrowRight,
   TriangleAlert,
   Search,
@@ -16,6 +15,7 @@ import {
   Clock,
   MapPin,
   RefreshCw,
+  Navigation,
 } from 'lucide-react';
 
 /**
@@ -42,9 +42,9 @@ const RotasPage = () => {
   const [carregandoLocais, setCarregandoLocais] = useState(true);
   const [erroLocais, setErroLocais] = useState('');
 
-  // --- Seleção de origem e destino ---
-  const [origemId, setOrigemId] = useState('');
-  const [destinoId, setDestinoId] = useState('');
+  // --- Seleção de origem ---
+  const [origemTexto, setOrigemTexto] = useState('');
+  const [coordenadasGps, setCoordenadasGps] = useState(null);
 
   // --- Resultado da rota ---
   const [resultado, setResultado] = useState(null);
@@ -60,22 +60,45 @@ const RotasPage = () => {
       .finally(() => setCarregandoLocais(false));
   }, []);
 
-  // Resolve o objeto completo do local selecionado pelo id
-  const localOrigem = locais.find((l) => l.id === origemId) || null;
-  const localDestino = locais.find((l) => l.id === destinoId) || null;
+  // Resolve os objetos para o mapa a partir do resultado (se houver)
+  const localOrigem = resultado?.pontos[0] || null;
+  const localDestino = resultado?.pontos[resultado.pontos.length - 1] || null;
 
   /**
-   * Valida os campos e aciona o cálculo de rota no backend.
-   * Evita múltiplas chamadas enquanto uma requisição está em andamento.
+   * Captura a localização atual do usuário via HTML5 Geolocation API
    */
-  const calcularRota = useCallback(async () => {
-    if (!localOrigem || !localDestino) {
-      setErroCalculo('Selecione a origem e o destino antes de calcular.');
+  const handleGpsClick = () => {
+    if (!navigator.geolocation) {
+      setErroCalculo('Seu navegador não suporta geolocalização.');
       return;
     }
 
-    if (origemId === destinoId) {
-      setErroCalculo('Origem e destino devem ser diferentes.');
+    setCalcLoading(true);
+    setErroCalculo('');
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCalcLoading(false);
+        setCoordenadasGps({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setOrigemTexto('Usando localização atual (GPS)');
+        setResultado(null);
+      },
+      (error) => {
+        setCalcLoading(false);
+        setErroCalculo('Não foi possível obter sua localização. Verifique as permissões.');
+      }
+    );
+  };
+
+  /**
+   * Valida os campos e aciona o cálculo de rota no backend.
+   */
+  const calcularRota = useCallback(async () => {
+    if (!origemTexto && !coordenadasGps) {
+      setErroCalculo('Informe o CEP/Endereço ou use a localização atual.');
       return;
     }
 
@@ -84,7 +107,12 @@ const RotasPage = () => {
     setCalcLoading(true);
 
     try {
-      const rota = await rotasService.calcularRota(localOrigem.nome, localDestino.nome);
+      // Se tivermos coordenadas de GPS, envia elas; senão envia o texto
+      const reqLat = coordenadasGps ? coordenadasGps.lat : null;
+      const reqLng = coordenadasGps ? coordenadasGps.lng : null;
+      const reqCep = coordenadasGps ? null : origemTexto;
+
+      const rota = await rotasService.calcularMaisProximo(reqCep, reqLat, reqLng);
       setResultado(rota);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Não foi possível calcular a rota.';
@@ -92,34 +120,21 @@ const RotasPage = () => {
     } finally {
       setCalcLoading(false);
     }
-  }, [localOrigem, localDestino, origemId, destinoId]);
+  }, [origemTexto, coordenadasGps]);
 
   /**
    * Limpa a seleção e o resultado, voltando ao estado inicial.
    */
   const limpar = useCallback(() => {
-    setOrigemId('');
-    setDestinoId('');
+    setOrigemTexto('');
+    setCoordenadasGps(null);
     setResultado(null);
     setErroCalculo('');
   }, []);
 
-  /**
-   * Handler de mudança de origem.
-   * Limpa o resultado ao trocar de local.
-   */
   const handleOrigemChange = (e) => {
-    setOrigemId(e.target.value);
-    setResultado(null);
-    setErroCalculo('');
-  };
-
-  /**
-   * Handler de mudança de destino.
-   * Limpa o resultado ao trocar de local.
-   */
-  const handleDestinoChange = (e) => {
-    setDestinoId(e.target.value);
+    setOrigemTexto(e.target.value);
+    if (coordenadasGps) setCoordenadasGps(null); // Reseta o GPS se o usuário voltar a digitar
     setResultado(null);
     setErroCalculo('');
   };
@@ -172,47 +187,37 @@ const RotasPage = () => {
           </div>
 
           <p className="rotas-panel__desc">
-            Selecione a origem e o destino. O sistema calculará a melhor rota disponível
-            entre os locais cadastrados no Espírito Santo.
+            Digite seu CEP/Endereço ou use sua localização atual. O sistema encontrará a agência mais próxima para devolver o carro.
           </p>
 
           {/* --- Formulário de seleção --- */}
           <div className="rotas-panel__form">
-            {/* Origem */}
-            <Select
-              id="select-origem"
-              label="Origem"
-              value={origemId}
-              onChange={handleOrigemChange}
-              aria-label="Selecionar local de origem"
-            >
-              <option value="">Selecione um local...</option>
-              {locais.map((local) => (
-                <option key={local.id} value={local.id} disabled={local.id === destinoId}>
-                  {local.nome}
-                </option>
-              ))}
-            </Select>
-
-            <div className="rotas-panel__arrow" aria-hidden="true">
-              <ArrowDown size={20} />
+            {/* Origem (Texto) */}
+            <div className="input-group">
+              <label className="input-label" htmlFor="input-origem">Onde você está?</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  id="input-origem"
+                  type="text"
+                  className="input-field"
+                  placeholder="Ex: 29010-000 ou Av. Vitória"
+                  value={origemTexto}
+                  onChange={handleOrigemChange}
+                  disabled={coordenadasGps !== null}
+                  aria-label="Digitar CEP ou Endereço"
+                  style={{ flex: 1 }}
+                />
+                <Button 
+                  variant="secondary" 
+                  onClick={handleGpsClick} 
+                  disabled={calcLoading}
+                  title="Usar localização atual"
+                  style={{ padding: '0 12px' }}
+                >
+                  <Navigation size={20} />
+                </Button>
+              </div>
             </div>
-
-            {/* Destino */}
-            <Select
-              id="select-destino"
-              label="Destino"
-              value={destinoId}
-              onChange={handleDestinoChange}
-              aria-label="Selecionar local de destino"
-            >
-              <option value="">Selecione um local...</option>
-              {locais.map((local) => (
-                <option key={local.id} value={local.id} disabled={local.id === origemId}>
-                  {local.nome}
-                </option>
-              ))}
-            </Select>
 
             {/* Mensagem de erro de validação / cálculo */}
             {erroCalculo && (
@@ -228,17 +233,17 @@ const RotasPage = () => {
                 id="btn-calcular-rota"
                 onClick={calcularRota}
                 loading={calcLoading}
-                disabled={!origemId || !destinoId || calcLoading}
+                disabled={(!origemTexto && !coordenadasGps) || calcLoading}
                 className="w-full"
-                aria-label="Calcular rota entre origem e destino"
+                aria-label="Encontrar agência mais próxima"
               >
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <Search size={16} aria-hidden="true" />
-                  {calcLoading ? 'Calculando...' : 'Calcular Rota'}
+                  {calcLoading ? 'Buscando...' : 'Encontrar Agência'}
                 </span>
               </Button>
 
-              {(origemId || destinoId || resultado) && (
+              {(origemTexto || resultado) && (
                 <Button
                   id="btn-limpar-rota"
                   variant="secondary"
@@ -264,12 +269,12 @@ const RotasPage = () => {
               {/* Origem → Destino resumo */}
               <div className="rota-result__info">
                 <div>
-                  <span className="rota-label">Origem:</span>
+                  <span className="rota-label">Sua Localização:</span>
                   <strong>{resultado.origem}</strong>
                 </div>
                 <div>
-                  <span className="rota-label">Destino:</span>
-                  <strong>{resultado.destino}</strong>
+                  <span className="rota-label">Agência Mais Próxima:</span>
+                  <strong style={{ color: 'var(--primary-color)' }}>{resultado.destino}</strong>
                 </div>
               </div>
 
