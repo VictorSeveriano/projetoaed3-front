@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from '../../components/layout/Header';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
-import Select from '../../components/ui/Select';
 import MapView from '../../components/ui/MapView';
 import rotasService from '../../services/rotas.service';
 import {
