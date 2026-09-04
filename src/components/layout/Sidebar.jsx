@@ -6,10 +6,11 @@ import { LayoutDashboard, Car, CalendarDays, Network, LogOut, ChevronLeft, Chevr
 
 const NAV_ITEMS = [
   { to: '/dashboard',  icon: <LayoutDashboard size={20} />, label: 'Dashboard'   },
-  { to: '/carros',     icon: <Car size={20} />, label: 'Carros'       },
-  { to: '/reservas',   icon: <CalendarDays size={20} />, label: 'Reservas'     },
-  { to: '/grafo',      icon: <Map size={20} />, label: 'Rotas' },
+  { to: '/rotas',      icon: <Network size={20} />, label: 'Solicitar Corrida' },
+  { to: '/corridas',   icon: <CalendarDays size={20} />, label: 'Corridas'     },
+  { to: '/carros',     icon: <Car size={20} />, label: 'Veiculos'       },
 ];
+
 
 const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   const { usuario, logout } = useAuth();

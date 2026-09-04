@@ -6,25 +6,36 @@ class DashboardService {
     return response.data;
   }
 
-  async getReservas() {
-    const response = await api.get('/dashboard/reservas');
+  async getCorridas() {
+    const response = await api.get('/dashboard/corridas');
     return response.data;
   }
 
-  async getLocais() {
-    const response = await api.get('/dashboard/locais');
+  async getOrigens() {
+    const response = await api.get('/dashboard/origens');
     return response.data;
   }
 
-  async getCarros() {
-    const response = await api.get('/dashboard/carros');
+  async getDestinos() {
+    const response = await api.get('/dashboard/destinos');
     return response.data;
   }
 
-  async getReceitas() {
-    const response = await api.get('/dashboard/receitas');
+  async getRotas() {
+    const response = await api.get('/dashboard/rotas');
+    return response.data;
+  }
+
+  async getVeiculos() {
+    const response = await api.get('/dashboard/veiculos');
+    return response.data;
+  }
+
+  async getFaturamento() {
+    const response = await api.get('/dashboard/faturamento');
     return response.data;
   }
 }
 
 export default new DashboardService();
+

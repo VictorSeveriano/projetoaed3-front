@@ -5,8 +5,8 @@ import Layout from '../components/layout/Layout';
 import LoginPage from '../pages/Login/LoginPage';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
 import CarrosPage from '../pages/Carros/CarrosPage';
-import ReservasPage from '../pages/Reservas/ReservasPage';
-import GrafoPage from '../pages/Grafo/GrafoPage';
+import CorridasPage from '../pages/Corridas/CorridasPage';
+import RotasPage from '../pages/Rotas/RotasPage';
 
 const AppRoutes = () => (
   <Routes>
@@ -19,8 +19,8 @@ const AppRoutes = () => (
             <Routes>
               <Route path="/dashboard"  element={<DashboardPage />} />
               <Route path="/carros"     element={<CarrosPage />} />
-              <Route path="/reservas"   element={<ReservasPage />} />
-              <Route path="/grafo"      element={<GrafoPage />} />
+              <Route path="/corridas"   element={<CorridasPage />} />
+              <Route path="/rotas"      element={<RotasPage />} />
               <Route path="*"           element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Layout>

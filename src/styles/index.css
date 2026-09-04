@@ -373,3 +373,317 @@ input,select,textarea { font-family:inherit; outline:none; }
   .map-container { min-height:300px; }
   .map-placeholder { min-height:300px; }
 }
+
+/* =========================================
+   Rotas & Corridas Styles
+   ========================================= */
+
+.rotas-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+  .rotas-layout {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+@media (min-width: 992px) {
+  .rotas-layout {
+    grid-template-columns: 360px 1fr;
+  }
+}
+
+.rotas-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.rotas-section {
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-md) + 4px); /* Aumentado levemente */
+}
+
+.rotas-section__title {
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rotas-origem-row {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-md) + 2px); /* Aumentado levemente o espacamento interno */
+}
+
+.rotas-cep-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap; /* Evitar overflow horizontal no celular */
+}
+
+.rotas-divider {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.rotas-geo-info {
+  font-size: 0.875rem;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+}
+
+.rotas-resultados {
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.rotas-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.rota-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.rota-card:hover {
+  border-color: var(--primary-light);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.rota-card--ativa {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.rota-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.rota-card__label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rota-card__badge {
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-right: auto;
+}
+
+.rota-card__check {
+  color: var(--primary);
+}
+
+.rota-card__metrics {
+  display: flex;
+  gap: var(--spacing-md);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.rota-card__metric {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rota-card__caminho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.2);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.rota-card__loc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rota-card__fonte {
+  font-size: 0.75rem;
+  color: var(--warning);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.rotas-mapa {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  min-height: 400px;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
+
+.map-placeholder {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.map-placeholder--config {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* CorridaModal Styles */
+.corrida-resumo {
+  background: var(--bg-dark);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.corrida-resumo__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.corrida-resumo__label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.corrida-caminho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--border-color);
+}
+
+.corrida-caminho__step {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.corrida-caminho__arrow {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.corrida-caminho__loc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.corrida-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.corrida-metric {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: var(--bg-card);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.corrida-metric--valor {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  font-weight: 600;
+}
+
+.rota-chip {
+  display: inline-block;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-light);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: help;
+}
+
+.success-banner {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--success-bg);
+  text-align: center;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}

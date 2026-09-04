@@ -3,16 +3,14 @@ import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
-import ReservaModal from '../../components/ui/ReservaModal';
 import Button from '../../components/ui/Button';
 import carrosService from '../../services/carros.service';
-import localizacoesService from '../../services/localizacoes.service';
 import { formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
-import { Car, CarFront, MapPin, IdCard, CalendarPlus, Lock } from 'lucide-react';
+import { Car, CarFront, IdCard, CheckCircle2 } from 'lucide-react';
 
 const CATEGORIAS = ['Todos', 'Sedan', 'Hatch', 'SUV'];
 
-const CarroCard = ({ carro, onReservar }) => {
+const CarroCard = ({ carro }) => {
   const statusInfo = STATUS_LABELS[carro.status] || { label: carro.status, color: 'muted' };
   return (
     <div className="carro-card animate-fade-in">
@@ -24,23 +22,15 @@ const CarroCard = ({ carro, onReservar }) => {
         <h3 className="carro-card__name">{carro.marca} {carro.modelo}</h3>
         <p className="carro-card__year">{carro.ano} · {carro.categoria}</p>
         <div className="carro-card__details">
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={carro.localizacao}><MapPin size={16} style={{ flexShrink: 0 }} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{carro.localizacao}</span></span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IdCard size={16} /> {carro.placa}</span>
         </div>
-        <p className="carro-card__price">{formatarMoeda(carro.precoDiaria)}<span>/dia</span></p>
+        <p className="carro-card__price">{formatarMoeda(carro.tarifaBase)}<span>/km</span></p>
       </div>
       <div className="carro-card__footer">
-        <Button
-          id={`btn-reservar-${carro.id}`}
-          onClick={() => onReservar(carro)}
-          disabled={carro.status !== 'DISPONIVEL'}
-          size="sm"
-          className="w-full"
-        >
-          {carro.status === 'DISPONIVEL' ? 
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><CalendarPlus size={16} /> Reservar</span> : 
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><Lock size={16} /> Indisponivel</span>}
-        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          <CheckCircle2 size={16} /> 
+          Recurso para Corridas
+        </div>
       </div>
     </div>
   );
@@ -49,9 +39,7 @@ const CarroCard = ({ carro, onReservar }) => {
 const CarrosPage = () => {
   const [carros, setCarros] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtros, setFiltros] = useState({ categoria: '', localizacao: '' });
-  const [localizacoes, setLocalizacoes] = useState([]);
-  const [reservaModal, setReservaModal] = useState({ open: false, carro: null });
+  const [filtros, setFiltros] = useState({ categoria: '' });
 
   const carregarCarros = async () => {
     setLoading(true);
@@ -63,17 +51,9 @@ const CarrosPage = () => {
 
   useEffect(() => { carregarCarros(); }, [filtros]);
 
-  useEffect(() => {
-    localizacoesService.listarTodas().then((r) => setLocalizacoes(r.data || [])).catch(() => {});
-  }, []);
-
-  const abrirReserva = (carro) => {
-    setReservaModal({ open: true, carro });
-  };
-
   return (
     <div className="page animate-fade-in">
-      <Header title="Carros" subtitle="Gerencie e reserve os veículos disponíveis" />
+      <Header title="Veiculos" subtitle="Frota disponível para alocação em corridas" />
 
       {/* Filtros */}
       <div className="filters-bar">
@@ -85,38 +65,20 @@ const CarrosPage = () => {
         >
           {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
         </select>
-        <select
-          id="filtro-localizacao"
-          className="input-field input-field--select filters-bar__select"
-          value={filtros.localizacao}
-          onChange={(e) => setFiltros((p) => ({ ...p, localizacao: e.target.value }))}
-        >
-          <option value="">Todas as Localizações</option>
-          {localizacoes.map((l) => <option key={l.id} value={l.nome}>{l.nome}</option>)}
-        </select>
-        <Button variant="ghost" onClick={() => setFiltros({ categoria: '', localizacao: '' })} size="sm">
+        <Button variant="ghost" onClick={() => setFiltros({ categoria: '' })} size="sm">
           Limpar
         </Button>
       </div>
 
       {loading ? (
-        <Loading message="Carregando carros..." />
+        <Loading message="Carregando veiculos..." />
       ) : carros.length === 0 ? (
-        <EmptyState icon={<Car size={48} />} title="Nenhum carro encontrado" description="Tente ajustar os filtros." />
+        <EmptyState icon={<Car size={48} />} title="Nenhum veiculo encontrado" description="Tente ajustar os filtros." />
       ) : (
         <div className="carros-grid">
-          {carros.map((c) => <CarroCard key={c.id} carro={c} onReservar={abrirReserva} />)}
+          {carros.map((c) => <CarroCard key={c.id} carro={c} />)}
         </div>
       )}
-
-      {/* Modal de Reserva */}
-      <ReservaModal
-        isOpen={reservaModal.open}
-        onClose={() => setReservaModal({ open: false, carro: null })}
-        carro={reservaModal.carro}
-        localizacoes={localizacoes}
-        onSuccess={carregarCarros}
-      />
     </div>
   );
 };
