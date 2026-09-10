@@ -86,7 +86,7 @@ const RotasPage = () => {
       });
     }
 
-    // Renderiza polyline da rota selecionada
+    // Renderiza polyline da rota selecionada (geometria real da malha viaria)
     if (polyline && window.google.maps.geometry) {
       const decoded = window.google.maps.geometry.encoding.decodePath(polyline);
       polylineRef.current = new window.google.maps.Polyline({
@@ -98,21 +98,12 @@ const RotasPage = () => {
       decoded.forEach((p) => bounds.extend(p));
       mapRef.current.fitBounds(bounds, { padding: 60 });
     } else if (rotaSelecionada && rotaSelecionada.pontos.length >= 2) {
-      // Fallback: conecta os pontos da rota com linha reta
-      const path = rotaSelecionada.pontos
+      // Sem polyline real: ajusta o mapa para enquadrar os marcadores sem desenhar linha
+      const bounds = new window.google.maps.LatLngBounds();
+      rotaSelecionada.pontos
         .filter((p) => p.latitude && p.longitude)
-        .map((p) => ({ lat: p.latitude, lng: p.longitude }));
-      if (path.length >= 2) {
-        polylineRef.current = new window.google.maps.Polyline({
-          path, geodesic: true,
-          strokeColor: '#6366f1', strokeOpacity: 0.7, strokeWeight: 4,
-          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 }, offset: '0', repeat: '20px' }],
-        });
-        polylineRef.current.setMap(mapRef.current);
-        const bounds = new window.google.maps.LatLngBounds();
-        path.forEach((p) => bounds.extend(p));
-        mapRef.current.fitBounds(bounds, { padding: 80 });
-      }
+        .forEach((p) => bounds.extend({ lat: p.latitude, lng: p.longitude }));
+      if (!bounds.isEmpty()) mapRef.current.fitBounds(bounds, { padding: 80 });
     }
   }, [rotaSelecionada, limparMarcadores, limparPolyline]);
 
@@ -335,7 +326,7 @@ const RotasPage = () => {
                         ))}
                       </div>
                       {rota.fonte === 'google_maps' && (
-                        <span className="rota-card__fonte">Distancia real via OpenStreetMap</span>
+                        <span className="rota-card__fonte">Rota pela malha viária real</span>
                       )}
                     </button>
                   );
