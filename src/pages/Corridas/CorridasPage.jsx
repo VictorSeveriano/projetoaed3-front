@@ -6,11 +6,13 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import corridasService from '../../services/corridas.service';
+import carrosService from '../../services/carros.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff } from 'lucide-react';
 
 const CorridasPage = () => {
   const [corridas, setCorridas] = useState([]);
+  const [carrosMap, setCarrosMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [cancelando, setCancelando] = useState(null);
   const [corridaToCancel, setCorridaToCancel] = useState(null);
@@ -19,8 +21,16 @@ const CorridasPage = () => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const res = await corridasService.listarTodas();
-      setCorridas(res || []);
+      // Carrega corridas e carros em paralelo para enriquecer a exibicao de veiculo
+      const [corridasRes, carrosRes] = await Promise.all([
+        corridasService.listarTodas(),
+        carrosService.listarTodos().catch(() => ({ data: [] })),
+      ]);
+      setCorridas(corridasRes || []);
+      // Mapa carroId -> { marca, modelo } para exibicao na tabela
+      const mapa = {};
+      (carrosRes?.data || carrosRes || []).forEach((c) => { mapa[c.id] = c; });
+      setCarrosMap(mapa);
     } catch { setCorridas([]); } finally { setLoading(false); }
   };
 
@@ -79,12 +89,16 @@ const CorridasPage = () => {
                     <td className="data-table__cell">{formatarDataHorario(c.dataHorario)}</td>
                     <td className="data-table__cell">{c.distanciaKm} km</td>
                     <td className="data-table__cell">{formatarMoeda(c.valor)}</td>
-                    <td className="data-table__cell">{c.veiculoId ? '#' + c.veiculoId : '—'}</td>
+                    <td className="data-table__cell">
+                      {c.veiculoId && carrosMap[c.veiculoId]
+                        ? carrosMap[c.veiculoId].marca + ' ' + carrosMap[c.veiculoId].modelo
+                        : c.veiculoId ? '#' + c.veiculoId : '—'}
+                    </td>
                     <td className="data-table__cell">
                       <Badge label={statusInfo.label} color={statusInfo.color} />
                     </td>
                     <td className="data-table__cell">
-                      {c.status === 'CONFIRMADA' && (
+                      {(c.status === 'SOLICITADA' || c.status === 'CONFIRMADA') && (
                         <Button
                           id={'btn-cancelar-' + c.id}
                           variant="danger"

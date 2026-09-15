@@ -371,6 +371,8 @@ const RotasPage = () => {
         rota={rotaSelecionada}
         origemNome={rotaSelecionada?.caminho?.[0] || ''}
         destinoNome={rotaSelecionada?.caminho?.[rotaSelecionada?.caminho.length - 1] || ''}
+        origemGeocodificada={origemGeocodificada}
+        destinoGeocodificada={destinoGeocodificada}
         onSuccess={() => { setRotas([]); setRotaSelecionada(null); setDestinoInput(''); setOrigemInput(''); setOrigemGeocodificada(null); setDestinoGeocodificada(null); }}
       />
     </div>

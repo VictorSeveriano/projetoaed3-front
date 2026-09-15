@@ -13,20 +13,25 @@ import { Route, Check, TriangleAlert, Car, MapPin, Clock } from 'lucide-react';
  * Exibe:
  * - Origem e destino
  * - Rota selecionada (caminho visual, distancia, duracao)
- * - Valor estimado da corrida
+ * - Valor estimado da corrida (vindo do backend via rota.valorEstimado)
  * - Campo de data/horario desejado
  *
- * Ao confirmar, cria a corrida via POST /api/corridas.
+ * Ao confirmar, cria a corrida via POST /api/corridas com contrato completo:
+ * - origemLat/Lng e destinoLat/Lng para preservar coordenadas
+ * - polyline para preservar geometria da rota
+ * - rotaCaminho e rotasAlternativas
  *
  * Props:
  * @param {boolean}     isOpen
  * @param {function}    onClose
- * @param {object|null} rota       - Rota selecionada pelo usuario
+ * @param {object|null} rota                - Rota selecionada pelo usuario (inclui valorEstimado)
  * @param {string}      origemNome
  * @param {string}      destinoNome
- * @param {function}    onSuccess  - Callback apos corrida criada
+ * @param {object|null} origemGeocodificada - { lat, lng, nome } da origem geocodificada
+ * @param {object|null} destinoGeocodificada- { lat, lng, nome } do destino geocodificado
+ * @param {function}    onSuccess           - Callback apos corrida criada
  */
-const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, onSuccess }) => {
+const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, origemGeocodificada, destinoGeocodificada, onSuccess }) => {
   const [dataHorario, setDataHorario] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,8 +48,10 @@ const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, onSucces
     }
   }, [isOpen]);
 
-  // Valor estimado: tarifa base de Sedan (R$4/km) como default
-  const valorEstimado = rota ? parseFloat((rota.distanciaKm * 4.0).toFixed(2)) : 0;
+  // valorEstimado vem do backend (rota.valorEstimado = distanciaKm * tarifa_minima).
+  // Exibido como estimativa pre-confirmacao. O valor real e calculado pelo backend
+  // em corridas.service.criar() apos a selecao do veiculo disponivel.
+  const valorEstimado = rota?.valorEstimado || 0;
 
   const handleCloseRequest = () => {
     if (isDirty && !successMsg && !loading) {
@@ -67,7 +74,13 @@ const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, onSucces
         usuarioId: '1',
         origemNome,
         destinoNome,
+        // Coordenadas preservadas para historico sem re-geocodificacao
+        origemLat: origemGeocodificada?.lat || null,
+        origemLng: origemGeocodificada?.lng || null,
+        destinoLat: destinoGeocodificada?.lat || null,
+        destinoLng: destinoGeocodificada?.lng || null,
         rotaCaminho: rota.caminho,
+        polyline: rota.polyline || null,
         distanciaKm: rota.distanciaKm,
         duracaoMin: rota.duracaoMin,
         dataHorario: new Date(dataHorario).toISOString(),
@@ -144,7 +157,7 @@ const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, onSucces
                   </div>
                   <div className="corrida-metric corrida-metric--valor">
                     <Car size={14} aria-hidden="true" />
-                    <span>Estimado: {formatarMoeda(valorEstimado)}</span>
+                    <span>A partir de {formatarMoeda(valorEstimado)}</span>
                   </div>
                 </div>
               </div>
