@@ -1,39 +1,47 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import Header from '../../components/layout/Header';
 import Button from '../../components/ui/Button';
 import CorridaModal from '../../components/ui/CorridaModal';
 import rotasService from '../../services/rotas.service';
-import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check } from 'lucide-react';
+import useLocationSearch from '../../hooks/useLocationSearch';
+import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check, Search, X, Loader } from 'lucide-react';
 
 /**
  * RotasPage — Pagina de solicitacao de corrida.
  *
  * Fluxo:
- * 1. Usuario informa ORIGEM e DESTINO (texto livre, CEP, ou GPS)
- * 2. Ao clicar em Calcular Rotas, o sistema geocodifica os enderecos se necessario
- * 3. Sistema calcula multiplas rotas via backend 
- * 4. Usuario ve cards com rotas alternativas
- * 5. Usuario seleciona rota preferida e confirma a corrida no modal
+ * 1. Usuario digita origem (>= 3 chars) -> debounce 400ms -> sugestoes aparecem
+ * 2. Usuario seleciona sugestao -> origemSelecionada = { ..., latitude, longitude }
+ * 3. Repete para destino
+ * 4. Clica "Calcular Rotas" -> backend recebe coordenadas -> Routes API -> rotas reais
+ * 5. Usuario seleciona rota alternativa -> mapa atualiza
+ * 6. Usuario confirma corrida no modal
+ *
+ * Regras:
+ * - "Calcular Rotas" so funciona com origem e destino selecionados/validados
+ * - Editar o texto apos selecionar invalida a selecao (handled pelo hook)
+ * - GPS preenche a origem diretamente sem autocomplete
  */
 const RotasPage = () => {
-  const [origemInput, setOrigemInput] = useState('');
-  const [origemGeocodificada, setOrigemGeocodificada] = useState(null);
-  
-  const [destinoInput, setDestinoInput] = useState('');
-  const [destinoGeocodificada, setDestinoGeocodificada] = useState(null);
+  // --- Autocomplete de Origem ---
+  const origem  = useLocationSearch();
+  // --- Autocomplete de Destino ---
+  const destino = useLocationSearch();
 
-  const [rotas, setRotas] = useState([]);
-  const [rotaSelecionada, setRotaSelecionada] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingGps, setLoadingGps] = useState(false);
-  const [error, setError] = useState('');
-  const [corridaModal, setCorridaModal] = useState({ open: false });
-  
-  const containerRef = useRef(null);
-  const mapRef = useRef(null);
-  const markersRef = useRef([]);
-  const polylineRef = useRef(null);
-  const isMapInitRef = useRef(false);
+  const [rotas, setRotas]                   = React.useState([]);
+  const [rotaSelecionada, setRotaSelecionada] = React.useState(null);
+  const [loading, setLoading]               = React.useState(false);
+  const [loadingGps, setLoadingGps]         = React.useState(false);
+  const [error, setError]                   = React.useState('');
+  const [corridaModal, setCorridaModal]     = React.useState({ open: false });
+
+  const containerRef    = useRef(null);
+  const mapRef          = useRef(null);
+  const markersRef      = useRef([]);
+  const polylineRef     = useRef(null);
+  const isMapInitRef    = useRef(false);
+  const origemListRef   = useRef(null);
+  const destinoListRef  = useRef(null);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const CENTER_ES = { lat: -20.2760, lng: -40.3520 };
@@ -53,14 +61,11 @@ const RotasPage = () => {
     limparMarcadores();
     limparPolyline();
 
-    // Renderiza marcadores da rota selecionada
     if (rotaSelecionada && rotaSelecionada.pontos) {
       rotaSelecionada.pontos.forEach((ponto, idx) => {
         if (!ponto.latitude || !ponto.longitude) return;
-        
-        const isOrigem = idx === 0;
+        const isOrigem  = idx === 0;
         const isDestino = idx === rotaSelecionada.pontos.length - 1;
-
         const icon = {
           path: window.google.maps.SymbolPath.CIRCLE,
           fillColor: isOrigem ? '#6366f1' : isDestino ? '#10b981' : '#f59e0b',
@@ -69,7 +74,6 @@ const RotasPage = () => {
           strokeWeight: 2,
           scale: isOrigem || isDestino ? 10 : 6,
         };
-
         const marker = new window.google.maps.Marker({
           position: { lat: ponto.latitude, lng: ponto.longitude },
           map: mapRef.current,
@@ -77,16 +81,14 @@ const RotasPage = () => {
           icon,
           animation: window.google.maps.Animation.DROP,
         });
-
         const iw = new window.google.maps.InfoWindow({
-          content: `<div style="font-family:Inter,sans-serif;padding:4px;min-width:160px"><b style="font-size:13px;color:#1e293b">${ponto.nome}</b></div>`,
+          content: <div style="font-family:Inter,sans-serif;padding:4px;min-width:160px"><b style="font-size:13px;color:#1e293b"></b></div>,
         });
         marker.addListener('click', () => iw.open(mapRef.current, marker));
         markersRef.current.push(marker);
       });
     }
 
-    // Renderiza polyline da rota selecionada (geometria real da malha viaria)
     if (polyline && window.google.maps.geometry) {
       const decoded = window.google.maps.geometry.encoding.decodePath(polyline);
       polylineRef.current = new window.google.maps.Polyline({
@@ -98,7 +100,6 @@ const RotasPage = () => {
       decoded.forEach((p) => bounds.extend(p));
       mapRef.current.fitBounds(bounds, { padding: 60 });
     } else if (rotaSelecionada && rotaSelecionada.pontos.length >= 2) {
-      // Sem polyline real: ajusta o mapa para enquadrar os marcadores sem desenhar linha
       const bounds = new window.google.maps.LatLngBounds();
       rotaSelecionada.pontos
         .filter((p) => p.latitude && p.longitude)
@@ -144,6 +145,20 @@ const RotasPage = () => {
     if (isMapInitRef.current) renderizarMapa(rotaSelecionada?.polyline);
   }, [rotaSelecionada, renderizarMapa]);
 
+  // --- Fechar sugestoes ao clicar fora ---
+  useEffect(() => {
+    const handleClickFora = (e) => {
+      if (origemListRef.current && !origemListRef.current.contains(e.target)) {
+        origem.setMostrarSugestoes(false);
+      }
+      if (destinoListRef.current && !destinoListRef.current.contains(e.target)) {
+        destino.setMostrarSugestoes(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickFora);
+    return () => document.removeEventListener('mousedown', handleClickFora);
+  }, [origem, destino]);
+
   // --- GPS ---
   const usarGps = () => {
     if (!navigator.geolocation) { setError('GPS nao disponivel neste navegador.'); return; }
@@ -151,9 +166,15 @@ const RotasPage = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        const nomeGerado = 'Localizacao Atual';
-        setOrigemGeocodificada({ lat: latitude, lng: longitude, nome: nomeGerado, textoOriginal: nomeGerado });
-        setOrigemInput(nomeGerado);
+        // Simula uma sugestao selecionada com os dados do GPS
+        const sugestaoGps = {
+          descricao: 'Localizacao Atual (GPS)',
+          logradouro: '', numero: '', complemento: '',
+          bairro: '', cidade: '', estado: '', cep: '',
+          latitude,
+          longitude,
+        };
+        origem.selecionar(sugestaoGps);
         setLoadingGps(false);
       },
       () => { setError('Nao foi possivel obter a localizacao GPS.'); setLoadingGps(false); },
@@ -161,117 +182,218 @@ const RotasPage = () => {
     );
   };
 
-  // --- Calcula multiplas rotas ---
+  // --- Navega pelo teclado no dropdown ---
+  const handleKeyDown = useCallback((e, campo, listId) => {
+    if (!campo.mostrarSugestoes && !campo.sugestoes.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      campo.setActiveIndex((i) => Math.min(i + 1, campo.sugestoes.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      campo.setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (campo.activeIndex >= 0 && campo.sugestoes[campo.activeIndex]) {
+        e.preventDefault();
+        campo.selecionar(campo.sugestoes[campo.activeIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      campo.setMostrarSugestoes(false);
+      campo.setActiveIndex(-1);
+    }
+  }, []);
+
+  // --- Calcular rotas ---
   const calcularRotas = async () => {
-    if (!origemInput.trim()) { setError('Informe um endereco de origem.'); return; }
-    if (!destinoInput.trim()) { setError('Informe um endereco de destino.'); return; }
+    // Validar selecoes — nunca geocodificar no momento do clique
+    if (!origem.selecionada) {
+      setError('Nao foi selecionada uma localizacao valida para a origem.');
+      return;
+    }
+    if (!destino.selecionada) {
+      setError('Nao foi selecionada uma localizacao valida para o destino.');
+      return;
+    }
+
+    const origemPayload = {
+      nome: origem.selecionada.descricao,
+      lat: origem.selecionada.latitude,
+      lng: origem.selecionada.longitude,
+    };
+    const destinoPayload = {
+      nome: destino.selecionada.descricao,
+      lat: destino.selecionada.latitude,
+      lng: destino.selecionada.longitude,
+    };
 
     setLoading(true); setError(''); setRotas([]); setRotaSelecionada(null);
-
     try {
-      let origemPayload = origemGeocodificada;
-      let destinoPayload = destinoGeocodificada;
-
-      // Geocodifica Origem se necessario
-      if (!origemPayload || origemInput !== origemPayload.textoOriginal) {
-        try {
-          const resO = await rotasService.geocodificarCep(origemInput);
-          const end = resO.endereco;
-          const label = [end.logradouro, end.bairro, end.cidade].filter(Boolean).join(', ') || origemInput;
-          origemPayload = { nome: label, lat: resO.latitude, lng: resO.longitude, textoOriginal: origemInput };
-          setOrigemGeocodificada(origemPayload);
-          setOrigemInput(origemPayload.nome);
-        } catch(e) {
-          throw new Error('Nao foi possivel localizar o endereco de origem.');
-        }
-      }
-
-      // Geocodifica Destino se necessario
-      if (!destinoPayload || destinoInput !== destinoPayload.textoOriginal) {
-        try {
-          const resD = await rotasService.geocodificarCep(destinoInput);
-          const end = resD.endereco;
-          const label = [end.logradouro, end.bairro, end.cidade].filter(Boolean).join(', ') || destinoInput;
-          destinoPayload = { nome: label, lat: resD.latitude, lng: resD.longitude, textoOriginal: destinoInput };
-          setDestinoGeocodificada(destinoPayload);
-          setDestinoInput(destinoPayload.nome);
-        } catch(e) {
-          throw new Error('Nao foi possivel localizar o endereco de destino.');
-        }
-      }
-
       const resultado = await rotasService.calcularCorrida(origemPayload, destinoPayload);
       setRotas(resultado.rotas || []);
       if (resultado.rotas && resultado.rotas.length > 0) {
         setRotaSelecionada(resultado.rotas[0]);
+      } else {
+        setError('Nenhuma rota encontrada entre os enderecos informados.');
       }
     } catch (err) {
-      setError(err.message || err.response?.data?.message || 'Nao foi possivel calcular a rota agora. Tente novamente.');
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        'Nao foi possivel calcular a rota agora. Tente novamente.',
+      );
     } finally { setLoading(false); }
   };
 
-  const selecionarRota = (rota) => { setRotaSelecionada(rota); };
+  const selecionarRota = (rota) => setRotaSelecionada(rota);
 
   const abrirCorridaModal = () => {
     if (!rotaSelecionada) { setError('Selecione uma rota antes de solicitar a corrida.'); return; }
     setCorridaModal({ open: true });
   };
 
+  // --- Renderiza campo com autocomplete ---
+  const renderCampoLocalizacao = (campo, id, label, placeholder, listRef, extraAcoes = null) => {
+    const listId = id + '-sugestoes';
+    const origemOuDestino = label.toLowerCase();
+    return (
+      <section className="rotas-section" aria-label={label}>
+        <h2 className="rotas-section__title">
+          <MapPin size={16} aria-hidden="true" />
+          {label}
+        </h2>
+        <div className="autocomplete-wrapper" ref={listRef}>
+          <div className="rotas-origem-row" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input
+                id={id}
+                className="input-field"
+                placeholder={placeholder}
+                value={campo.texto}
+                autoComplete="off"
+                aria-label={label}
+                aria-autocomplete="list"
+                aria-expanded={campo.mostrarSugestoes && campo.sugestoes.length > 0}
+                aria-controls={listId}
+                aria-activedescendant={
+                  campo.activeIndex >= 0 ? `${listId}-item-${campo.activeIndex}` : undefined
+                }
+                onChange={(e) => { setError(''); campo.setTexto(e.target.value); }}
+                onFocus={() => { if (campo.sugestoes.length > 0) campo.setMostrarSugestoes(true); }}
+                onKeyDown={(e) => handleKeyDown(e, campo, listId)}
+              />
+              {/* Icone de status no campo */}
+              <span className="autocomplete-field-icon" aria-hidden="true">
+                {campo.buscando
+                  ? <Loader size={14} className="spin-icon" />
+                  : campo.selecionada
+                    ? <Check size={14} style={{ color: 'var(--color-success)' }} />
+                    : campo.texto.length >= 3
+                      ? <Search size={14} />
+                      : null
+                }
+              </span>
+            </div>
+            {/* Botao limpar campo */}
+            {campo.texto && (
+              <button
+                type="button"
+                className="autocomplete-clear-btn"
+                aria-label={'Limpar ' + origemOuDestino}
+                onClick={() => { campo.limpar(); setError(''); }}
+              >
+                <X size={14} />
+              </button>
+            )}
+            {extraAcoes}
+          </div>
+
+          {/* Dropdown de sugestoes */}
+          {campo.mostrarSugestoes && campo.sugestoes.length > 0 && (
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label={'Sugestoes de ' + origemOuDestino}
+              className="autocomplete-list"
+            >
+              {campo.sugestoes.map((s, i) => (
+                <li
+                  key={i}
+                  id={`${listId}-item-${i}`}
+                  role="option"
+                  aria-selected={campo.activeIndex === i}
+                  className={'autocomplete-item' + (campo.activeIndex === i ? ' autocomplete-item--active' : '')}
+                  onMouseDown={(e) => {
+                    // mouseDown em vez de click para evitar fechar antes do clique ser processado
+                    e.preventDefault();
+                    campo.selecionar(s);
+                    setError('');
+                  }}
+                  onMouseEnter={() => campo.setActiveIndex(i)}
+                >
+                  <MapPin size={12} className="autocomplete-item__icon" aria-hidden="true" />
+                  <span className="autocomplete-item__texto">{s.descricao}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Estados de feedback sem sugestoes */}
+          {campo.mostrarSugestoes && !campo.buscando && campo.sugestoes.length === 0 && campo.texto.length >= 3 && !campo.selecionada && (
+            <p className="autocomplete-status autocomplete-status--empty" role="status">
+              Nenhum local encontrado para esta busca.
+            </p>
+          )}
+          {campo.erro && (
+            <p className="autocomplete-status autocomplete-status--error" role="alert">
+              {campo.erro}
+            </p>
+          )}
+
+          {/* Badge de confirmacao */}
+          {campo.selecionada && (
+            <p className="rotas-geo-info" aria-live="polite">
+              <Check size={14} aria-hidden="true" />
+              Localizacao confirmada
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // --- Render ---
   return (
     <div className="page animate-fade-in">
       <Header
         title="Solicitar Corrida"
-        subtitle="Informe origem e destino para calcular as melhores rotas"
+        subtitle="Digite origem e destino, selecione uma sugestao e calcule a rota"
       />
 
       <div className="rotas-layout">
-        {/* Painel esquerdo: formulario e resultados */}
+        {/* Painel esquerdo */}
         <div className="rotas-panel">
-          {/* Origem */}
-          <section className="rotas-section">
-            <h2 className="rotas-section__title">
-              <MapPin size={16} aria-hidden="true" />
-              Origem
-            </h2>
-            <div className="rotas-origem-row">
-              <input
-                id="input-origem"
-                className="input-field"
-                placeholder="Digite a origem..."
-                value={origemInput}
-                onChange={(e) => { setOrigemInput(e.target.value); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') calcularRotas(); }}
-              />
-              <Button id="btn-gps" variant="ghost" size="sm" onClick={usarGps} loading={loadingGps}>
-                <Navigation size={16} aria-hidden="true" />
-                GPS
-              </Button>
-            </div>
-            {origemGeocodificada && origemInput === origemGeocodificada.textoOriginal && (
-              <p className="rotas-geo-info">
-                <Check size={14} aria-hidden="true" />
-                Localizacao confirmada
-              </p>
-            )}
-          </section>
 
-          {/* Destino */}
-          <section className="rotas-section">
-            <h2 className="rotas-section__title">
-              <MapPin size={16} aria-hidden="true" />
-              Destino
-            </h2>
-            <div className="rotas-origem-row">
-              <input
-                id="input-destino"
-                className="input-field"
-                placeholder="Digite o destino..."
-                value={destinoInput}
-                onChange={(e) => setDestinoInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') calcularRotas(); }}
-              />
-            </div>
-          </section>
+          {/* Campo Origem com autocomplete */}
+          {renderCampoLocalizacao(
+            origem,
+            'input-origem',
+            'Origem',
+            'Digite a origem...',
+            origemListRef,
+            <Button id="btn-gps" variant="ghost" size="sm" onClick={usarGps} loading={loadingGps} title="Usar minha localizacao atual">
+              <Navigation size={16} aria-hidden="true" />
+              GPS
+            </Button>,
+          )}
+
+          {/* Campo Destino com autocomplete */}
+          {renderCampoLocalizacao(
+            destino,
+            'input-destino',
+            'Destino',
+            'Digite o destino...',
+            destinoListRef,
+          )}
 
           <Button id="btn-calcular-rotas" onClick={calcularRotas} loading={loading} className="w-full">
             <Route size={16} aria-hidden="true" />
@@ -326,7 +448,7 @@ const RotasPage = () => {
                         ))}
                       </div>
                       {rota.fonte === 'google_maps' && (
-                        <span className="rota-card__fonte">Rota pela malha viária real</span>
+                        <span className="rota-card__fonte">Rota pela malha viaria real</span>
                       )}
                     </button>
                   );
@@ -369,11 +491,16 @@ const RotasPage = () => {
         isOpen={corridaModal.open}
         onClose={() => setCorridaModal({ open: false })}
         rota={rotaSelecionada}
-        origemNome={rotaSelecionada?.caminho?.[0] || ''}
-        destinoNome={rotaSelecionada?.caminho?.[rotaSelecionada?.caminho.length - 1] || ''}
-        origemGeocodificada={origemGeocodificada}
-        destinoGeocodificada={destinoGeocodificada}
-        onSuccess={() => { setRotas([]); setRotaSelecionada(null); setDestinoInput(''); setOrigemInput(''); setOrigemGeocodificada(null); setDestinoGeocodificada(null); }}
+        origemNome={origem.selecionada?.descricao || ''}
+        destinoNome={destino.selecionada?.descricao || ''}
+        origemGeocodificada={origem.selecionada ? { lat: origem.selecionada.latitude, lng: origem.selecionada.longitude } : null}
+        destinoGeocodificada={destino.selecionada ? { lat: destino.selecionada.latitude, lng: destino.selecionada.longitude } : null}
+        onSuccess={() => {
+          setRotas([]);
+          setRotaSelecionada(null);
+          origem.limpar();
+          destino.limpar();
+        }}
       />
     </div>
   );
