@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import localizacaoService from '../services/localizacao.service';
 
 /**
@@ -60,6 +60,13 @@ const useLocationSearch = () => {
       return;
     }
 
+    // Mostra loading imediatamente ao digitar (antes do debounce de 400ms),
+    // e limpa sugestões antigas para não exibir resultados desatualizados durante a espera.
+    setBuscando(true);
+    setSugestoes([]);
+    setMostrarSugestoes(false);
+    setErro(null);
+
     timerRef.current = setTimeout(async () => {
       // Cancela requisicao anterior
       if (abortRef.current) {
@@ -67,11 +74,8 @@ const useLocationSearch = () => {
       }
       abortRef.current = new AbortController();
 
-      // Incrementa sequencia para detectar resposta desatualizada
+      // Incrementa sequencia para detectar resposta desatualizada (race condition)
       const seq = ++seqRef.current;
-
-      setBuscando(true);
-      setErro(null);
 
       try {
         const resultados = await localizacaoService.buscarSugestoes(

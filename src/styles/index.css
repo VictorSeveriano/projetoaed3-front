@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --color-primary: #6366f1;
@@ -33,6 +33,20 @@
   --shadow-glow: 0 0 24px var(--color-primary-glow);
   --transition-fast: all 0.15s ease;
   --transition-normal: all 0.25s ease;
+  /* Tokens de espaçamento */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  /* Aliases para compatibilidade com a seção Rotas/Corridas do CSS */
+  --primary: var(--color-primary);
+  --primary-light: var(--color-primary-light);
+  --success: var(--color-success);
+  --success-bg: rgba(16,185,129,0.15);
+  --warning: var(--color-warning);
+  --bg-card: var(--bg-700);
+  --bg-dark: var(--bg-800);
 }
 
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
@@ -261,7 +275,6 @@ input,select,textarea { font-family:inherit; outline:none; }
 .data-table__cell { padding:14px 16px; font-size:14px; color:var(--text-secondary); border-bottom:1px solid var(--border-color); vertical-align:middle; }
 .rota-chip { background:rgba(6,182,212,0.15); color:var(--color-accent); padding:2px 10px; border-radius:var(--radius-full); font-size:12px; font-weight:600; white-space:nowrap; }
 
-/* === RESERVA FORM (no modal) === */
 .reserva-form { display:flex; flex-direction:column; gap:18px; }
 .reserva-form__row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .reserva-form__actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
@@ -270,23 +283,18 @@ input,select,textarea { font-family:inherit; outline:none; }
 .rota-preview__path { font-size:14px; color:var(--text-primary); margin-bottom:6px; }
 .rota-preview__distance { font-size:13px; color:var(--text-secondary); }
 .form-error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-md); padding:12px 16px; font-size:13px; color:var(--color-danger); }
-.success-banner { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-md); padding:24px; text-align:center; font-size:16px; font-weight:600; color:var(--color-success); }
 
-/* === ROTAS PAGE === */
-.rotas-layout { display:grid; grid-template-columns:360px 1fr; gap:24px; align-items:start; }
-.rotas-panel { background:var(--bg-700); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:24px; display:flex; flex-direction:column; gap:20px; overflow:hidden; }
+/* === CLASSES AUXILIARES (GrafoPage e outros) === */
 .rotas-panel__header { display:flex; align-items:center; gap:10px; }
 .rotas-panel__icon { color:var(--color-primary); flex-shrink:0; }
 .rotas-panel__title { font-size:17px; font-weight:700; color:var(--text-primary); }
 .rotas-panel__desc { font-size:13px; color:var(--text-secondary); line-height:1.6; }
 .rotas-panel__form { display:flex; flex-direction:column; gap:14px; }
-.rotas-panel__arrow { text-align:center; color:var(--color-primary); }
-.rotas-panel__actions { display:flex; flex-direction:column; gap:8px; }
-.rotas-form-error { display:flex; align-items:center; gap:8px; }
 .rotas-error-state { display:flex; flex-direction:column; align-items:center; gap:16px; padding:64px 32px; text-align:center; color:var(--color-danger); }
 
-/* Resultado da Rota */
+/* Resultado da Rota (GrafoPage) */
 .rota-result { background:rgba(99,102,241,0.08); border:1px solid var(--border-active); border-radius:var(--radius-md); padding:18px; display:flex; flex-direction:column; gap:12px; }
+/* === RESERVA FORM (no modal) === */
 .rota-result__title { font-size:14px; font-weight:700; color:var(--color-primary-light); display:flex; align-items:center; gap:6px; }
 .rota-result__info { display:flex; flex-direction:column; gap:4px; font-size:13px; }
 .rota-label { color:var(--text-muted); margin-right:4px; }
