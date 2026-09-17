@@ -35,8 +35,14 @@ const GrafoPage = () => {
   const [erro, setErro] = useState('');
 
   const consultarGrafo = async () => {
-    if (!origemNome || !destinoNome || !origemLat || !origemLng || !destinoLat || !destinoLng) {
-      setErro('Preencha todos os campos para visualizar o grafo da operação.');
+    if (!origemNome || !destinoNome || !origemLat || !origemLng || !destinoLat || !destinoLng || !distanciaMetros) {
+      setErro('Preencha todos os campos, incluindo a distância, para visualizar o grafo da operação.');
+      return;
+    }
+    
+    const distM = parseFloat(distanciaMetros);
+    if (isNaN(distM) || distM <= 0) {
+      setErro('Informe uma distância válida maior que zero.');
       return;
     }
 
@@ -53,7 +59,7 @@ const GrafoPage = () => {
           destinoNome,
           destinoLat,
           destinoLng,
-          distanciaMetros: distanciaMetros || '1000',
+          distanciaMetros: distM,
         },
       });
       setGrafo(data.data);
@@ -104,7 +110,7 @@ const GrafoPage = () => {
                 id="grafo-origem-nome"
                 type="text"
                 className="input-field"
-                placeholder="Ex: Rodoviária de Serra"
+                placeholder="Ex: Digite o nome da origem"
                 value={origemNome}
                 onChange={(e) => { setOrigemNome(e.target.value); setErro(''); }}
               />
@@ -143,7 +149,7 @@ const GrafoPage = () => {
                 id="grafo-destino-nome"
                 type="text"
                 className="input-field"
-                placeholder="Ex: Terminal de Vitória"
+                placeholder="Ex: Digite o nome do destino"
                 value={destinoNome}
                 onChange={(e) => { setDestinoNome(e.target.value); setErro(''); }}
               />
@@ -261,7 +267,7 @@ const GrafoPage = () => {
 
               {/* Arestas */}
               <h4 style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                Arestas (conexões reais)
+                Arestas (relações da operação)
               </h4>
               {(grafo.arestas || []).map((a, i) => (
                 <div key={i} className="rota-result__path" style={{ marginBottom: '8px' }}>
@@ -317,9 +323,9 @@ const GrafoPage = () => {
               Grafo Dinâmico
             </h3>
             <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
-              O grafo é construído por operação e representa somente relações justificadas
-              pelos dados reais disponíveis: vértice <strong>Origem</strong>, vértice <strong>Destino</strong>
-              e a aresta com a distância real retornada pelo serviço de roteamento.
+              O grafo é construído dinamicamente para a operação atual. Seus vértices representam a
+              origem e o destino informados pelo usuário, enquanto a aresta representa a relação entre
+              esses pontos utilizando como peso a distância da rota obtida pelo serviço de roteamento.
             </p>
             <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)', marginTop: '8px' }}>
               Não há pontos fixos pré-cadastrados. Uma operação Serra → Vitória produz um grafo
