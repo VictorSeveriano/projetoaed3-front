@@ -1,255 +1,218 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import Header from '../../components/layout/Header';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
-import MapView from '../../components/ui/MapView';
-import rotasService from '../../services/rotas.service';
 import {
-  Compass,
+  GitBranch,
   ArrowRight,
   TriangleAlert,
-  Search,
-  CheckCircle2,
-  Ruler,
-  Clock,
-  MapPin,
-  RefreshCw,
-  Navigation,
+  Info,
+  Network,
 } from 'lucide-react';
+import api from '../../services/api';
 
 /**
- * RotasPage — Tela de Rotas do ReservaCar.
+ * GrafoPage — Visualização do Grafo Dinâmico e da ABB.
  *
- * Permite ao usuário:
- * - Selecionar um local de origem entre os pontos reais do Espírito Santo
- * - Selecionar um local de destino
- * - Calcular a melhor rota entre os dois pontos
- * - Visualizar o trajeto no mapa (Google Maps)
- * - Conferir distância real e tempo estimado de deslocamento
+ * Exibe a estrutura do grafo construído para uma operação de rota real.
+ * O grafo só contém dados após ser consultado com origem, destino e distância —
+ * nunca possui pontos fixos pré-cadastrados.
  *
- * Arquitetura:
- * - Esta página contém apenas lógica de interface e interação
- * - O cálculo de rota (Dijkstra + Directions API) é responsabilidade do backend
- * - A exibição do mapa é responsabilidade do componente MapView
- *
- * Terminologia ao usuário: "Rotas", "Origem", "Destino", "Melhor Rota"
- * Terminologia interna (código): grafo, dijkstra, vértice, aresta (apenas nos services)
+ * Para consultar o grafo de uma operação específica, forneça os parâmetros
+ * de query ao endpoint GET /api/grafo.
  */
-const RotasPage = () => {
-  // --- Estado principal ---
-  const [locais, setLocais] = useState([]);
-  const [carregandoLocais, setCarregandoLocais] = useState(true);
-  const [erroLocais, setErroLocais] = useState('');
+const GrafoPage = () => {
+  const [origemNome, setOrigemNome] = useState('');
+  const [destinoNome, setDestinoNome] = useState('');
+  const [origemLat, setOrigemLat] = useState('');
+  const [origemLng, setOrigemLng] = useState('');
+  const [destinoLat, setDestinoLat] = useState('');
+  const [destinoLng, setDestinoLng] = useState('');
+  const [distanciaMetros, setDistanciaMetros] = useState('');
 
-  // --- Seleção de origem ---
-  const [origemTexto, setOrigemTexto] = useState('');
-  const [coordenadasGps, setCoordenadasGps] = useState(null);
+  const [grafo, setGrafo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState('');
 
-  // --- Resultado da rota ---
-  const [resultado, setResultado] = useState(null);
-  const [calcLoading, setCalcLoading] = useState(false);
-  const [erroCalculo, setErroCalculo] = useState('');
-
-  // --- Carrega os locais disponíveis ao montar a página ---
-  useEffect(() => {
-    rotasService
-      .listarLocais()
-      .then((data) => setLocais(data))
-      .catch(() => setErroLocais('Não foi possível carregar os locais disponíveis.'))
-      .finally(() => setCarregandoLocais(false));
-  }, []);
-
-  // Resolve os objetos para o mapa a partir do resultado (se houver)
-  const localOrigem = resultado?.pontos[0] || null;
-  const localDestino = resultado?.pontos[resultado.pontos.length - 1] || null;
-
-  /**
-   * Captura a localização atual do usuário via HTML5 Geolocation API
-   */
-  const handleGpsClick = () => {
-    if (!navigator.geolocation) {
-      setErroCalculo('Seu navegador não suporta geolocalização.');
+  const consultarGrafo = async () => {
+    if (!origemNome || !destinoNome || !origemLat || !origemLng || !destinoLat || !destinoLng) {
+      setErro('Preencha todos os campos para visualizar o grafo da operação.');
       return;
     }
 
-    setCalcLoading(true);
-    setErroCalculo('');
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCalcLoading(false);
-        setCoordenadasGps({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setOrigemTexto('Usando localização atual (GPS)');
-        setResultado(null);
-      },
-      (error) => {
-        setCalcLoading(false);
-        setErroCalculo('Não foi possível obter sua localização. Verifique as permissões.');
-      }
-    );
-  };
-
-  /**
-   * Valida os campos e aciona o cálculo de rota no backend.
-   */
-  const calcularRota = useCallback(async () => {
-    if (!origemTexto && !coordenadasGps) {
-      setErroCalculo('Informe o CEP/Endereço ou use a localização atual.');
-      return;
-    }
-
-    setErroCalculo('');
-    setResultado(null);
-    setCalcLoading(true);
+    setErro('');
+    setGrafo(null);
+    setLoading(true);
 
     try {
-      // Se tivermos coordenadas de GPS, envia elas; senão envia o texto
-      const reqLat = coordenadasGps ? coordenadasGps.lat : null;
-      const reqLng = coordenadasGps ? coordenadasGps.lng : null;
-      const reqCep = coordenadasGps ? null : origemTexto;
-
-      const rota = await rotasService.calcularMaisProximo(reqCep, reqLat, reqLng);
-      setResultado(rota);
+      const { data } = await api.get('/grafo', {
+        params: {
+          origemNome,
+          origemLat,
+          origemLng,
+          destinoNome,
+          destinoLat,
+          destinoLng,
+          distanciaMetros: distanciaMetros || '1000',
+        },
+      });
+      setGrafo(data.data);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Não foi possível calcular a rota.';
-      setErroCalculo(msg);
+      setErro(err.response?.data?.message || 'Não foi possível consultar o grafo.');
     } finally {
-      setCalcLoading(false);
+      setLoading(false);
     }
-  }, [origemTexto, coordenadasGps]);
-
-  /**
-   * Limpa a seleção e o resultado, voltando ao estado inicial.
-   */
-  const limpar = useCallback(() => {
-    setOrigemTexto('');
-    setCoordenadasGps(null);
-    setResultado(null);
-    setErroCalculo('');
-  }, []);
-
-  const handleOrigemChange = (e) => {
-    setOrigemTexto(e.target.value);
-    if (coordenadasGps) setCoordenadasGps(null); // Reseta o GPS se o usuário voltar a digitar
-    setResultado(null);
-    setErroCalculo('');
   };
 
-  // --- Renderização de estado de carregamento inicial ---
-  if (carregandoLocais) {
-    return (
-      <div className="page animate-fade-in">
-        <Header
-          title="Rotas"
-          subtitle="Consulte e calcule os melhores trajetos entre os locais disponíveis."
-        />
-        <Loading message="Carregando locais..." />
-      </div>
-    );
-  }
-
-  // --- Renderização de erro ao carregar locais ---
-  if (erroLocais) {
-    return (
-      <div className="page animate-fade-in">
-        <Header
-          title="Rotas"
-          subtitle="Consulte e calcule os melhores trajetos entre os locais disponíveis."
-        />
-        <div className="rotas-error-state">
-          <TriangleAlert size={40} aria-hidden="true" />
-          <p>{erroLocais}</p>
-          <Button onClick={() => window.location.reload()}>
-            <RefreshCw size={16} aria-hidden="true" /> Tentar novamente
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const limpar = () => {
+    setGrafo(null);
+    setErro('');
+  };
 
   return (
     <div className="page animate-fade-in">
       <Header
-        title="Rotas"
-        subtitle="Selecione a origem e o destino para calcular o melhor trajeto entre os locais do Espírito Santo."
+        title="Grafo Dinâmico"
+        subtitle="Visualize a estrutura do grafo construído para cada operação de rota."
       />
 
       <div className="rotas-layout">
-        {/* ===== PAINEL DE CONTROLE ===== */}
+        {/* Painel de controle */}
         <div className="rotas-panel">
           <div className="rotas-panel__header">
-            <Compass size={22} aria-hidden="true" className="rotas-panel__icon" />
-            <h2 className="rotas-panel__title">Calcular Rota</h2>
+            <Network size={22} aria-hidden="true" className="rotas-panel__icon" />
+            <h2 className="rotas-panel__title">Consultar Grafo da Operação</h2>
           </div>
 
-          <p className="rotas-panel__desc">
-            Digite seu CEP/Endereço ou use sua localização atual. O sistema encontrará a agência mais próxima para devolver o carro.
-          </p>
+          {/* Explicação do grafo dinâmico */}
+          <div
+            className="rota-result__fonte"
+            style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px' }}
+          >
+            <Info size={16} style={{ flexShrink: 0, marginTop: '2px' }} aria-hidden="true" />
+            <span>
+              O grafo é construído dinamicamente a cada operação: vértice Origem, vértice Destino e
+              aresta com a distância real retornada pelo serviço de roteamento. Nenhum ponto fixo
+              é pré-cadastrado.
+            </span>
+          </div>
 
-          {/* --- Formulário de seleção --- */}
           <div className="rotas-panel__form">
-            {/* Origem (Texto) */}
             <div className="input-group">
-              <label className="input-label" htmlFor="input-origem">Onde você está?</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <label className="input-label" htmlFor="grafo-origem-nome">Nome da Origem</label>
+              <input
+                id="grafo-origem-nome"
+                type="text"
+                className="input-field"
+                placeholder="Ex: Rodoviária de Serra"
+                value={origemNome}
+                onChange={(e) => { setOrigemNome(e.target.value); setErro(''); }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div className="input-group">
+                <label className="input-label" htmlFor="grafo-origem-lat">Lat. Origem</label>
                 <input
-                  id="input-origem"
-                  type="text"
+                  id="grafo-origem-lat"
+                  type="number"
+                  step="any"
                   className="input-field"
-                  placeholder="Ex: 29010-000 ou Av. Vitória"
-                  value={origemTexto}
-                  onChange={handleOrigemChange}
-                  disabled={coordenadasGps !== null}
-                  aria-label="Digitar CEP ou Endereço"
-                  style={{ flex: 1 }}
+                  placeholder="-20.1234"
+                  value={origemLat}
+                  onChange={(e) => { setOrigemLat(e.target.value); setErro(''); }}
                 />
-                <Button 
-                  variant="secondary" 
-                  onClick={handleGpsClick} 
-                  disabled={calcLoading}
-                  title="Usar localização atual"
-                  style={{ padding: '0 12px' }}
-                >
-                  <Navigation size={20} />
-                </Button>
+              </div>
+              <div className="input-group">
+                <label className="input-label" htmlFor="grafo-origem-lng">Lng. Origem</label>
+                <input
+                  id="grafo-origem-lng"
+                  type="number"
+                  step="any"
+                  className="input-field"
+                  placeholder="-40.3456"
+                  value={origemLng}
+                  onChange={(e) => { setOrigemLng(e.target.value); setErro(''); }}
+                />
               </div>
             </div>
 
-            {/* Mensagem de erro de validação / cálculo */}
-            {erroCalculo && (
-              <div className="form-error rotas-form-error" role="alert">
+            <div className="input-group">
+              <label className="input-label" htmlFor="grafo-destino-nome">Nome do Destino</label>
+              <input
+                id="grafo-destino-nome"
+                type="text"
+                className="input-field"
+                placeholder="Ex: Terminal de Vitória"
+                value={destinoNome}
+                onChange={(e) => { setDestinoNome(e.target.value); setErro(''); }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div className="input-group">
+                <label className="input-label" htmlFor="grafo-destino-lat">Lat. Destino</label>
+                <input
+                  id="grafo-destino-lat"
+                  type="number"
+                  step="any"
+                  className="input-field"
+                  placeholder="-20.3197"
+                  value={destinoLat}
+                  onChange={(e) => { setDestinoLat(e.target.value); setErro(''); }}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label" htmlFor="grafo-destino-lng">Lng. Destino</label>
+                <input
+                  id="grafo-destino-lng"
+                  type="number"
+                  step="any"
+                  className="input-field"
+                  placeholder="-40.3376"
+                  value={destinoLng}
+                  onChange={(e) => { setDestinoLng(e.target.value); setErro(''); }}
+                />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label" htmlFor="grafo-distancia">Distância (metros)</label>
+              <input
+                id="grafo-distancia"
+                type="number"
+                min="1"
+                className="input-field"
+                placeholder="Ex: 12500"
+                value={distanciaMetros}
+                onChange={(e) => { setDistanciaMetros(e.target.value); setErro(''); }}
+              />
+            </div>
+
+            {erro && (
+              <div className="form-error" role="alert">
                 <TriangleAlert size={16} aria-hidden="true" />
-                <span>{erroCalculo}</span>
+                <span>{erro}</span>
               </div>
             )}
 
-            {/* Botões de ação */}
             <div className="rotas-panel__actions">
               <Button
-                id="btn-calcular-rota"
-                onClick={calcularRota}
-                loading={calcLoading}
-                disabled={(!origemTexto && !coordenadasGps) || calcLoading}
+                id="btn-consultar-grafo"
+                onClick={consultarGrafo}
+                loading={loading}
+                disabled={loading}
                 className="w-full"
-                aria-label="Encontrar agência mais próxima"
               >
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                  <Search size={16} aria-hidden="true" />
-                  {calcLoading ? 'Buscando...' : 'Encontrar Agência'}
-                </span>
+                <GitBranch size={16} aria-hidden="true" />
+                {loading ? 'Consultando...' : 'Visualizar Grafo'}
               </Button>
-
-              {(origemTexto || resultado) && (
+              {grafo && (
                 <Button
-                  id="btn-limpar-rota"
+                  id="btn-limpar-grafo"
                   variant="secondary"
                   onClick={limpar}
-                  disabled={calcLoading}
                   className="w-full"
-                  aria-label="Limpar seleção e resultado"
                 >
                   Limpar
                 </Button>
@@ -257,114 +220,116 @@ const RotasPage = () => {
             </div>
           </div>
 
-          {/* ===== RESULTADO DA ROTA ===== */}
-          {resultado && (
-            <div className="rota-result animate-fade-in" role="region" aria-label="Resultado da rota">
+          {/* Resultado: estrutura do grafo */}
+          {loading && <Loading message="Construindo grafo..." />}
+
+          {grafo && !loading && (
+            <div className="rota-result animate-fade-in" role="region" aria-label="Estrutura do grafo">
               <h3 className="rota-result__title">
-                <CheckCircle2 size={18} aria-hidden="true" />
-                Melhor Rota Encontrada
+                <GitBranch size={18} aria-hidden="true" />
+                Grafo da Operação
               </h3>
 
-              {/* Origem → Destino resumo */}
-              <div className="rota-result__info">
-                <div>
-                  <span className="rota-label">Sua Localização:</span>
-                  <strong>{resultado.origem}</strong>
-                </div>
-                <div>
-                  <span className="rota-label">Agência Mais Próxima:</span>
-                  <strong style={{ color: 'var(--primary-color)' }}>{resultado.destino}</strong>
-                </div>
-              </div>
-
-              {/* Trajeto visual */}
-              <div className="rota-result__path" aria-label="Trajeto">
-                {resultado.caminho.map((nome, i) => (
-                  <React.Fragment key={nome}>
-                    <span className="rota-node">{nome}</span>
-                    {i < resultado.caminho.length - 1 && (
-                      <span className="rota-arrow" aria-hidden="true">
-                        <ArrowRight size={14} />
-                      </span>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              {/* Métricas da rota */}
-              <div className="rota-result__metrics">
+              {/* Estatísticas */}
+              <div className="rota-result__metrics" style={{ marginBottom: '16px' }}>
                 <div className="rota-metric">
-                  <Ruler size={16} aria-hidden="true" className="rota-metric__icon" />
                   <div>
-                    <span className="rota-metric__label">Distância</span>
-                    <span className="rota-metric__value">{resultado.distanciaFormatada}</span>
+                    <span className="rota-metric__label">Vértices</span>
+                    <span className="rota-metric__value">{grafo.vertices?.length ?? 0}</span>
                   </div>
                 </div>
-
-                {resultado.duracaoFormatada && (
-                  <div className="rota-metric">
-                    <Clock size={16} aria-hidden="true" className="rota-metric__icon" />
-                    <div>
-                      <span className="rota-metric__label">Tempo estimado</span>
-                      <span className="rota-metric__value">{resultado.duracaoFormatada}</span>
-                    </div>
+                <div className="rota-metric">
+                  <div>
+                    <span className="rota-metric__label">Arestas</span>
+                    <span className="rota-metric__value">{grafo.arestas?.length ?? 0}</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Fonte dos dados */}
-              {resultado.fonte === 'grafo_interno' && (
-                <p className="rota-result__fonte">
-                  Distância calculada internamente. Configure a API do Google Maps para dados em tempo real.
-                </p>
-              )}
+              {/* Vértices */}
+              <h4 style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                Vértices
+              </h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px' }}>
+                {(grafo.vertices || []).map((v, i) => (
+                  <li key={i} className="rotas-local-item">
+                    <span className="rotas-local-item__nome">{v.nome}</span>
+                    <span className="rotas-local-item__cidade">{v.categoria}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Arestas */}
+              <h4 style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                Arestas (conexões reais)
+              </h4>
+              {(grafo.arestas || []).map((a, i) => (
+                <div key={i} className="rota-result__path" style={{ marginBottom: '8px' }}>
+                  <span className="rota-node">{a.origem}</span>
+                  <span className="rota-arrow" aria-hidden="true">
+                    <ArrowRight size={14} />
+                  </span>
+                  <span className="rota-node">{a.destino}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                    {a.peso.toFixed(2)} km
+                  </span>
+                </div>
+              ))}
             </div>
           )}
-
-          {/* ===== INFORMAÇÕES DOS LOCAIS ===== */}
-          <div className="rotas-info">
-            <h3 className="rotas-info__title">
-              <MapPin size={16} aria-hidden="true" />
-              Locais Disponíveis
-            </h3>
-            <div className="rotas-info__stats">
-              <div className="grafo-stat">
-                <span className="grafo-stat__value">{locais.length}</span>
-                <span className="grafo-stat__label">Locais</span>
-              </div>
-              <div className="grafo-stat">
-                <span className="grafo-stat__value">
-                  {[...new Set(locais.map((l) => l.cidade))].length}
-                </span>
-                <span className="grafo-stat__label">Cidades</span>
-              </div>
-            </div>
-
-            {/* Lista resumida de locais */}
-            <ul className="rotas-locais-list" aria-label="Lista de locais cadastrados">
-              {locais.map((local) => (
-                <li key={local.id} className="rotas-local-item">
-                  <span className="rotas-local-item__nome">{local.nome}</span>
-                  <span className="rotas-local-item__cidade">{local.cidade} · {local.categoria}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        {/* ===== MAPA ===== */}
-        <div className="rotas-visual-wrapper">
-          <MapView
-            locations={locais}
-            origin={localOrigem}
-            destination={localDestino}
-            polyline={resultado?.polyline || null}
-            loading={calcLoading}
-          />
+        {/* Painel informativo sobre ABB */}
+        <div className="rotas-visual-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px' }}>
+          <div className="rota-result">
+            <h3 className="rota-result__title">
+              <GitBranch size={18} aria-hidden="true" />
+              Árvore Binária de Busca (ABB)
+            </h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              Quando o usuário solicita uma corrida, as alternativas reais retornadas pelo serviço
+              de roteamento são organizadas pela ABB usando a <strong>distância em metros</strong> como chave.
+            </p>
+            <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              O percurso <strong>in-order</strong> (esquerda → raiz → direita) retorna as rotas
+              ordenadas do menor para o maior percurso — sem usar <code>Array.sort()</code>.
+            </p>
+            <div style={{ background: 'var(--bg-tertiary, #1e293b)', borderRadius: '8px', padding: '12px', fontFamily: 'monospace', fontSize: '13px', color: 'var(--text-primary)' }}>
+              <div>inserir(5400, rotaA)</div>
+              <div>inserir(8200, rotaB)</div>
+              <div>inserir(11000, rotaC)</div>
+              <div style={{ marginTop: '8px', color: 'var(--color-success, #10b981)' }}>
+                percorrerEmOrdem() →
+              </div>
+              <div style={{ paddingLeft: '16px', color: 'var(--text-secondary)' }}>
+                5.4 km → 8.2 km → 11.0 km
+              </div>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '12px' }}>
+              Rotas com distâncias iguais são ambas preservadas no mesmo nó — nenhuma alternativa
+              é descartada por empate.
+            </p>
+          </div>
+
+          <div className="rota-result">
+            <h3 className="rota-result__title">
+              <Network size={18} aria-hidden="true" />
+              Grafo Dinâmico
+            </h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
+              O grafo é construído por operação e representa somente relações justificadas
+              pelos dados reais disponíveis: vértice <strong>Origem</strong>, vértice <strong>Destino</strong>
+              e a aresta com a distância real retornada pelo serviço de roteamento.
+            </p>
+            <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-secondary)', marginTop: '8px' }}>
+              Não há pontos fixos pré-cadastrados. Uma operação Serra → Vitória produz um grafo
+              diferente de Vila Velha → Cariacica.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default RotasPage;
+export default GrafoPage;
