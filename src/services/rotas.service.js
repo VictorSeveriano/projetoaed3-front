@@ -4,9 +4,8 @@ import api from './api';
  * RotasService — Centraliza comunicacao com os endpoints de rotas.
  *
  * Responsabilidades:
- * - Calcular multiplas rotas entre origem e destino (BFS + Dijkstra via backend)
- * - Geocodificar CEP (ViaCEP + Nominatim via backend)
- * - Listar locais disponiveis
+ * - Calcular multiplas rotas entre origem e destino
+ * - Geocodificar CEP ou endereco
  *
  * O calculo efetivo e responsabilidade do backend.
  */
