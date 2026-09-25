@@ -4,10 +4,11 @@ import { useAuth } from '../../context/AuthContext';
 import { CarFront, TriangleAlert } from 'lucide-react';
 
 const LoginPage = () => {
-  const [form, setForm] = useState({ usuario: '', senha: '' });
+  const [isLogin, setIsLogin] = useState(true);
+  const [form, setForm] = useState({ nome: '', usuario: '', senha: '', perfil: 'USUARIO' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, cadastrar } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,19 +18,39 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.usuario || !form.senha) {
-      setError('Preencha usuario e senha.');
-      return;
-    }
-    setLoading(true);
-    try {
-      await login(form.usuario, form.senha);
-      navigate('/dashboard');
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || (err.message === 'Network Error' ? 'Erro de conexão com o servidor.' : 'Credenciais inválidas.');
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+    setError('');
+
+    if (isLogin) {
+      if (!form.usuario || !form.senha) {
+        setError('Preencha usuario e senha.');
+        return;
+      }
+      setLoading(true);
+      try {
+        await login(form.usuario, form.senha);
+        navigate('/dashboard');
+      } catch (err) {
+        setError(err.response?.data?.message || 'Credenciais inválidas.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Cadastro
+      if (!form.nome || !form.usuario || !form.senha) {
+        setError('Preencha todos os campos.');
+        return;
+      }
+      setLoading(true);
+      try {
+        await cadastrar({ nome: form.nome, usuario: form.usuario, senha: form.senha, perfil: form.perfil });
+        // O RedirectInicial (AppRoutes) cuidara de mandar para o destino correto pelo perfil.
+        // Vamos forçar o reload da page ou navegar pra raiz:
+        navigate('/');
+      } catch (err) {
+        setError(err.response?.data?.message || 'Erro ao criar conta.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -52,6 +73,22 @@ const LoginPage = () => {
 
         {/* Formulario */}
         <form className="login-form" onSubmit={handleSubmit} noValidate>
+          {!isLogin && (
+            <div className="input-group">
+              <label className="input-label" htmlFor="login-nome">Nome Completo</label>
+              <input
+                id="login-nome"
+                name="nome"
+                type="text"
+                className="input-field"
+                placeholder="Ex: João Silva"
+                value={form.nome}
+                onChange={handleChange}
+                autoFocus
+              />
+            </div>
+          )}
+
           <div className="input-group">
             <label className="input-label" htmlFor="login-usuario">Usuário</label>
             <input
@@ -62,7 +99,6 @@ const LoginPage = () => {
               placeholder="admin"
               value={form.usuario}
               onChange={handleChange}
-              autoFocus
               autoComplete="username"
             />
           </div>
@@ -81,6 +117,22 @@ const LoginPage = () => {
             />
           </div>
 
+          {!isLogin && (
+            <div className="input-group">
+              <label className="input-label" htmlFor="login-perfil">Perfil desejado</label>
+              <select
+                id="login-perfil"
+                name="perfil"
+                className="input-field"
+                value={form.perfil}
+                onChange={handleChange}
+              >
+                <option value="USUARIO">Passageiro (Solicitar corridas)</option>
+                <option value="MOTORISTA">Motorista (Oferecer corridas)</option>
+              </select>
+            </div>
+          )}
+
           {error && (
             <div className="login-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <TriangleAlert size={16} /> {error}
@@ -93,13 +145,29 @@ const LoginPage = () => {
             className="btn btn--lg btn-primary w-full"
             disabled={loading}
           >
-            {loading ? <span className="btn__spinner" /> : 'Entrar'}
+            {loading ? <span className="btn__spinner" /> : (isLogin ? 'Entrar' : 'Criar Conta')}
           </button>
         </form>
 
-        <p className="login-hint">
-          Credenciais padrão: <strong>admin</strong> / <strong>admin123</strong>
-        </p>
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+          <button 
+            type="button" 
+            className="btn btn-ghost" 
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError('');
+              setForm({ nome: '', usuario: '', senha: '', perfil: 'USUARIO' });
+            }}
+          >
+            {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça login'}
+          </button>
+        </div>
+
+        {isLogin && (
+          <p className="login-hint">
+            Credenciais padrão: <strong>admin</strong> / <strong>admin123</strong>
+          </p>
+        )}
       </div>
     </div>
   );

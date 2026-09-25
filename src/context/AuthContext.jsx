@@ -22,6 +22,15 @@ export const AuthProvider = ({ children }) => {
     return userData;
   }, []);
 
+  const cadastrar = useCallback(async (dados) => {
+    const response = await authService.cadastrar(dados);
+    const { token, usuario: userData } = response.data;
+    sessionStorage.setItem('auth_token', token);
+    sessionStorage.setItem('usuario', JSON.stringify(userData));
+    setUsuario(userData);
+    return userData;
+  }, []);
+
   const logout = useCallback(() => {
     sessionStorage.clear();
     setUsuario(null);
@@ -30,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = Boolean(usuario);
 
   return (
-    <AuthContext.Provider value={{ usuario, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ usuario, isAuthenticated, login, cadastrar, logout }}>
       {children}
     </AuthContext.Provider>
   );

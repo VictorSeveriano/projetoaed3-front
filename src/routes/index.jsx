@@ -11,17 +11,22 @@ import CarrosPage from '../pages/Carros/CarrosPage';
 import CorridasPage from '../pages/Corridas/CorridasPage';
 import RotasPage from '../pages/Rotas/RotasPage';
 
-// Páginas do usuário/passageiro (importadas pelos routers)
+// Páginas do usuário/passageiro
 import PerfilUsuarioPage from '../pages/Usuario/PerfilUsuarioPage';
 
-// Roteadores de rotas compartilhadas entre perfis
-import MinhasCorridasRouter from '../pages/MinhasCorridasRouter';
+// Roteador de perfil (mantido)
 import PerfilRouter from '../pages/PerfilRouter';
 
 // Páginas do motorista
 import InicioMotoristaPage from '../pages/Motorista/InicioMotoristaPage';
 import RelatorioMotoristaPage from '../pages/Motorista/RelatorioMotoristaPage';
 import MeuVeiculoPage from '../pages/Motorista/MeuVeiculoPage';
+
+// Páginas Admin (novas)
+import MotoristasPage from '../pages/Admin/MotoristasPage';
+import MotoristasAnalisePage from '../pages/Admin/MotoristasAnalisePage';
+import VeiculosAnalisePage from '../pages/Admin/VeiculosAnalisePage';
+import NotificacoesPage from '../pages/Admin/NotificacoesPage';
 
 /**
  * RedirectInicial — Redireciona para a rota home correta conforme perfil.
@@ -58,16 +63,20 @@ const AppRoutes = () => (
               <Route path="/dashboard"         element={<DashboardPage />} />
               <Route path="/corridas"          element={<CorridasPage />} />
               <Route path="/carros"            element={<CarrosPage />} />
+              <Route path="/veiculos/analise"  element={<VeiculosAnalisePage />} />
               <Route path="/rotas"             element={<RotasPage />} />
+              <Route path="/motoristas"        element={<MotoristasPage />} />
+              <Route path="/motoristas/analise" element={<MotoristasAnalisePage />} />
+              <Route path="/notificacoes"      element={<NotificacoesPage />} />
 
               {/* --- Usuário/Passageiro --- */}
               <Route path="/solicitar-corrida" element={<RotasPage />} />
-              <Route path="/minhas-corridas"   element={<MinhasCorridasRouter />} />
+              <Route path="/minhas-corridas"   element={<CorridasPage />} />
               <Route path="/perfil"            element={<PerfilRouter />} />
 
               {/* --- Motorista --- */}
               <Route path="/inicio"            element={<InicioMotoristaPage />} />
-              {/* /minhas-corridas compartilhado: renderiza componente correto por perfil */}
+              <Route path="/minhas-corridas"   element={<CorridasPage />} />
               <Route path="/relatorio"         element={<RelatorioMotoristaPage />} />
               <Route path="/meu-veiculo"       element={<MeuVeiculoPage />} />
 

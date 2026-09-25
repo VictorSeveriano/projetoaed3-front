@@ -4,8 +4,10 @@ import api from './api';
  * CorridasService — Centraliza toda comunicação com os endpoints de corridas.
  */
 const corridasService = {
-  async listarTodas() {
-    const { data } = await api.get('/corridas');
+  async listarPorPerfil(usuarioId, perfil, status = '') {
+    const params = new URLSearchParams({ usuarioId, perfil });
+    if (status) params.append('status', status);
+    const { data } = await api.get(`/corridas/minhas?${params.toString()}`);
     return data.data;
   },
 

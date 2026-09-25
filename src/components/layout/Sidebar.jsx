@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 import {
   LayoutDashboard, Car, CalendarDays, Network, LogOut,
-  ChevronLeft, ChevronRight, Map, Home, BarChart2, User,
+  ChevronLeft, ChevronRight, Map, Home, BarChart2, User, Bell
 } from 'lucide-react';
 
 /**
@@ -17,10 +17,14 @@ import {
  * Termos internos (Grafo, ABB, Dijkstra) não aparecem na UI.
  */
 const NAV_ITEMS_ADMIN = [
-  { to: '/dashboard',  icon: <LayoutDashboard size={20} />, label: 'Dashboard'        },
-  { to: '/corridas',   icon: <CalendarDays size={20} />,    label: 'Corridas'          },
-  { to: '/carros',     icon: <Car size={20} />,             label: 'Veículos'          },
-  { to: '/rotas',      icon: <Network size={20} />,         label: 'Solicitar Corrida' },
+  { to: '/dashboard',             icon: <LayoutDashboard size={20} />, label: 'Dashboard'             },
+  { to: '/corridas',              icon: <CalendarDays size={20} />,    label: 'Corridas'              },
+  { to: '/carros',                icon: <Car size={20} />,             label: 'Veículos'              },
+  { to: '/veiculos/analise',      icon: <Car size={20} />,             label: 'Análise de Veículos'   },
+  { to: '/rotas',                 icon: <Network size={20} />,         label: 'Solicitar Corrida'     },
+  { to: '/motoristas',            icon: <User size={20} />,            label: 'Motoristas'            },
+  { to: '/motoristas/analise',    icon: <User size={20} />,            label: 'Análise de Motoristas' },
+  { to: '/notificacoes',          icon: <Bell size={20} />,            label: 'Notificações'          },
 ];
 
 const NAV_ITEMS_USUARIO = [

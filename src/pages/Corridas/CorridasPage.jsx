@@ -1,16 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import CorridasTabs from '../../components/ui/CorridasTabs';
 import corridasService from '../../services/corridas.service';
 import carrosService from '../../services/carros.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff } from 'lucide-react';
 
 const CorridasPage = () => {
+  const { usuario } = useAuth();
+  const [statusFiltro, setStatusFiltro] = useState('TODAS');
   const [corridas, setCorridas] = useState([]);
   const [carrosMap, setCarrosMap] = useState({});
   const [loading, setLoading] = useState(true);
@@ -18,23 +22,23 @@ const CorridasPage = () => {
   const [corridaToCancel, setCorridaToCancel] = useState(null);
   const [cancelError, setCancelError] = useState('');
 
-  const carregar = async () => {
+  const carregar = useCallback(async () => {
+    if (!usuario?.id) return;
     setLoading(true);
     try {
-      // Carrega corridas e carros em paralelo para enriquecer a exibicao de veiculo
+      const filtroApi = statusFiltro === 'TODAS' ? '' : statusFiltro;
       const [corridasRes, carrosRes] = await Promise.all([
-        corridasService.listarTodas(),
+        corridasService.listarPorPerfil(usuario.id, usuario.perfil, filtroApi),
         carrosService.listarTodos().catch(() => ({ data: [] })),
       ]);
       setCorridas(corridasRes || []);
-      // Mapa carroId -> { marca, modelo } para exibicao na tabela
       const mapa = {};
       (carrosRes?.data || carrosRes || []).forEach((c) => { mapa[c.id] = c; });
       setCarrosMap(mapa);
     } catch { setCorridas([]); } finally { setLoading(false); }
-  };
+  }, [usuario, statusFiltro]);
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); }, [carregar]);
 
   const handleCancelar = async () => {
     if (!corridaToCancel) return;
@@ -52,7 +56,11 @@ const CorridasPage = () => {
   return (
     <>
     <div className="page animate-fade-in">
-      <Header title="Corridas" subtitle="Gerencie as corridas solicitadas" />
+      <Header title="Corridas" subtitle={usuario?.perfil === 'ADMINISTRADOR' ? "Gerencie as corridas de todos os perfis" : "Gerencie suas corridas"} />
+
+      <div style={{ marginBottom: '24px' }}>
+        <CorridasTabs abaAtiva={statusFiltro} onChangeAba={setStatusFiltro} />
+      </div>
 
       {loading ? (
         <Loading message="Carregando corridas..." />
@@ -60,7 +68,7 @@ const CorridasPage = () => {
         <EmptyState
           icon={<CalendarOff size={48} strokeWidth={1.5} />}
           title="Nenhuma corrida encontrada"
-          description="Vá até Solicitar Corrida e reserve sua primeira viagem."
+          description={statusFiltro === 'TODAS' ? "Não há corridas registradas." : `Não há corridas no status ${statusFiltro}.`}
         />
       ) : (
         <div className="table-wrapper">
@@ -98,7 +106,8 @@ const CorridasPage = () => {
                       <Badge label={statusInfo.label} color={statusInfo.color} />
                     </td>
                     <td className="data-table__cell">
-                      {(c.status === 'SOLICITADA' || c.status === 'CONFIRMADA') && (
+                      {/* USUARIO nao cancela, so motorista/admin, ex.: */}
+                      {(c.status === 'SOLICITADA' || c.status === 'CONFIRMADA') && usuario?.perfil !== 'MOTORISTA' && (
                         <Button
                           id={'btn-cancelar-' + c.id}
                           variant="danger"
@@ -106,6 +115,22 @@ const CorridasPage = () => {
                           onClick={() => setCorridaToCancel(c.id)}
                         >
                           Cancelar
+                        </Button>
+                      )}
+                      {/* MOTORISTA pode finalizar */}
+                      {(c.status === 'EM_ANDAMENTO') && (usuario?.perfil === 'MOTORISTA' || usuario?.perfil === 'ADMINISTRADOR') && (
+                        <Button
+                          id={'btn-finalizar-' + c.id}
+                          variant="primary"
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await corridasService.finalizar(c.id);
+                              carregar();
+                            } catch(e) {}
+                          }}
+                        >
+                          Finalizar
                         </Button>
                       )}
                     </td>
