@@ -4,7 +4,8 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilUsuario, ModalPerfilMotorista } from '../../components/ui/ModaisPerfil';
-import api from '../../services/api';
+import usuariosService from '../../services/usuarios.service';
+import motoristasService from '../../services/motoristas.service';
 import { User, Search, Filter } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
@@ -26,12 +27,8 @@ const UsuariosPage = () => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (filtroPesquisa) params.search = filtroPesquisa;
-      if (filtroPerfil) params.perfil = filtroPerfil;
-      
-      const { data } = await api.get('/usuarios', { params });
-      setUsuarios(data.data || []);
+      const res = await usuariosService.listarTodos({ search: filtroPesquisa, perfil: filtroPerfil });
+      setUsuarios(res || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -53,7 +50,7 @@ const UsuariosPage = () => {
 
   const handleSaveUsuario = async (id, dados) => {
     try {
-      await api.patch(`/usuarios/${id}`, dados);
+      await usuariosService.atualizar(id, dados);
       await carregar(); // Recarrega a lista com os novos dados
       setUsuarioSelecionado(prev => ({ ...prev, ...dados }));
     } catch (err) {
@@ -65,9 +62,9 @@ const UsuariosPage = () => {
   const abrirMotorista = async (usuarioId) => {
     try {
       // O perfil do motorista fica em /api/motoristas/perfil/:usuarioId
-      const { data } = await api.get(`/motoristas/perfil/${usuarioId}`);
-      if (data.data) {
-        setMotoristaSelecionado(data.data);
+      const { data } = await motoristasService.buscarPorUsuarioId(usuarioId);
+      if (data) {
+        setMotoristaSelecionado(data);
         setModalMotoristaOpen(true);
         setModalUsuarioOpen(false); // fecha o de usuário
       } else {

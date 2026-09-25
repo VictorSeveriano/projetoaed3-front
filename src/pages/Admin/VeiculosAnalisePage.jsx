@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
-import api from '../../services/api';
+import veiculosService from '../../services/veiculos.service';
 import { Car } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
@@ -18,8 +18,8 @@ const VeiculosAnalisePage = () => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/veiculos/analise');
-      setPendentes(data.data || []);
+      const res = await veiculosService.listarAnalise();
+      setPendentes(res || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -32,8 +32,11 @@ const VeiculosAnalisePage = () => {
   const handleConfirmarAcao = async () => {
     if (!acao) return;
     try {
-      const payload = acao.tipo === 'aprovar' ? { classe: classeSelecionada } : {};
-      await api.patch(`/veiculos/${acao.veiculo.id}/${acao.tipo}`, payload);
+      if (acao.tipo === 'aprovar') {
+        await veiculosService.aprovar(acao.veiculo.id, classeSelecionada);
+      } else {
+        await veiculosService.rejeitar(acao.veiculo.id);
+      }
       await carregar();
     } catch (err) {
       console.error(err);

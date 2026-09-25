@@ -4,7 +4,8 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
-import api from '../../services/api';
+import motoristasService from '../../services/motoristas.service';
+import veiculosService from '../../services/veiculos.service';
 import { Users } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
@@ -19,8 +20,8 @@ const MotoristasPage = () => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/motoristas');
-      setMotoristas(data.data || []);
+      const res = await motoristasService.listarTodos();
+      setMotoristas(res || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -41,7 +42,7 @@ const MotoristasPage = () => {
 
   const handleSaveClasse = async (id, classe) => {
     try {
-      await api.patch(`/veiculos/${id}/classe`, { classe });
+      await veiculosService.editarClasse(id, classe);
       await carregar(); // Recarrega os motoristas para refletir a nova classe do veículo
       // Atualiza o veículo selecionado no modal para refletir imediatamente sem fechar
       setVeiculoSelecionado(prev => ({ ...prev, classe }));

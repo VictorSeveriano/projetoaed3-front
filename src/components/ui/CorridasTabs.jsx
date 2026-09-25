@@ -4,7 +4,7 @@ import Button from './Button';
 import EmptyState from './EmptyState';
 import ConfirmationModal from './ConfirmationModal';
 import corridasService from '../../services/corridas.service';
-import carrosService from '../../services/carros.service';
+import veiculosService from '../../services/veiculos.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff, MapPin, Clock, Route } from 'lucide-react';
 

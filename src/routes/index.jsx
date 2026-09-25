@@ -7,7 +7,7 @@ import Layout from '../components/layout/Layout';
 // Páginas existentes (admin)
 import LoginPage from '../pages/Login/LoginPage';
 import DashboardPage from '../pages/Dashboard/DashboardPage';
-import CarrosPage from '../pages/Carros/CarrosPage';
+import VeiculosPage from '../pages/Veiculos/VeiculosPage';
 import CorridasPage from '../pages/Corridas/CorridasPage';
 import RotasPage from '../pages/Rotas/RotasPage';
 
@@ -63,7 +63,7 @@ const AppRoutes = () => (
               {/* --- Administrador --- */}
               <Route path="/dashboard"         element={<DashboardPage />} />
               <Route path="/corridas"          element={<CorridasPage />} />
-              <Route path="/carros"            element={<CarrosPage />} />
+              <Route path="/veiculos"          element={<VeiculosPage />} />
               <Route path="/veiculos/analise"  element={<VeiculosAnalisePage />} />
               <Route path="/rotas"             element={<RotasPage />} />
               <Route path="/usuarios"          element={<UsuariosPage />} />

@@ -4,7 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import Button from '../../components/ui/Button';
-import carrosService from '../../services/carros.service';
+import veiculosService from '../../services/veiculos.service';
 import { formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { Car, CarFront, IdCard, CheckCircle2 } from 'lucide-react';
 
@@ -36,17 +36,17 @@ const CarroCard = ({ carro }) => {
   );
 };
 
-const CarrosPage = () => {
-  const [carros, setCarros] = useState([]);
+const VeiculosPage = () => {
+  const [veiculos, setVeiculos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState({ categoria: '' });
 
   const carregarCarros = async () => {
     setLoading(true);
     try {
-      const res = await carrosService.listarTodos(filtros);
-      setCarros(res.data || []);
-    } catch { setCarros([]); } finally { setLoading(false); }
+      const res = await veiculosService.listarTodos(filtros);
+      setVeiculos(res || []);
+    } catch { setVeiculos([]); } finally { setLoading(false); }
   };
 
   useEffect(() => { carregarCarros(); }, [filtros]);
@@ -71,16 +71,16 @@ const CarrosPage = () => {
       </div>
 
       {loading ? (
-        <Loading message="Carregando veiculos..." />
-      ) : carros.length === 0 ? (
-        <EmptyState icon={<Car size={48} />} title="Nenhum veiculo encontrado" description="Tente ajustar os filtros." />
+        <Loading message="Carregando veículos..." />
+      ) : veiculos.length === 0 ? (
+        <EmptyState icon={<Car size={48} />} title="Nenhum veículo encontrado" description="Tente ajustar os filtros." />
       ) : (
         <div className="carros-grid">
-          {carros.map((c) => <CarroCard key={c.id} carro={c} />)}
+          {veiculos.map((c) => <CarroCard key={c.id} carro={c} />)}
         </div>
       )}
     </div>
   );
 };
 
-export default CarrosPage;
+export default VeiculosPage;

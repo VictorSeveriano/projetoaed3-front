@@ -64,20 +64,17 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista }) => {
 
 export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSaveClasse }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [classe, setClasse] = useState(veiculo?.classe || 'BASICO');
 
   // Sync state if veiculo changes
   React.useEffect(() => {
-    if (veiculo) setClasse(veiculo.classe || 'BASICO');
     setIsEditing(false);
   }, [veiculo]);
 
   if (!veiculo) return null;
 
   const handleSave = async () => {
-    if (onSaveClasse) {
-      await onSaveClasse(veiculo.id, classe);
-    }
+    // onSaveClasse is now handled mostly automatically by the backend via derivation,
+    // so this is left for any future generic updates on the vehicle.
     setIsEditing(false);
   };
 
@@ -100,35 +97,32 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSaveCl
       <div className="perfil-campo">
         <span className="perfil-campo__label">Porte / Classe</span>
         <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {veiculo.porte || '—'} / 
-          {isEditing ? (
-            <select 
-              className="input-field" 
-              style={{ padding: '4px', height: 'auto', width: 'auto' }}
-              value={classe}
-              onChange={e => setClasse(e.target.value)}
-            >
-              <option value="BASICO">Básico</option>
-              <option value="NORMAL">Normal</option>
-              <option value="PREMIUM">Premium</option>
-            </select>
-          ) : (
-            <Badge label={veiculo.classe || 'N/D'} color="info" />
-          )}
-          
-          {isAdmin && (
-            isEditing ? (
-              <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
-            ) : (
-              <button 
-                onClick={() => setIsEditing(true)}
-                style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.85rem' }}
-              >
-                Editar
-              </button>
-            )
-          )}
+          {veiculo.porte || '—'} / <Badge label={veiculo.classe || 'N/D'} color="info" />
         </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Cor</span>
+        <span className="perfil-campo__valor">{veiculo.cor || '—'}</span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Quilometragem</span>
+        <span className="perfil-campo__valor">{veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—'}</span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Passageiros</span>
+        <span className="perfil-campo__valor">{veiculo.quantidadePassageiros || '—'}</span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Itens de Segurança</span>
+        <span className="perfil-campo__valor">
+          Ar-Condicionado: {veiculo.possuiArCondicionado ? 'Sim' : 'Não'}<br/>
+          Extintor: {veiculo.possuiExtintor ? 'Sim' : 'Não'}<br/>
+          Cinto Segurança: {veiculo.possuiCintoSeguranca ? 'Sim' : 'Não'}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Documentação</span>
+        <span className="perfil-campo__valor">{veiculo.documentacaoRegularizada ? 'Regularizada' : 'Pendente/Irregular'}</span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Aprovação</span>
@@ -153,13 +147,17 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSaveCl
 
 export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ nome: '', usuario: '' });
+  const [formData, setFormData] = useState({ nome: '', usuario: '', cpf: '', email: '', celular: '', endereco: {} });
 
   React.useEffect(() => {
     if (usuario) {
       setFormData({
         nome: usuario.nome || '',
-        usuario: usuario.usuario || ''
+        usuario: usuario.usuario || '',
+        cpf: usuario.cpf || '',
+        email: usuario.email || '',
+        celular: usuario.celular || '',
+        endereco: usuario.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
       });
     }
     setIsEditing(false);
@@ -205,6 +203,50 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
             />
           ) : (
             <span>@{usuario.usuario}</span>
+          )}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">E-mail</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+          ) : <span>{usuario.email || '—'}</span>}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Celular</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
+          ) : <span>{usuario.celular || '—'}</span>}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Endereço</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {isEditing ? (
+            <>
+              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Rua" value={formData.endereco.rua || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} />
+              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Bairro" value={formData.endereco.bairro || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Número" value={formData.endereco.numero || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} />
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="CEP" value={formData.endereco.cep || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Cidade" value={formData.endereco.cidade || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} />
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="UF" value={formData.endereco.estado || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} />
+              </div>
+            </>
+          ) : (
+            <span>
+              {usuario.endereco ? (
+                <>
+                  {usuario.endereco.rua}, {usuario.endereco.numero} - {usuario.endereco.bairro}<br />
+                  {usuario.endereco.cidade}/{usuario.endereco.estado} - CEP: {usuario.endereco.cep}
+                </>
+              ) : '—'}
+            </span>
           )}
         </span>
       </div>

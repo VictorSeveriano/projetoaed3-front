@@ -22,7 +22,10 @@ const MeuVeiculoPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
   
-  const [form, setForm] = useState({ modelo: '', marca: '', ano: '', placa: '', porte: 'PEQUENO' });
+  const [form, setForm] = useState({ 
+    modelo: '', marca: '', ano: '', placa: '', porte: 'PEQUENO', cor: '', quilometragem: '', quantidadePassageiros: 4,
+    possuiArCondicionado: false, possuiExtintor: false, possuiCintoSeguranca: false, documentacaoRegularizada: false
+  });
   const [submitting, setSubmitting] = useState(false);
 
   const carregar = () => {
@@ -100,6 +103,39 @@ const MeuVeiculoPage = () => {
                   <option value="LUXO">Luxo</option>
                 </select>
               </div>
+              <div className="input-group">
+                <label className="input-label">Cor</label>
+                <input type="text" className="input-field" placeholder="Ex: Prata" value={form.cor} onChange={e => setForm({...form, cor: e.target.value})} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Quilometragem</label>
+                <input type="number" className="input-field" placeholder="Ex: 50000" value={form.quilometragem} onChange={e => setForm({...form, quilometragem: parseInt(e.target.value) || 0})} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Quantidade de Passageiros</label>
+                <input type="number" className="input-field" placeholder="Ex: 4" value={form.quantidadePassageiros} onChange={e => setForm({...form, quantidadePassageiros: parseInt(e.target.value) || 4})} />
+              </div>
+              <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="input-label">Itens de Segurança e Documentação</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" checked={form.possuiArCondicionado} onChange={e => setForm({...form, possuiArCondicionado: e.target.checked})} />
+                    Possui Ar-Condicionado
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" checked={form.possuiExtintor} onChange={e => setForm({...form, possuiExtintor: e.target.checked})} />
+                    Possui Extintor
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" checked={form.possuiCintoSeguranca} onChange={e => setForm({...form, possuiCintoSeguranca: e.target.checked})} />
+                    Possui Cinto de Segurança
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input type="checkbox" checked={form.documentacaoRegularizada} onChange={e => setForm({...form, documentacaoRegularizada: e.target.checked})} />
+                    Documentação Regularizada
+                  </label>
+                </div>
+              </div>
             </div>
             <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
               {submitting ? 'Cadastrando...' : 'Cadastrar Veículo'}
@@ -162,6 +198,45 @@ const MeuVeiculoPage = () => {
               <div>
                 <span className="perfil-campo__label">Status</span>
                 <Badge label={statusInfo.label} color={statusInfo.color} />
+              </div>
+            </div>
+          </div>
+          
+          <hr style={{ margin: '24px 0', borderColor: 'var(--color-border)' }} />
+          
+          <div className="perfil-grid">
+            <div className="perfil-campo">
+              <div>
+                <span className="perfil-campo__label">Cor</span>
+                <span className="perfil-campo__valor">{veiculo.cor || '—'}</span>
+              </div>
+            </div>
+            <div className="perfil-campo">
+              <div>
+                <span className="perfil-campo__label">Quilometragem</span>
+                <span className="perfil-campo__valor">{veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—'}</span>
+              </div>
+            </div>
+            <div className="perfil-campo">
+              <div>
+                <span className="perfil-campo__label">Passageiros</span>
+                <span className="perfil-campo__valor">{veiculo.quantidadePassageiros || '—'}</span>
+              </div>
+            </div>
+            <div className="perfil-campo">
+              <div>
+                <span className="perfil-campo__label">Itens de Segurança</span>
+                <span className="perfil-campo__valor" style={{ display: 'block', marginTop: '4px' }}>
+                  • Ar-Condicionado: {veiculo.possuiArCondicionado ? 'Sim' : 'Não'}<br/>
+                  • Extintor: {veiculo.possuiExtintor ? 'Sim' : 'Não'}<br/>
+                  • Cinto Segurança: {veiculo.possuiCintoSeguranca ? 'Sim' : 'Não'}
+                </span>
+              </div>
+            </div>
+            <div className="perfil-campo">
+              <div>
+                <span className="perfil-campo__label">Documentação</span>
+                <span className="perfil-campo__valor">{veiculo.documentacaoRegularizada ? 'Regularizada' : 'Pendente/Irregular'}</span>
               </div>
             </div>
           </div>

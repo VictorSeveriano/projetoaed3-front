@@ -8,7 +8,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import CorridasTabs from '../../components/ui/CorridasTabs';
 import corridasService from '../../services/corridas.service';
-import carrosService from '../../services/carros.service';
+import veiculosService from '../../services/veiculos.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff } from 'lucide-react';
 
@@ -29,7 +29,7 @@ const CorridasPage = () => {
       const filtroApi = statusFiltro === 'TODAS' ? '' : statusFiltro;
       const [corridasRes, carrosRes] = await Promise.all([
         corridasService.listarPorPerfil(usuario.id, usuario.perfil, filtroApi),
-        carrosService.listarTodos().catch(() => ({ data: [] })),
+        veiculosService.listarTodos().catch(() => ({ data: [] })),
       ]);
       setCorridas(corridasRes || []);
       const mapa = {};

@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
-import api from '../../services/api';
+import motoristasService from '../../services/motoristas.service';
 import { UserCheck } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
@@ -17,8 +17,8 @@ const MotoristasAnalisePage = () => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/motoristas/analise');
-      setPendentes(data.data || []);
+      const res = await motoristasService.listarAnalise();
+      setPendentes(res || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -31,7 +31,11 @@ const MotoristasAnalisePage = () => {
   const handleConfirmarAcao = async () => {
     if (!acao) return;
     try {
-      await api.patch(`/motoristas/${acao.motorista.id}/${acao.tipo}`);
+      if (acao.tipo === 'aprovar') {
+        await motoristasService.aprovar(acao.motorista.id);
+      } else {
+        await motoristasService.rejeitar(acao.motorista.id);
+      }
       await carregar();
     } catch (err) {
       console.error(err);
