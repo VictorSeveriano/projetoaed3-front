@@ -123,6 +123,10 @@ const RotasPage = () => {
         { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] },
       ],
     });
+
+    const trafficLayer = new window.google.maps.TrafficLayer();
+    trafficLayer.setMap(mapRef.current);
+
     isMapInitRef.current = true;
     renderizarMapa();
   }, [renderizarMapa]);

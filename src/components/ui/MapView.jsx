@@ -198,6 +198,11 @@ const MapView = ({ locations = [], origin = null, destination = null, polyline =
       ],
     });
 
+    // Adiciona a camada de trânsito em tempo real ao mapa
+    const trafficLayer = new window.google.maps.TrafficLayer();
+    trafficLayer.setMap(mapRef.current);
+
+
     isInitializedRef.current = true;
     renderizarMarcadores();
   }, [renderizarMarcadores]);
