@@ -2,44 +2,39 @@ import React, { useState } from 'react';
 import { TriangleAlert, Search } from 'lucide-react';
 import axios from 'axios';
 import { formatarCPF, formatarCelular, formatarCEP } from '../../utils/formatters';
-import { validarCPF, validarCelular, validarCEP } from '../../utils/validators';
+import { validarCPF, validarCelular, validarCEP, validarSenha } from '../../utils/validators';
 
 const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAvancar, onVoltar, onSubmit, loading }) => {
   const [cepLoading, setCepLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const validateField = (name, value) => {
-    let errorMsg = '';
-    
-    if (name === 'cpf') {
-      const limpo = value.replace(/\D/g, '');
-      if (limpo.length !== 11) {
-        errorMsg = 'CPF deve possuir 11 números.';
-      } else if (!validarCPF(limpo)) {
-        errorMsg = 'CPF inválido.';
-      }
-    } else if (name === 'celular') {
-      if (!validarCelular(value)) {
-        errorMsg = 'Celular inválido.';
-      }
-    } else if (name === 'endereco.cep') {
-      if (!validarCEP(value)) {
-        errorMsg = 'CEP deve possuir 8 números.';
-      }
-    } else if (name === 'email') {
-      if (!value.includes('@') || !value.includes('.')) {
-        errorMsg = 'E-mail inválido.';
-      }
-    } else if (name === 'nome' && !value.trim()) {
-      errorMsg = 'Nome é obrigatório.';
-    } else if (name === 'senha') {
-      if (value.length < 8) errorMsg = 'Senha deve ter no mínimo 8 caracteres.';
-      else if (!/\d/.test(value)) errorMsg = 'Senha deve conter pelo menos um número.';
-      else if (!/[a-zA-Z]/.test(value)) errorMsg = 'Senha deve conter pelo menos uma letra.';
-    } else if (name === 'senhaConfirmacao') {
-      if (value !== form.senha) errorMsg = 'As senhas não coincidem.';
+  const getFieldError = (name, value) => {
+    if (!value && typeof value === 'string' && !value.trim()) {
+      return 'Campo obrigatório.';
     }
 
+    if (name === 'cpf') {
+      const limpo = value.replace(/\D/g, '');
+      if (limpo.length !== 11) return 'CPF deve possuir 11 números.';
+      if (!validarCPF(limpo)) return 'CPF inválido.';
+    } else if (name === 'celular') {
+      if (!validarCelular(value)) return 'Celular inválido.';
+    } else if (name === 'endereco.cep') {
+      if (!validarCEP(value)) return 'CEP deve possuir 8 números.';
+    } else if (name === 'email') {
+      if (!value.includes('@') || !value.includes('.')) return 'E-mail inválido.';
+    } else if (name === 'senha') {
+      const senhaErro = validarSenha(value, form.nome);
+      if (senhaErro) return senhaErro;
+    } else if (name === 'senhaConfirmacao') {
+      if (value !== form.senha) return 'As senhas não coincidem.';
+    }
+
+    return '';
+  };
+
+  const validateField = (name, value) => {
+    const errorMsg = getFieldError(name, value);
     setFieldErrors(prev => ({ ...prev, [name]: errorMsg }));
   };
 
@@ -130,21 +125,8 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
     if (perfil === 'MOTORISTA') requiredFields1.push('cnh');
 
     requiredFields1.forEach(field => {
-      let value = form[field] || '';
-      let errorMsg = '';
-      if (!value) {
-        errorMsg = 'Campo obrigatório.';
-      } else {
-        if (field === 'cpf') {
-          const limpo = value.replace(/\D/g, '');
-          if (limpo.length !== 11) errorMsg = 'CPF deve possuir 11 números.';
-          else if (!validarCPF(limpo)) errorMsg = 'CPF inválido.';
-        } else if (field === 'celular') {
-          if (!validarCelular(value)) errorMsg = 'Celular inválido.';
-        } else if (field === 'email') {
-          if (!value.includes('@') || !value.includes('.')) errorMsg = 'E-mail inválido.';
-        }
-      }
+      const value = form[field] || '';
+      const errorMsg = getFieldError(field, value);
       if (errorMsg) {
         newErrors[field] = errorMsg;
         hasError = true;
@@ -163,15 +145,8 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
 
     const requiredFields2 = ['cep', 'rua', 'numero', 'bairro', 'cidade', 'estado'];
     requiredFields2.forEach(field => {
-      let value = form.endereco?.[field] || '';
-      let errorMsg = '';
-      if (!value) {
-        errorMsg = `${field.charAt(0).toUpperCase() + field.slice(1)} é obrigatório.`;
-      } else {
-        if (field === 'cep') {
-          if (!validarCEP(value)) errorMsg = 'CEP deve possuir 8 números.';
-        }
-      }
+      const value = form.endereco?.[field] || '';
+      const errorMsg = getFieldError(`endereco.${field}`, value);
       if (errorMsg) {
         newErrors[`endereco.${field}`] = errorMsg;
         hasError = true;
@@ -190,19 +165,8 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
 
     const requiredFields3 = ['senha', 'senhaConfirmacao'];
     requiredFields3.forEach(field => {
-      let value = form[field] || '';
-      let errorMsg = '';
-      if (!value) {
-        errorMsg = 'Campo obrigatório.';
-      } else {
-        if (field === 'senha') {
-          if (value.length < 8) errorMsg = 'Senha deve ter no mínimo 8 caracteres.';
-          else if (!/\d/.test(value)) errorMsg = 'Senha deve conter pelo menos um número.';
-          else if (!/[a-zA-Z]/.test(value)) errorMsg = 'Senha deve conter pelo menos uma letra.';
-        } else if (field === 'senhaConfirmacao') {
-          if (value !== form.senha) errorMsg = 'As senhas não coincidem.';
-        }
-      }
+      const value = form[field] || '';
+      const errorMsg = getFieldError(field, value);
       if (errorMsg) {
         newErrors[field] = errorMsg;
         hasError = true;
@@ -418,12 +382,22 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
               <input 
                 id="form-senha" name="senha" type="password" 
                 className={getInputClass('senha')} 
-                placeholder="Mínimo 8 caracteres, 1 número, 1 letra" 
+                placeholder="••••••••" 
                 value={form.senha || ''} 
                 onChange={handleChange} 
                 onBlur={handleBlur}
               />
               {renderError('senha')}
+              <div style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <p style={{ fontWeight: 600, marginBottom: '6px' }}>Requisitos da senha:</p>
+                <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.5' }}>
+                  <li>No mínimo 8 caracteres</li>
+                  <li>Pelo menos um número</li>
+                  <li>Pelo menos um caractere especial (!@#$%&*)</li>
+                  <li>Evite sequências ou repetições, como 123456789</li>
+                  <li>Não utilize seu nome ou sobrenome</li>
+                </ul>
+              </div>
             </div>
             <div className="input-group">
               <label className="input-label" htmlFor="form-senhaConfirmacao">Confirme a Senha *</label>
