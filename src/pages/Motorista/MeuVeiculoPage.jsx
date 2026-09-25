@@ -22,7 +22,7 @@ const MeuVeiculoPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
   
-  const [form, setForm] = useState({ modelo: '', marca: '', ano: '', placa: '', categoria: 'Sedan' });
+  const [form, setForm] = useState({ modelo: '', marca: '', ano: '', placa: '', porte: 'PEQUENO' });
   const [submitting, setSubmitting] = useState(false);
 
   const carregar = () => {
@@ -91,11 +91,13 @@ const MeuVeiculoPage = () => {
                 <input type="text" className="input-field" placeholder="Ex: ABC-1234" value={form.placa} onChange={e => setForm({...form, placa: e.target.value})} />
               </div>
               <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="input-label">Categoria</label>
-                <select className="input-field" value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})}>
-                  <option value="Sedan">Sedan</option>
-                  <option value="Hatch">Hatch</option>
+                <label className="input-label">Porte do Veículo</label>
+                <select className="input-field" value={form.porte} onChange={e => setForm({...form, porte: e.target.value})}>
+                  <option value="PEQUENO">Pequeno (Hatch)</option>
+                  <option value="MEDIO">Médio (Sedan)</option>
+                  <option value="GRANDE">Grande (Minivan)</option>
                   <option value="SUV">SUV</option>
+                  <option value="LUXO">Luxo</option>
                 </select>
               </div>
             </div>
@@ -144,8 +146,8 @@ const MeuVeiculoPage = () => {
             <div className="perfil-campo">
               <span className="perfil-campo__icon" aria-hidden="true"><Tag size={18} /></span>
               <div>
-                <span className="perfil-campo__label">Categoria</span>
-                <span className="perfil-campo__valor">{veiculo.categoria}</span>
+                <span className="perfil-campo__label">Porte / Tipo</span>
+                <span className="perfil-campo__valor">{veiculo.porte || '—'} / <Badge label={veiculo.tipo || 'NORMAL'} color={veiculo.tipo === 'PREMIUM' ? 'warning' : 'info'} /></span>
               </div>
             </div>
             <div className="perfil-campo">

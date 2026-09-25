@@ -1,11 +1,15 @@
 export const formatarData = (dateStr) => {
-  if (!dateStr) return '-';
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR');
+  if (!dateStr) return '—';
+  const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
+  if (isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('pt-BR');
 };
 
 export const formatarDataHorario = (isoStr) => {
-  if (!isoStr) return '-';
-  return new Date(isoStr).toLocaleString('pt-BR', {
+  if (!isoStr) return '—';
+  const date = new Date(isoStr);
+  if (isNaN(date.getTime())) return '—';
+  return date.toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });

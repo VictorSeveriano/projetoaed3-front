@@ -13,6 +13,7 @@ const VeiculosAnalisePage = () => {
   const [pendentes, setPendentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [acao, setAcao] = useState(null); // { tipo: 'aprovar' | 'rejeitar', veiculo: obj }
+  const [classeSelecionada, setClasseSelecionada] = useState('BASICO');
 
   const carregar = async () => {
     setLoading(true);
@@ -31,12 +32,15 @@ const VeiculosAnalisePage = () => {
   const handleConfirmarAcao = async () => {
     if (!acao) return;
     try {
-      await api.patch(`/veiculos/${acao.veiculo.id}/${acao.tipo}`);
+      const payload = acao.tipo === 'aprovar' ? { classe: classeSelecionada } : {};
+      await api.patch(`/veiculos/${acao.veiculo.id}/${acao.tipo}`, payload);
       await carregar();
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.message || 'Erro ao processar ação');
     } finally {
       setAcao(null);
+      setClasseSelecionada('BASICO');
     }
   };
 
@@ -60,7 +64,7 @@ const VeiculosAnalisePage = () => {
                 <tr>
                   <th>Modelo/Marca</th>
                   <th>Placa</th>
-                  <th>Categoria</th>
+                  <th>Porte / Tipo</th>
                   <th>Motorista</th>
                   <th>Data Cadastro</th>
                   <th>Status</th>
@@ -72,7 +76,7 @@ const VeiculosAnalisePage = () => {
                   <tr key={v.id} className="data-table__row">
                     <td className="data-table__cell">{v.marca} {v.modelo}</td>
                     <td className="data-table__cell">{v.placa}</td>
-                    <td className="data-table__cell">{v.categoria}</td>
+                    <td className="data-table__cell">{v.porte || '—'} / <Badge label={v.classe || 'N/D'} color="info" /></td>
                     <td className="data-table__cell">{v.motorista?.nome || '—'}</td>
                     <td className="data-table__cell">{formatarData(v.criadoEm)}</td>
                     <td className="data-table__cell">
@@ -93,15 +97,48 @@ const VeiculosAnalisePage = () => {
       </div>
 
       <ConfirmationModal
-        isOpen={!!acao}
+        isOpen={!!acao && acao.tipo === 'rejeitar'}
         onClose={() => setAcao(null)}
         onConfirm={handleConfirmarAcao}
-        title={acao?.tipo === 'aprovar' ? 'Aprovar Veículo' : 'Rejeitar Veículo'}
-        message={`Tem certeza que deseja ${acao?.tipo} o veículo ${acao?.veiculo?.marca} ${acao?.veiculo?.modelo}?`}
-        confirmText={acao?.tipo === 'aprovar' ? 'Sim, Aprovar' : 'Sim, Rejeitar'}
+        title="Rejeitar Veículo"
+        message={`Tem certeza que deseja rejeitar o veículo ${acao?.veiculo?.marca} ${acao?.veiculo?.modelo}?`}
+        confirmText="Sim, Rejeitar"
         cancelText="Cancelar"
-        variant={acao?.tipo === 'aprovar' ? 'primary' : 'danger'}
+        variant="danger"
       />
+
+      {acao && acao.tipo === 'aprovar' && (
+        <div className="modal-overlay" onClick={() => setAcao(null)}>
+          <div className="modal modal--md" onClick={e => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">Aprovar Veículo e Definir Classe</h2>
+              <button className="modal__close" onClick={() => setAcao(null)}>✕</button>
+            </div>
+            <div className="modal__body">
+              <p style={{ marginBottom: '16px' }}>
+                Você está aprovando o veículo <strong>{acao.veiculo.marca} {acao.veiculo.modelo}</strong> ({acao.veiculo.placa}).
+              </p>
+              <div className="input-group">
+                <label className="input-label">Classe de Serviço</label>
+                <select 
+                  className="input-field" 
+                  value={classeSelecionada} 
+                  onChange={e => setClasseSelecionada(e.target.value)}
+                >
+                  <option value="BASICO">Básico</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="PREMIUM">Premium</option>
+                </select>
+                <span className="input-hint">A classe afeta a tarifação futura do veículo. O porte informado é {acao.veiculo.porte}.</span>
+              </div>
+            </div>
+            <div className="modal__footer">
+              <Button variant="outline" onClick={() => setAcao(null)}>Cancelar</Button>
+              <Button variant="success" onClick={handleConfirmarAcao}>Aprovar Veículo</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

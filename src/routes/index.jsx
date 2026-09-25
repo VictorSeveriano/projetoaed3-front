@@ -23,6 +23,7 @@ import RelatorioMotoristaPage from '../pages/Motorista/RelatorioMotoristaPage';
 import MeuVeiculoPage from '../pages/Motorista/MeuVeiculoPage';
 
 // Páginas Admin (novas)
+import UsuariosPage from '../pages/Admin/UsuariosPage';
 import MotoristasPage from '../pages/Admin/MotoristasPage';
 import MotoristasAnalisePage from '../pages/Admin/MotoristasAnalisePage';
 import VeiculosAnalisePage from '../pages/Admin/VeiculosAnalisePage';
@@ -65,6 +66,7 @@ const AppRoutes = () => (
               <Route path="/carros"            element={<CarrosPage />} />
               <Route path="/veiculos/analise"  element={<VeiculosAnalisePage />} />
               <Route path="/rotas"             element={<RotasPage />} />
+              <Route path="/usuarios"          element={<UsuariosPage />} />
               <Route path="/motoristas"        element={<MotoristasPage />} />
               <Route path="/motoristas/analise" element={<MotoristasAnalisePage />} />
               <Route path="/notificacoes"      element={<NotificacoesPage />} />

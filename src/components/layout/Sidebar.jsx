@@ -22,6 +22,7 @@ const NAV_ITEMS_ADMIN = [
   { to: '/carros',                icon: <Car size={20} />,             label: 'Veículos'              },
   { to: '/veiculos/analise',      icon: <Car size={20} />,             label: 'Análise de Veículos'   },
   { to: '/rotas',                 icon: <Network size={20} />,         label: 'Solicitar Corrida'     },
+  { to: '/usuarios',              icon: <User size={20} />,            label: 'Usuários'              },
   { to: '/motoristas',            icon: <User size={20} />,            label: 'Motoristas'            },
   { to: '/motoristas/analise',    icon: <User size={20} />,            label: 'Análise de Motoristas' },
   { to: '/notificacoes',          icon: <Bell size={20} />,            label: 'Notificações'          },
@@ -109,6 +110,7 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
             <NavLink
               key={item.to}
               to={item.to}
+              end
               onClick={onClose}
               data-tooltip={item.label}
               className={({ isActive }) =>

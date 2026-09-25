@@ -22,7 +22,7 @@ const ChartCard = ({ title, loading, error, empty, children, className = '' }) =
           </div>
         ) : empty ? (
           <div className="chart-card__state chart-card__empty">
-            <p>Não há dados suficientes para exibir este gráfico.</p>
+            <p>Sem dados disponíveis</p>
           </div>
         ) : (
           <div className="chart-container">

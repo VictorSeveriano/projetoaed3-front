@@ -81,7 +81,7 @@ const LoginPage = () => {
                 name="nome"
                 type="text"
                 className="input-field"
-                placeholder="Ex: João Silva"
+                placeholder="Ex: Seu Nome Completo"
                 value={form.nome}
                 onChange={handleChange}
                 autoFocus
