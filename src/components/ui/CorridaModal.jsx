@@ -5,6 +5,7 @@ import Input from './Input';
 import Button from './Button';
 import corridasService from '../../services/corridas.service';
 import { formatarMoeda } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 import { Route, Check, TriangleAlert, Car, MapPin, Clock } from 'lucide-react';
 
 /**
@@ -32,6 +33,7 @@ import { Route, Check, TriangleAlert, Car, MapPin, Clock } from 'lucide-react';
  * @param {function}    onSuccess           - Callback apos corrida criada
  */
 const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, origemGeocodificada, destinoGeocodificada, onSuccess }) => {
+  const { usuario } = useAuth();
   const [dataHorario, setDataHorario] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,7 +73,7 @@ const CorridaModal = ({ isOpen, onClose, rota, origemNome, destinoNome, origemGe
     setLoading(true); setError('');
     try {
       await corridasService.criar({
-        usuarioId: '1',
+        usuarioId: usuario?.id,
         origemNome,
         destinoNome,
         // Coordenadas preservadas para historico sem re-geocodificacao

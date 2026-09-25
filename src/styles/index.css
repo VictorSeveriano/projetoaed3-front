@@ -825,3 +825,106 @@ input,select,textarea { font-family:inherit; outline:none; }
 @media (max-width: 480px) {
   .rotas-mapa { min-height: 280px; height: 280px; }
 }
+
+/* === CORRIDAS TABS === */
+.corridas-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.corridas-tab {
+  position: relative;
+  padding: 8px 16px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.corridas-tab:hover { color: var(--text-primary); background: var(--bg-glass); }
+.corridas-tab--ativa {
+  color: var(--color-primary-light);
+  background: rgba(99,102,241,0.1);
+  border-color: var(--border-color);
+  border-bottom-color: var(--bg-800);
+}
+.corridas-tab__count {
+  background: rgba(99,102,241,0.2);
+  color: var(--color-primary-light);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+.corridas-local { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.corridas-metric { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+@media (max-width: 768px) {
+  .corridas-tabs { gap: 2px; }
+  .corridas-tab  { padding: 7px 12px; font-size: 12px; }
+}
+
+/* === PERFIL === */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+.perfil-campo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-600);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+}
+.perfil-campo:hover { border-color: var(--border-active); }
+.perfil-campo__icon { color: var(--color-primary); flex-shrink: 0; margin-top: 2px; }
+.perfil-campo__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.perfil-campo__valor { display: block; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+@media (max-width: 600px) {
+  .perfil-grid { grid-template-columns: 1fr; }
+}
+
+/* === RELATORIO === */
+.relatorio-filtro .card__body { padding: 16px 22px; }
+.relatorio-filtro__campos { display: flex; gap: 16px; flex-wrap: wrap; }
+.relatorio-filtro__campos .input-group { min-width: 160px; flex: 1; }
+.relatorio-vazio {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 24px 0;
+}
+.relatorio-nota .card__body { padding: 12px 22px; }
+.relatorio-nota__texto { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+@media (max-width: 480px) {
+  .relatorio-filtro__campos { flex-direction: column; }
+}
+
+/* === BADGE INFO (status SOLICITADA) === */
+.badge--info { background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); }
