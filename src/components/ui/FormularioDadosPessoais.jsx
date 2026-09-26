@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TriangleAlert, Search } from 'lucide-react';
 import axios from 'axios';
 import { formatarCPF, formatarCelular, formatarCEP } from '../../utils/formatters';
-import { validarCPF, validarCelular, validarCEP, validarSenha } from '../../utils/validators';
+import { validarCPF, validarCelular, validarCEP, validarSenha, validarCNH } from '../../utils/validators';
 
 const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAvancar, onVoltar, onSubmit, loading }) => {
   const [cepLoading, setCepLoading] = useState(false);
@@ -21,6 +21,10 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
       if (!validarCelular(value)) return 'Celular inválido.';
     } else if (name === 'endereco.cep') {
       if (!validarCEP(value)) return 'CEP deve possuir 8 números.';
+    } else if (name === 'cnh') {
+      const limpo = value.replace(/\D/g, '');
+      if (limpo.length !== 11) return 'CNH deve possuir 11 números.';
+      if (!validarCNH(limpo)) return 'CNH inválida.';
     } else if (name === 'email') {
       if (!value.includes('@') || !value.includes('.')) return 'E-mail inválido.';
     } else if (name === 'senha') {

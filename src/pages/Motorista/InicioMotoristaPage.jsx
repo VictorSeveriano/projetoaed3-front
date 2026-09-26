@@ -7,6 +7,7 @@ import motoistasService from '../../services/motoristas.service';
 import api from '../../services/api';
 import { formatarMoeda } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
+import { validarCNH } from '../../utils/validators';
 import { Target, CheckCircle, Route, DollarSign } from 'lucide-react';
 
 
@@ -57,8 +58,8 @@ const InicioMotoristaPage = () => {
 
   const handleSolicitar = async (e) => {
     e.preventDefault();
-    if (!cnhForm || cnhForm.length < 11) {
-      setError('Informe uma CNH válida.');
+    if (!cnhForm || !validarCNH(cnhForm)) {
+      setError('Informe uma CNH válida (11 dígitos, apenas números).');
       return;
     }
     setSubmitting(true);
