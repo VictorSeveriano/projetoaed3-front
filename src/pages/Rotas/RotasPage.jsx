@@ -82,7 +82,7 @@ const RotasPage = () => {
           animation: window.google.maps.Animation.DROP,
         });
         const iw = new window.google.maps.InfoWindow({
-          content: <div style="font-family:Inter,sans-serif;padding:4px;min-width:160px"><b style="font-size:13px;color:#1e293b"></b></div>,
+          content: `<div style="font-family:Inter,sans-serif;padding:4px;min-width:160px"><b style="font-size:13px;color:#1e293b">${ponto.nome}</b></div>`,
         });
         marker.addListener('click', () => iw.open(mapRef.current, marker));
         markersRef.current.push(marker);
