@@ -8,6 +8,13 @@ import veiculosService from '../../services/veiculos.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff, MapPin, Clock, Route } from 'lucide-react';
 
+const FORMA_PAGAMENTO_LABELS = {
+  DINHEIRO:       'Dinheiro',
+  CARTAO_DEBITO:  'Cartão Débito',
+  CARTAO_CREDITO: 'Cartão Crédito',
+  PIX:            'PIX',
+};
+
 const ABAS = [
   { key: 'TODAS',       label: 'Todas'        },
   { key: 'SOLICITADA',  label: 'Solicitadas'  },
@@ -36,13 +43,17 @@ const CorridasTabs = ({
   error = '',
   podeCancelar = false,
   podeFinalizar = false,
+  podeConfirmarPagamento = false, // Motorista: confirma pagamento após corrida
+  motoristaUsuarioId = null,       // ID do usuário motorista para confirmar pagamento
   onAcao,
 }) => {
   const [abaAtiva, setAbaAtiva]           = useState('TODAS');
   const [corridaToCancel, setCorridaToCancel] = useState(null);
   const [corridaToFinalizar, setCorridaToFinalizar] = useState(null);
+  const [corridaToConfirmarPag, setCorridaToConfirmarPag] = useState(null);
   const [cancelando, setCancelando]       = useState(false);
   const [finalizando, setFinalizando]     = useState(false);
+  const [confirmandoPag, setConfirmandoPag] = useState(false);
   const [actionError, setActionError]     = useState('');
 
   const corridasFiltradas = useMemo(() => {
@@ -81,6 +92,18 @@ const CorridasTabs = ({
     } catch (err) {
       setActionError(err.response?.data?.message || 'Erro ao finalizar corrida.');
     } finally { setFinalizando(false); }
+  };
+
+  const handleConfirmarPagamento = async () => {
+    if (!corridaToConfirmarPag) return;
+    setConfirmandoPag(true); setActionError('');
+    try {
+      await corridasService.confirmarPagamento(corridaToConfirmarPag, motoristaUsuarioId);
+      setCorridaToConfirmarPag(null);
+      if (onAcao) onAcao();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Erro ao confirmar pagamento.');
+    } finally { setConfirmandoPag(false); }
   };
 
   const nomeVeiculo = (veiculoId) => {
@@ -152,10 +175,12 @@ const CorridasTabs = ({
                   <th scope="col">Destino</th>
                   <th scope="col">Data/Horário</th>
                   <th scope="col">Distância</th>
-                  <th scope="col">Valor das corridas</th>
+                  <th scope="col">Valor</th>
+                  <th scope="col">Classe</th>
+                  <th scope="col">Pagamento</th>
                   <th scope="col">Veículo</th>
                   <th scope="col">Status</th>
-                  {(podeCancelar || podeFinalizar) && <th scope="col">Ações</th>}
+                  {(podeCancelar || podeFinalizar || podeConfirmarPagamento) && <th scope="col">Ações</th>}
                 </tr>
               </thead>
               <tbody>
@@ -186,11 +211,20 @@ const CorridasTabs = ({
                         </span>
                       </td>
                       <td className="data-table__cell">{formatarMoeda(c.valor)}</td>
+                      <td className="data-table__cell">
+                        <Badge
+                          label={c.classe || 'NORMAL'}
+                          color={c.classe === 'PREMIUM' ? 'warning' : c.classe === 'BASICO' ? 'muted' : 'info'}
+                        />
+                      </td>
+                      <td className="data-table__cell" style={{ fontSize: '0.82rem' }}>
+                        {FORMA_PAGAMENTO_LABELS[c.formaPagamento] || c.formaPagamento || '—'}
+                      </td>
                       <td className="data-table__cell">{nomeVeiculo(c.veiculoId)}</td>
                       <td className="data-table__cell">
                         <Badge label={statusInfo.label} color={statusInfo.color} />
                       </td>
-                      {(podeCancelar || podeFinalizar) && (
+                      {(podeCancelar || podeFinalizar || podeConfirmarPagamento) && (
                         <td className="data-table__cell">
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                             {podeAcaoCancelar && (
@@ -211,6 +245,16 @@ const CorridasTabs = ({
                                 onClick={() => { setActionError(''); setCorridaToFinalizar(c.id); }}
                               >
                                 Finalizar
+                              </Button>
+                            )}
+                            {podeConfirmarPagamento && (c.status === 'EM_ANDAMENTO' || c.status === 'CONFIRMADA') && (
+                              <Button
+                                id={`btn-confirmar-pag-${c.id}`}
+                                variant="success"
+                                size="sm"
+                                onClick={() => { setActionError(''); setCorridaToConfirmarPag(c.id); }}
+                              >
+                                Confirmar Pagamento
                               </Button>
                             )}
                           </div>
@@ -249,6 +293,19 @@ const CorridasTabs = ({
         cancelText="Voltar"
         variant="primary"
         loading={finalizando}
+      />
+
+      {/* Modal de confirmação de pagamento */}
+      <ConfirmationModal
+        isOpen={!!corridaToConfirmarPag}
+        onClose={() => { setCorridaToConfirmarPag(null); setActionError(''); }}
+        onConfirm={handleConfirmarPagamento}
+        title="Confirmar recebimento do pagamento?"
+        message={actionError || 'Confirme que o pagamento foi recebido presencialmente. A corrida será marcada como FINALIZADA.'}
+        confirmText="Confirmar Pagamento"
+        cancelText="Voltar"
+        variant="primary"
+        loading={confirmandoPag}
       />
     </>
   );

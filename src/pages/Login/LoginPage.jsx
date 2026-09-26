@@ -63,8 +63,13 @@ const LoginPage = () => {
     }
     setLoading(true);
     try {
-      await login(form.usuario, form.senha);
-      navigate('/dashboard');
+      const userData = await login(form.usuario, form.senha);
+      // Redireciona baseado no perfil do usuário autenticado
+      switch (userData?.perfil) {
+        case 'MOTORISTA': navigate('/inicio'); break;
+        case 'USUARIO':   navigate('/solicitar-corrida'); break;
+        default:          navigate('/dashboard'); break;
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Credenciais inválidas.');
     } finally {
@@ -233,8 +238,8 @@ const LoginPage = () => {
               <TriangleAlert size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
               A sua senha de acesso é a mesma que você acabou de criar na etapa anterior.
             </p>
-            <button className="btn btn-primary btn--lg w-full" onClick={() => navigate('/dashboard')}>
-              Ir para o Dashboard →
+            <button className="btn btn-primary btn--lg w-full" onClick={() => { handleCloseModal(); navigate('/login'); }}>
+              Ir para o Login →
             </button>
           </div>
         ) : (

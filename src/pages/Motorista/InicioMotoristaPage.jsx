@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
 import StatCard from '../../components/ui/StatCard';
 import Loading from '../../components/ui/Loading';
+import EmptyState from '../../components/ui/EmptyState';
 import motoistasService from '../../services/motoristas.service';
+import api from '../../services/api';
 import { formatarMoeda } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { Target, CheckCircle, Route, DollarSign } from 'lucide-react';
+
 
 /**
  * InicioMotoristaPage — Página inicial do motorista.

@@ -16,8 +16,37 @@ const corridasService = {
     return data.data;
   },
 
+  /**
+   * Motorista aceita uma corrida.
+   * @param {string} corridaId
+   * @param {string} motoristaUsuarioId - ID do usuário do motorista (não o ID do registro Motorista)
+   */
+  async aceitar(corridaId, motoristaUsuarioId) {
+    const { data } = await api.patch(`/corridas/${corridaId}/aceitar`, { motoristaUsuarioId });
+    return data.data;
+  },
+
+  /**
+   * Motorista recusa uma corrida.
+   */
+  async recusar(corridaId, motoristaUsuarioId) {
+    const { data } = await api.patch(`/corridas/${corridaId}/recusar`, { motoristaUsuarioId });
+    return data.data;
+  },
+
   async cancelar(id) {
     const { data } = await api.patch(`/corridas/${id}/cancelar`);
+    return data.data;
+  },
+
+  /**
+   * Motorista confirma recebimento do pagamento.
+   * A corrida só é FINALIZADA após este passo.
+   * @param {string} id
+   * @param {string} motoristaUsuarioId
+   */
+  async confirmarPagamento(id, motoristaUsuarioId) {
+    const { data } = await api.patch(`/corridas/${id}/confirmar-pagamento`, { motoristaUsuarioId });
     return data.data;
   },
 

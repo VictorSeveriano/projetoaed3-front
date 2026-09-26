@@ -35,11 +35,12 @@ const NAV_ITEMS_USUARIO = [
 ];
 
 const NAV_ITEMS_MOTORISTA = [
-  { to: '/inicio',            icon: <Home size={20} />,         label: 'Início'           },
-  { to: '/minhas-corridas',   icon: <CalendarDays size={20} />, label: 'Minhas corridas'  },
-  { to: '/relatorio',         icon: <BarChart2 size={20} />,    label: 'Relatório mensal' },
-  { to: '/perfil',            icon: <User size={20} />,         label: 'Meu perfil'       },
-  { to: '/meu-veiculo',       icon: <Car size={20} />,          label: 'Meu veículo'      },
+  { to: '/inicio',                   icon: <Home size={20} />,         label: 'Início'                },
+  { to: '/notificacoes-motorista',   icon: <Bell size={20} />,         label: 'Corridas disponíveis'  },
+  { to: '/minhas-corridas',          icon: <CalendarDays size={20} />, label: 'Minhas corridas'       },
+  { to: '/relatorio',                icon: <BarChart2 size={20} />,    label: 'Relatório mensal'      },
+  { to: '/perfil',                   icon: <User size={20} />,         label: 'Meu perfil'            },
+  { to: '/meu-veiculo',              icon: <Car size={20} />,          label: 'Meu veículo'           },
 ];
 
 const PERFIL_LABELS = {

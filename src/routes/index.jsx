@@ -21,6 +21,7 @@ import PerfilRouter from '../pages/PerfilRouter';
 import InicioMotoristaPage from '../pages/Motorista/InicioMotoristaPage';
 import RelatorioMotoristaPage from '../pages/Motorista/RelatorioMotoristaPage';
 import MeuVeiculoPage from '../pages/Motorista/MeuVeiculoPage';
+import NotificacoesMotoristaPage from '../pages/Motorista/NotificacoesMotoristaPage';
 
 // Páginas Admin (novas)
 import UsuariosPage from '../pages/Admin/UsuariosPage';
@@ -81,6 +82,7 @@ const AppRoutes = () => (
               <Route path="/minhas-corridas"   element={<CorridasPage />} />
               <Route path="/relatorio"         element={<RelatorioMotoristaPage />} />
               <Route path="/meu-veiculo"       element={<MeuVeiculoPage />} />
+              <Route path="/notificacoes-motorista" element={<NotificacoesMotoristaPage />} />
 
               {/* Rota padrão — redireciona conforme perfil */}
               <Route path="*" element={<RedirectInicial />} />

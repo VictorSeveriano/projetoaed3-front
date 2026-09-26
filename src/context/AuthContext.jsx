@@ -24,10 +24,9 @@ export const AuthProvider = ({ children }) => {
 
   const cadastrar = useCallback(async (dados) => {
     const response = await authService.cadastrar(dados);
-    const { token, usuario: userData } = response.data;
-    sessionStorage.setItem('auth_token', token);
-    sessionStorage.setItem('usuario', JSON.stringify(userData));
-    setUsuario(userData);
+    const { usuario: userData } = response.data;
+    // Não cria sessão automaticamente — o usuário deve fazer login manualmente
+    // após o cadastro para que o redirecionamento respeite o perfil corretamente.
     return userData;
   }, []);
 
