@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import notificacoesService from '../../services/notificacoes.service';
 
 import {
   LayoutDashboard, Car, CalendarDays, Network, LogOut,
@@ -53,6 +54,8 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
+  const [naoLidas, setNaoLidas] = useState(0);
+
   // Seleciona itens pelo campo perfil — nunca por nome/id
   const navItems = useMemo(() => {
     switch (usuario?.perfil) {
@@ -62,6 +65,21 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
       default:             return NAV_ITEMS_ADMIN;
     }
   }, [usuario?.perfil]);
+
+  useEffect(() => {
+    if (usuario?.perfil === 'ADMINISTRADOR') {
+      const carregarNotificacoes = () => {
+        notificacoesService.listar(usuario.id)
+          .then(dados => setNaoLidas(dados?.naoLidas || 0))
+          .catch(() => setNaoLidas(0));
+      };
+      
+      carregarNotificacoes();
+      
+      window.addEventListener('notificacoes-atualizadas', carregarNotificacoes);
+      return () => window.removeEventListener('notificacoes-atualizadas', carregarNotificacoes);
+    }
+  }, [usuario]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -119,7 +137,22 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
               }
             >
               <span className="sidebar__link-icon">{item.icon}</span>
-              <span className="sidebar__link-label">{item.label}</span>
+              <span className="sidebar__link-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                {item.label}
+                {item.to === '/notificacoes' && usuario?.perfil === 'ADMINISTRADOR' && naoLidas > 0 && (
+                  <span style={{
+                    backgroundColor: 'var(--color-danger)', 
+                    color: 'white', 
+                    borderRadius: '12px', 
+                    padding: '2px 8px', 
+                    fontSize: '12px', 
+                    fontWeight: 'bold',
+                    marginLeft: '8px'
+                  }}>
+                    {naoLidas}
+                  </span>
+                )}
+              </span>
             </NavLink>
           ))}
         </nav>

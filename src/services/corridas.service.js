@@ -16,6 +16,11 @@ const corridasService = {
     return data.data;
   },
 
+  async calcularValorPrevia({ distanciaKm, classe, dataHorario }) {
+    const { data } = await api.post('/corridas/calcular-valor', { distanciaKm, classe, dataHorario });
+    return data.data; // should return { valor: number }
+  },
+
   /**
    * Motorista aceita uma corrida.
    * @param {string} corridaId

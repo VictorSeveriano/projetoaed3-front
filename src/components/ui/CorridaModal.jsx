@@ -46,6 +46,9 @@ const CorridaModal = ({
   const [successMsg, setSuccessMsg]     = useState('');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [erroModal, setErroModal]       = useState({ open: false, mensagem: '' });
+  
+  const [valorCalculado, setValorCalculado]   = useState(null);
+  const [calculandoValor, setCalculandoValor] = useState(false);
 
   const isDirty = dataHorario !== '';
 
@@ -56,11 +59,42 @@ const CorridaModal = ({
       setFormaPagamento('DINHEIRO');
       setError('');
       setSuccessMsg('');
+      setValorCalculado(null);
+      setCalculandoValor(false);
     }
   }, [isOpen]);
 
-  // valorEstimado vem do backend. Exibido como estimativa pré-confirmação.
-  const valorEstimado = rota?.valorEstimado || 0;
+  useEffect(() => {
+    if (!dataHorario || !classe || !rota?.distanciaKm) {
+      setValorCalculado(null);
+      return;
+    }
+    
+    let isActive = true;
+    setCalculandoValor(true); // Exibe carregamento imediatamente enquanto debouce
+    
+    const calcular = async () => {
+      try {
+        const data = await corridasService.calcularValorPrevia({
+          distanciaKm: rota.distanciaKm,
+          classe,
+          dataHorario: new Date(dataHorario).toISOString()
+        });
+        if (isActive) setValorCalculado(data.valor);
+      } catch (err) {
+        if (isActive) setValorCalculado(null);
+      } finally {
+        if (isActive) setCalculandoValor(false);
+      }
+    };
+    
+    // Pequeno atraso para evitar muitas requisições se o usuário estiver digitando
+    const timeout = setTimeout(calcular, 300);
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [classe, dataHorario, rota]);
 
   const handleCloseRequest = () => {
     if (isDirty && !successMsg && !loading) {
@@ -187,10 +221,6 @@ const CorridaModal = ({
                     <Clock size={14} aria-hidden="true" />
                     <span>{rota.duracaoFormatada}</span>
                   </div>
-                  <div className="corrida-metric corrida-metric--valor">
-                    <Car size={14} aria-hidden="true" />
-                    <span>A partir de {formatarMoeda(valorEstimado)}</span>
-                  </div>
                 </div>
               </div>
             )}
@@ -304,6 +334,19 @@ const CorridaModal = ({
               min={minDatetime}
               onChange={(e) => setDataHorario(e.target.value)}
             />
+
+            {/* Exibição Dinâmica do Valor */}
+            <div className="valor-corrida-container" style={{ marginTop: '20px', padding: '16px', background: 'var(--bg-800)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)' }}>Valor da corrida</span>
+                {(!dataHorario || !classe) && (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Selecione a classe e o horário para calcular</span>
+                )}
+              </div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                {calculandoValor ? 'Calculando...' : (valorCalculado !== null ? formatarMoeda(valorCalculado) : '--')}
+              </div>
+            </div>
 
             {error && (
               <div className="form-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

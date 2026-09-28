@@ -35,6 +35,7 @@ const NotificacoesPage = () => {
     try {
       await api.patch(`/notificacoes/ler-todas?destinatarioId=${usuario.id}`);
       carregar();
+      window.dispatchEvent(new Event('notificacoes-atualizadas'));
     } catch (e) {}
   };
 
@@ -42,6 +43,7 @@ const NotificacoesPage = () => {
     if (!n.lida) {
       try {
         await api.patch(`/notificacoes/${n.id}/ler`);
+        window.dispatchEvent(new Event('notificacoes-atualizadas'));
       } catch (e) {}
     }
     if (n.tipo === 'SOLICITACAO_MOTORISTA') navigate('/motoristas/analise');
