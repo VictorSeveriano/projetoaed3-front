@@ -231,9 +231,9 @@ const CorridaModal = ({
     .toISOString().slice(0, 16);
 
   const CLASSES = [
-    { value: 'BASICO',  label: 'Básico',  desc: 'Hatch ou Sedan Compacto' },
-    { value: 'NORMAL',  label: 'Normal',  desc: 'Sedan Médio ou SUV Compacto' },
-    { value: 'PREMIUM', label: 'Premium', desc: 'SUV Grande ou Luxo' },
+    { value: 'BASICO',  label: 'Pequeno', desc: 'Hatch ou sedan compacto' },
+    { value: 'NORMAL',  label: 'Médio',   desc: 'Sedan médio ou SUV compacto' },
+    { value: 'PREMIUM', label: 'Grande',  desc: 'SUV grande ou veículo de luxo' },
   ];
 
   const FORMAS_PAGAMENTO = [
@@ -308,7 +308,7 @@ const CorridaModal = ({
             {/* Seleção de classe do veículo */}
             <div className="input-group" style={{ marginTop: '16px' }}>
               <label className="input-label" id="label-classe-veiculo">
-                Classe do Veículo
+                Porte do Veículo
               </label>
               <div
                 role="radiogroup"

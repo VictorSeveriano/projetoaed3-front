@@ -15,6 +15,11 @@ import api from '../../services/api';
 import { VeiculoFormCadastro } from '../../components/ui/VeiculoFormCadastro';
 import { VeiculoCardEdicao } from '../../components/ui/VeiculoCardEdicao';
 
+const FORM_INICIAL = {
+  modelo: '', marca: '', ano: '', placa: '', porte: 'Pequeno', cor: '', quilometragem: '', quantidadePassageiros: 4,
+  possuiArCondicionado: false, possuiExtintor: false, possuiCintoSeguranca: false, documentacaoRegularizada: false
+};
+
 /**
  * MeuVeiculoPage — Veículo associado ao motorista autenticado.
  *
@@ -30,6 +35,7 @@ const MeuVeiculoPage = () => {
   const [error, setError]     = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
   
   const [form, setForm] = useState({ 
@@ -37,6 +43,7 @@ const MeuVeiculoPage = () => {
     possuiArCondicionado: false, possuiExtintor: false, possuiCintoSeguranca: false, documentacaoRegularizada: false
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const carregar = () => {
     setLoading(true);
@@ -146,6 +153,22 @@ const MeuVeiculoPage = () => {
     }
   };
 
+  const handleDeleteVehicle = async () => {
+    setDeleting(true);
+    try {
+      await veiculosService.excluir(veiculo.id);
+      setShowDeleteConfirm(false);
+      setIsEditing(false);
+      setForm(FORM_INICIAL);
+      carregar();
+    } catch (err) {
+      setShowDeleteConfirm(false);
+      setErroModal({ aberto: true, mensagem: err.response?.data?.message || 'Erro ao excluir veículo.' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="page animate-fade-in">
       <Header title="Meu Veículo" subtitle="Informações do veículo vinculado à sua conta" />
@@ -164,6 +187,8 @@ const MeuVeiculoPage = () => {
         setIsEditing={setIsEditing}
         handleCancelClick={handleCancelClick}
         handleSaveEdits={handleSaveEdits}
+        handleDelete={() => setShowDeleteConfirm(true)}
+        deleting={deleting}
       />
       <ConfirmationModal 
         isOpen={showConfirm} 
@@ -178,6 +203,17 @@ const MeuVeiculoPage = () => {
           });
         }} 
         onCancel={() => setShowConfirm(false)} 
+      />
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteVehicle}
+        title="Excluir veículo?"
+        message={`O veículo ${veiculo.marca} ${veiculo.modelo} será removido das listas. Você poderá cadastrar outro, que precisará de nova aprovação do administrador.`}
+        confirmText="Excluir veículo"
+        cancelText="Cancelar"
+        variant="danger"
+        loading={deleting}
       />
       <ModalErro
         isOpen={erroModal.aberto}

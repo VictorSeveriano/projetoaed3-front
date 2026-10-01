@@ -39,6 +39,11 @@ const veiculosService = {
   async atualizar(id, dados) {
     const { data } = await api.patch(`/veiculos/${id}`, dados);
     return data.data;
+  },
+
+  async excluir(id) {
+    const { data } = await api.delete(`/veiculos/${id}`);
+    return data.data;
   }
 };
 

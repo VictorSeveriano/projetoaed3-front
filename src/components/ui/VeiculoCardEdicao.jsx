@@ -1,10 +1,10 @@
 import React from 'react';
-import { Car, Tag, Hash, Calendar, DollarSign } from 'lucide-react';
+import { Car, Tag, Hash, Calendar, DollarSign, Trash2 } from 'lucide-react';
 import Badge from './Badge';
 import Button from './Button';
 import { STATUS_LABELS, formatarMoeda } from '../../utils/formatters';
 
-export const VeiculoCardEdicao = ({ veiculo, form, setForm, isEditing, setIsEditing, handleCancelClick, handleSaveEdits }) => {
+export const VeiculoCardEdicao = ({ veiculo, form, setForm, isEditing, setIsEditing, handleCancelClick, handleSaveEdits, handleDelete, deleting }) => {
   const statusInfo = STATUS_LABELS[veiculo.status] || { label: veiculo.status, color: 'muted' };
 
   return (
@@ -17,7 +17,12 @@ export const VeiculoCardEdicao = ({ veiculo, form, setForm, isEditing, setIsEdit
             <Button size="sm" variant="outline" onClick={handleCancelClick}>Cancelar</Button>
           </div>
         ) : (
-          <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
+            <Button size="sm" variant="danger" onClick={handleDelete} disabled={veiculo.status === 'EM_CORRIDA' || deleting} title={veiculo.status === 'EM_CORRIDA' ? 'Veículo em corrida' : 'Excluir veículo'}>
+              <Trash2 size={14} aria-hidden="true" /> Excluir Veículo
+            </Button>
+          </div>
         )}
       </div>
       <div className="card__body">

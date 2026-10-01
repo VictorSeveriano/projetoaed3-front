@@ -126,7 +126,7 @@ const LoginPage = () => {
               name="usuario"
               type="text"
               className="input-field"
-              placeholder="admin"
+              placeholder=""
               value={form.usuario}
               onChange={handleChange}
               autoComplete="username"
@@ -140,7 +140,7 @@ const LoginPage = () => {
               name="senha"
               type="password"
               className="input-field"
-              placeholder="••••••••"
+              placeholder=""
               value={form.senha}
               onChange={handleChange}
               autoComplete="current-password"
@@ -173,9 +173,6 @@ const LoginPage = () => {
           </button>
         </div>
 
-        <p className="login-hint">
-          Credenciais padrão: <strong>admin</strong> / <strong>admin123</strong>
-        </p>
       </div>
 
       {/* MODAL DE CADASTRO */}
