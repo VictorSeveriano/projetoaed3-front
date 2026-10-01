@@ -8,6 +8,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
+import ModalInformacao from '../../components/ui/ModalInformacao';
 import { formatarData } from '../../utils/formatters';
 
 const PERFIL_LABELS = {
@@ -29,6 +30,7 @@ const PerfilUsuarioPage = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({ nome: '', usuario: '', cpf: '', email: '', celular: '', endereco: {} });
   const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
+  const [infoModal, setInfoModal] = useState(false);
 
   useEffect(() => {
     if (!usuario?.id) return;
@@ -67,6 +69,10 @@ const PerfilUsuarioPage = () => {
   };
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      setInfoModal(true);
+      return;
+    }
     try {
       const updated = await usuariosService.atualizar(usuario.id, formData);
       setPerfil(updated);
@@ -75,6 +81,90 @@ const PerfilUsuarioPage = () => {
       setErroModal({ aberto: true, mensagem: err.response?.data?.message || 'Erro ao salvar.' });
     }
   };
+
+  const editableFields = (
+    <>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Nome Completo</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
+          ) : <span>{perfil?.nome || '—'}</span>}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Usuário</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.usuario} onChange={e => setFormData({ ...formData, usuario: e.target.value })} />
+          ) : <span>@{perfil?.usuario || '—'}</span>}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">E-mail</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+          ) : <span>{perfil?.email || '—'}</span>}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Celular</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
+          ) : <span>{perfil?.celular || '—'}</span>}
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Endereço</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {isEditing ? (
+            <>
+              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Rua" value={formData.endereco.rua || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} />
+              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Bairro" value={formData.endereco.bairro || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Número" value={formData.endereco.numero || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} />
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="CEP" value={formData.endereco.cep || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Cidade" value={formData.endereco.cidade || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} />
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="UF" value={formData.endereco.estado || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} />
+              </div>
+            </>
+          ) : (
+            <span>
+              {perfil?.endereco ? (
+                <>
+                  {perfil.endereco.rua}, {perfil.endereco.numero} - {perfil.endereco.bairro}<br />
+                  {perfil.endereco.cidade}/{perfil.endereco.estado} - CEP: {perfil.endereco.cep}
+                </>
+              ) : '—'}
+            </span>
+          )}
+        </span>
+      </div>
+    </>
+  );
+
+  const readonlyFields = (
+    <>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">CPF</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{perfil?.cpf || '—'}</span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Perfil</span>
+        <span className="perfil-campo__valor">
+          <Badge label={PERFIL_LABELS[perfil?.perfil] || perfil?.perfil || '—'} color={perfil?.perfil === 'ADMINISTRADOR' ? 'danger' : perfil?.perfil === 'MOTORISTA' ? 'warning' : 'info'} />
+        </span>
+      </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Cadastro</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{perfil?.criadoEm ? formatarData(perfil.criadoEm) : '—'}</span>
+      </div>
+    </>
+  );
 
   return (
     <div className="page animate-fade-in">
@@ -96,87 +186,32 @@ const PerfilUsuarioPage = () => {
             )}
           </div>
           <div className="card__body">
-            <div className="perfil-grid">
-              
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">Nome Completo</span>
-                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isEditing ? (
-                    <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
-                  ) : <span>{perfil?.nome || '—'}</span>}
-                </span>
+            {isEditing ? (
+              <>
+                <div className="perfil-section">
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    Campos Editáveis
+                  </h3>
+                  <div className="perfil-grid" style={{ marginBottom: '24px' }}>
+                    {editableFields}
+                  </div>
+                </div>
+
+                <div className="perfil-section" style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>
+                    Campos Somente Leitura
+                  </h3>
+                  <div className="perfil-grid">
+                    {readonlyFields}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="perfil-grid">
+                {editableFields}
+                {readonlyFields}
               </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">Usuário</span>
-                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isEditing ? (
-                    <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.usuario} onChange={e => setFormData({ ...formData, usuario: e.target.value })} />
-                  ) : <span>@{perfil?.usuario || '—'}</span>}
-                </span>
-              </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">CPF</span>
-                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isEditing ? (
-                    <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
-                  ) : <span>{perfil?.cpf || '—'}</span>}
-                </span>
-              </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">E-mail</span>
-                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isEditing ? (
-                    <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                  ) : <span>{perfil?.email || '—'}</span>}
-                </span>
-              </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">Celular</span>
-                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isEditing ? (
-                    <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
-                  ) : <span>{perfil?.celular || '—'}</span>}
-                </span>
-              </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">Endereço</span>
-                <span className="perfil-campo__valor" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {isEditing ? (
-                    <>
-                      <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Rua" value={formData.endereco.rua || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} />
-                      <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Bairro" value={formData.endereco.bairro || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} />
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Número" value={formData.endereco.numero || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} />
-                        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="CEP" value={formData.endereco.cep || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} />
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Cidade" value={formData.endereco.cidade || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} />
-                        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="UF" value={formData.endereco.estado || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} />
-                      </div>
-                    </>
-                  ) : (
-                    <span>
-                      {perfil?.endereco ? (
-                        <>
-                          {perfil.endereco.rua}, {perfil.endereco.numero} - {perfil.endereco.bairro}<br />
-                          {perfil.endereco.cidade}/{perfil.endereco.estado} - CEP: {perfil.endereco.cep}
-                        </>
-                      ) : '—'}
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">Perfil</span>
-                <span className="perfil-campo__valor">
-                  <Badge label={PERFIL_LABELS[perfil?.perfil] || perfil?.perfil || '—'} color={perfil?.perfil === 'ADMINISTRADOR' ? 'danger' : perfil?.perfil === 'MOTORISTA' ? 'warning' : 'info'} />
-                </span>
-              </div>
-              <div className="perfil-campo">
-                <span className="perfil-campo__label">Cadastro</span>
-                <span className="perfil-campo__valor">{perfil?.criadoEm ? formatarData(perfil.criadoEm) : '—'}</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -200,6 +235,12 @@ const PerfilUsuarioPage = () => {
         onClose={() => setErroModal({ aberto: false, mensagem: '' })}
         titulo="Erro"
         mensagem={erroModal.mensagem}
+      />
+      <ModalInformacao
+        isOpen={infoModal}
+        onClose={() => setInfoModal(false)}
+        titulo="Nenhuma alteração"
+        mensagem="Nenhum dado foi alterado. Modifique alguma informação antes de salvar."
       />
     </div>
   );

@@ -3,10 +3,11 @@ import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
-import { ModalPerfilUsuario, ModalPerfilMotorista } from '../../components/ui/ModaisPerfil';
+import { ModalPerfilUsuario, ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
 import ModalErro from '../../components/ui/ModalErro';
 import usuariosService from '../../services/usuarios.service';
 import motoristasService from '../../services/motoristas.service';
+import veiculosService from '../../services/veiculos.service';
 import { User, Search, Filter } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
@@ -20,6 +21,9 @@ const UsuariosPage = () => {
   
   const [modalMotoristaOpen, setModalMotoristaOpen] = useState(false);
   const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
+
+  const [modalVeiculoOpen, setModalVeiculoOpen] = useState(false);
+  const [veiculoSelecionado, setVeiculoSelecionado] = useState(null);
 
   const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
@@ -62,6 +66,36 @@ const UsuariosPage = () => {
         aberto: true,
         titulo: 'Erro',
         mensagem: err.response?.data?.message || 'Erro ao salvar os dados do usuário.',
+      });
+    }
+  };
+
+  const handleSaveMotorista = async (id, dados) => {
+    try {
+      await motoristasService.atualizar(id, dados);
+      await carregar();
+      setMotoristaSelecionado(prev => ({ ...prev, ...dados, usuario: { ...prev.usuario, nome: dados.nome, usuario: dados.usuario, cpf: dados.cpf, email: dados.email, celular: dados.celular, endereco: dados.endereco }, cnh: dados.cnh }));
+    } catch (err) {
+      console.error(err);
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao salvar os dados do motorista.',
+      });
+    }
+  };
+
+  const handleSaveVeiculo = async (id, dados) => {
+    try {
+      await veiculosService.atualizar(id, dados);
+      await carregar();
+      setVeiculoSelecionado(prev => ({ ...prev, ...dados }));
+    } catch (err) {
+      console.error(err);
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao salvar os dados do veículo.',
       });
     }
   };
@@ -158,8 +192,12 @@ const UsuariosPage = () => {
                     <button 
                       className="btn-link"
                       onClick={() => {
-                        setUsuarioSelecionado(u);
-                        setModalUsuarioOpen(true);
+                        if (u.perfil === 'MOTORISTA') {
+                          abrirMotorista(u.id);
+                        } else {
+                          setUsuarioSelecionado(u);
+                          setModalUsuarioOpen(true);
+                        }
                       }}
                       style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
                     >
@@ -195,7 +233,23 @@ const UsuariosPage = () => {
       <ModalPerfilMotorista
         isOpen={modalMotoristaOpen}
         onClose={() => setModalMotoristaOpen(false)}
-        motorista={motoristaSelecionado}
+        motorista={motoristaSelecionado ? {
+          ...motoristaSelecionado,
+          onOpenVeiculo: () => {
+            setVeiculoSelecionado(motoristaSelecionado.veiculo);
+            setModalVeiculoOpen(true);
+            setModalMotoristaOpen(false);
+          }
+        } : null}
+        onSave={handleSaveMotorista}
+      />
+
+      <ModalPerfilVeiculo
+        isOpen={modalVeiculoOpen}
+        onClose={() => setModalVeiculoOpen(false)}
+        veiculo={veiculoSelecionado}
+        isAdmin={true}
+        onSave={handleSaveVeiculo}
       />
 
       <ModalErro

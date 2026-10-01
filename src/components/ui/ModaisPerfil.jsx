@@ -3,33 +3,51 @@ import Modal from './Modal';
 import Badge from './Badge';
 import Button from './Button';
 import ConfirmationModal from './ConfirmationModal';
+import ModalInformacao from './ModalInformacao';
 import { formatarData, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 
 export const ModalPerfilBase = ({ isOpen, onClose, title, children }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
-      <div className="perfil-grid">
+      <div className="perfil-grid" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {children}
       </div>
     </Modal>
   );
 };
 
-export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, onSave }) => {
+export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = true, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ cnh: '' });
+  const [formData, setFormData] = useState({ cnh: '', cpf: '', nome: '', usuario: '', email: '', celular: '', endereco: {} });
   const [showConfirm, setShowConfirm] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   React.useEffect(() => {
     if (motorista) {
-      setFormData({ cnh: motorista.cnh || '' });
+      const u = motorista.usuario || {};
+      setFormData({
+        cnh: motorista.cnh || '',
+        cpf: u.cpf || '',
+        nome: u.nome || '',
+        usuario: u.usuario || '',
+        email: u.email || '',
+        celular: u.celular || '',
+        endereco: u.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
+      });
     }
     setIsEditing(false);
   }, [motorista]);
 
   if (!motorista) return null;
 
-  const hasChanges = motorista.cnh !== formData.cnh;
+  const isAddressDifferent = (addr1, addr2) => {
+    const a1 = addr1 || {};
+    const a2 = addr2 || {};
+    return a1.rua !== a2.rua || a1.bairro !== a2.bairro || a1.cidade !== a2.cidade || a1.estado !== a2.estado || a1.numero !== a2.numero || a1.cep !== a2.cep;
+  };
+
+  const u = motorista.usuario || {};
+  const hasChanges = motorista.cnh !== formData.cnh || u.cpf !== formData.cpf || u.nome !== formData.nome || u.usuario !== formData.usuario || u.email !== formData.email || u.celular !== formData.celular || isAddressDifferent(u.endereco, formData.endereco);
 
   const handleClose = () => {
     if (isEditing && hasChanges) {
@@ -40,27 +58,70 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, onSave }) => 
   };
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      setInfoOpen(true);
+      return;
+    }
     if (onSave) {
       await onSave(motorista.id, formData);
     }
     setIsEditing(false);
   };
 
-  return (
+  const editableFields = (
     <>
-    <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Motorista">
       <div className="perfil-campo">
         <span className="perfil-campo__label">Nome</span>
-        <span className="perfil-campo__valor">{motorista.usuario?.nome || '—'}</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing && isAdmin ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
+          ) : (
+            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.nome || '—'}</span>
+          )}
+        </span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Usuário</span>
-        <span className="perfil-campo__valor">@{motorista.usuario?.usuario || '—'}</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing && isAdmin ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.usuario} onChange={e => setFormData({ ...formData, usuario: e.target.value })} />
+          ) : (
+            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>@{u.usuario || '—'}</span>
+          )}
+        </span>
       </div>
       <div className="perfil-campo">
-        <span className="perfil-campo__label">CPF</span>
-        <span className="perfil-campo__valor">{motorista.usuario?.cpf || '—'}</span>
+        <span className="perfil-campo__label">E-mail</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing && isAdmin ? (
+            <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+          ) : (
+            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.email || '—'}</span>
+          )}
+        </span>
       </div>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Celular</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing && isAdmin ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
+          ) : (
+            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.celular || '—'}</span>
+          )}
+        </span>
+      </div>
+      {isAdmin && (
+        <div className="perfil-campo">
+          <span className="perfil-campo__label">CPF</span>
+          <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {isEditing ? (
+              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
+            ) : (
+              <span>{u.cpf || '—'}</span>
+            )}
+          </span>
+        </div>
+      )}
       <div className="perfil-campo">
         <span className="perfil-campo__label">CNH</span>
         <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -77,9 +138,56 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, onSave }) => 
           )}
         </span>
       </div>
+      {isAdmin && (
+        <div className="perfil-campo">
+          <span className="perfil-campo__label">Endereço</span>
+          <span className="perfil-campo__valor" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {isEditing ? (
+              <>
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Rua" value={formData.endereco.rua || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} />
+                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Bairro" value={formData.endereco.bairro || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Número" value={formData.endereco.numero || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} />
+                  <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="CEP" value={formData.endereco.cep || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Cidade" value={formData.endereco.cidade || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} />
+                  <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="UF" value={formData.endereco.estado || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} />
+                </div>
+              </>
+            ) : (
+              <span>
+                {u.endereco ? (
+                  <>
+                    {u.endereco.rua}, {u.endereco.numero} - {u.endereco.bairro}<br />
+                    {u.endereco.cidade}/{u.endereco.estado} - CEP: {u.endereco.cep}
+                  </>
+                ) : '—'}
+              </span>
+            )}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
+  const readonlyFields = (
+    <>
+      {!isAdmin && (
+        <>
+          <div className="perfil-campo">
+            <span className="perfil-campo__label">CPF</span>
+            <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.cpf || '—'}</span>
+          </div>
+          <div className="perfil-campo">
+            <span className="perfil-campo__label">Nome</span>
+            <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.nome || '—'}</span>
+          </div>
+        </>
+      )}
       <div className="perfil-campo">
         <span className="perfil-campo__label">Cadastro</span>
-        <span className="perfil-campo__valor">{formatarData(motorista.criadoEm)}</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{formatarData(motorista.criadoEm)}</span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Status</span>
@@ -101,16 +209,29 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, onSave }) => 
             >
               {motorista.veiculo.marca} {motorista.veiculo.modelo} ({motorista.veiculo.placa})
             </button>
-          ) : 'Nenhum veículo associado'}
+          ) : <span style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>Nenhum veículo associado</span>}
         </span>
       </div>
+    </>
+  );
 
-      <div className="perfil-campo" style={{ marginTop: '16px' }}>
+  return (
+    <>
+    <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Motorista">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
         {isEditing ? (
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
             <Button size="sm" variant="outline" onClick={() => {
-              setFormData({ cnh: motorista.cnh || '' });
+              setFormData({ 
+                cnh: motorista.cnh || '',
+                cpf: u.cpf || '',
+                nome: u.nome || '',
+                usuario: u.usuario || '',
+                email: u.email || '',
+                celular: u.celular || '',
+                endereco: u.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
+              });
               setIsEditing(false);
             }}>Cancelar</Button>
           </div>
@@ -118,7 +239,26 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, onSave }) => 
           <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
         )}
       </div>
+
+      {isEditing ? (
+        <>
+          <div>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '12px' }}>Campos Editáveis</h3>
+            <div className="perfil-grid">{editableFields}</div>
+          </div>
+          <div style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>Campos Somente Leitura</h3>
+            <div className="perfil-grid">{readonlyFields}</div>
+          </div>
+        </>
+      ) : (
+        <div className="perfil-grid">
+          {editableFields}
+          {readonlyFields}
+        </div>
+      )}
     </ModalPerfilBase>
+
     <ConfirmationModal 
       isOpen={showConfirm} 
       title="Descartar alterações?" 
@@ -130,13 +270,21 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, onSave }) => 
       }} 
       onCancel={() => setShowConfirm(false)} 
     />
+    
+    <ModalInformacao
+      isOpen={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      titulo="Nenhuma alteração"
+      mensagem="Nenhum dado foi alterado. Modifique alguma informação antes de salvar."
+    />
     </>
   );
 };
 
-export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }) => {
+export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = true, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [formData, setFormData] = useState({ marca: '', modelo: '', placa: '', ano: '', cor: '', porte: '' });
 
   React.useEffect(() => {
@@ -166,6 +314,10 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
   };
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      setInfoOpen(true);
+      return;
+    }
     if (onSave) {
       await onSave(veiculo.id, formData);
     }
@@ -174,9 +326,8 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
 
   const statusInfo = STATUS_LABELS[veiculo.status] || { label: veiculo.status, color: 'muted' };
 
-  return (
+  const editableFields = (
     <>
-    <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Veículo">
       <div className="perfil-campo">
         <span className="perfil-campo__label">Modelo/Marca</span>
         <span className="perfil-campo__valor" style={{ display: 'flex', gap: '8px' }}>
@@ -207,15 +358,6 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
         </span>
       </div>
       <div className="perfil-campo">
-        <span className="perfil-campo__label">Porte / Classe</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.porte} onChange={e => setFormData({ ...formData, porte: e.target.value })} />
-          ) : <span>{veiculo.porte || '—'}</span>}
-          / <Badge label={veiculo.classe || 'N/D'} color="info" />
-        </span>
-      </div>
-      <div className="perfil-campo">
         <span className="perfil-campo__label">Cor</span>
         <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isEditing ? (
@@ -224,16 +366,35 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
         </span>
       </div>
       <div className="perfil-campo">
+        <span className="perfil-campo__label">Porte</span>
+        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isEditing ? (
+            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.porte} onChange={e => setFormData({ ...formData, porte: e.target.value })} />
+          ) : <span>{veiculo.porte || '—'}</span>}
+        </span>
+      </div>
+    </>
+  );
+
+  const readonlyFields = (
+    <>
+      <div className="perfil-campo">
+        <span className="perfil-campo__label">Classe</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>
+          {veiculo.classe ? <Badge label={veiculo.classe} color="info" /> : '—'}
+        </span>
+      </div>
+      <div className="perfil-campo">
         <span className="perfil-campo__label">Quilometragem</span>
-        <span className="perfil-campo__valor">{veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—'}</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—'}</span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Passageiros</span>
-        <span className="perfil-campo__valor">{veiculo.quantidadePassageiros || '—'}</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{veiculo.quantidadePassageiros || '—'}</span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Itens de Segurança</span>
-        <span className="perfil-campo__valor">
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>
           Ar-Condicionado: {veiculo.possuiArCondicionado ? 'Sim' : 'Não'}<br/>
           Extintor: {veiculo.possuiExtintor ? 'Sim' : 'Não'}<br/>
           Cinto Segurança: {veiculo.possuiCintoSeguranca ? 'Sim' : 'Não'}
@@ -241,7 +402,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Documentação</span>
-        <span className="perfil-campo__valor">{veiculo.documentacaoRegularizada ? 'Regularizada' : 'Pendente/Irregular'}</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{veiculo.documentacaoRegularizada ? 'Regularizada' : 'Pendente/Irregular'}</span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Aprovação</span>
@@ -249,10 +410,9 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
           <Badge label={veiculo.statusAprovacao || 'PENDENTE'} color={veiculo.statusAprovacao === 'APROVADO' ? 'success' : 'warning'} />
         </div>
       </div>
-
       <div className="perfil-campo">
         <span className="perfil-campo__label">Motorista</span>
-        <span className="perfil-campo__valor">{veiculo.motorista?.nome || '—'}</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{veiculo.motorista?.nome || '—'}</span>
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Status Operacional</span>
@@ -260,8 +420,13 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
           <Badge label={statusInfo.label} color={statusInfo.color} />
         </div>
       </div>
+    </>
+  );
 
-      <div className="perfil-campo" style={{ marginTop: '16px' }}>
+  return (
+    <>
+    <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Veículo">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
         {isEditing ? (
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
@@ -277,7 +442,26 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
           <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
         )}
       </div>
+
+      {isEditing ? (
+        <>
+          <div>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '12px' }}>Campos Editáveis</h3>
+            <div className="perfil-grid">{editableFields}</div>
+          </div>
+          <div style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>Campos Somente Leitura</h3>
+            <div className="perfil-grid">{readonlyFields}</div>
+          </div>
+        </>
+      ) : (
+        <div className="perfil-grid">
+          {editableFields}
+          {readonlyFields}
+        </div>
+      )}
     </ModalPerfilBase>
+
     <ConfirmationModal 
       isOpen={showConfirm} 
       title="Descartar alterações?" 
@@ -289,13 +473,21 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin, onSave }
       }} 
       onCancel={() => setShowConfirm(false)} 
     />
+
+    <ModalInformacao
+      isOpen={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      titulo="Nenhuma alteração"
+      mensagem="Nenhum dado foi alterado. Modifique alguma informação antes de salvar."
+    />
     </>
   );
 };
 
-export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
+export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [formData, setFormData] = useState({ nome: '', usuario: '', cpf: '', email: '', celular: '', endereco: {} });
 
   React.useEffect(() => {
@@ -331,15 +523,18 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
   };
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      setInfoOpen(true);
+      return;
+    }
     if (onSave) {
       await onSave(usuario.id, formData);
     }
     setIsEditing(false);
   };
 
-  return (
+  const editableFields = (
     <>
-    <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Usuário">
       <div className="perfil-campo">
         <span className="perfil-campo__label">Nome Completo</span>
         <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -370,14 +565,6 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
           ) : (
             <span>@{usuario.usuario}</span>
           )}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">CPF</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
-          ) : <span>{usuario.cpf || '—'}</span>}
         </span>
       </div>
       <div className="perfil-campo">
@@ -424,6 +611,27 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
           )}
         </span>
       </div>
+      {isAdmin && (
+        <div className="perfil-campo">
+          <span className="perfil-campo__label">CPF</span>
+          <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {isEditing ? (
+              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
+            ) : <span>{usuario.cpf || '—'}</span>}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
+  const readonlyFields = (
+    <>
+      {!isAdmin && (
+        <div className="perfil-campo">
+          <span className="perfil-campo__label">CPF</span>
+          <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{usuario.cpf || '—'}</span>
+        </div>
+      )}
       <div className="perfil-campo">
         <span className="perfil-campo__label">Perfil</span>
         <span className="perfil-campo__valor">
@@ -432,7 +640,7 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
       </div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Cadastro</span>
-        <span className="perfil-campo__valor">{formatarData(usuario.criadoEm)}</span>
+        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{formatarData(usuario.criadoEm)}</span>
       </div>
       {usuario.perfil === 'MOTORISTA' && (
         <div className="perfil-campo">
@@ -448,8 +656,13 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
           </span>
         </div>
       )}
-      
-      <div className="perfil-campo" style={{ marginTop: '16px' }}>
+    </>
+  );
+
+  return (
+    <>
+    <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Usuário">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
         {isEditing ? (
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
@@ -466,7 +679,26 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
           <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
         )}
       </div>
+
+      {isEditing ? (
+        <>
+          <div>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '12px' }}>Campos Editáveis</h3>
+            <div className="perfil-grid">{editableFields}</div>
+          </div>
+          <div style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>Campos Somente Leitura</h3>
+            <div className="perfil-grid">{readonlyFields}</div>
+          </div>
+        </>
+      ) : (
+        <div className="perfil-grid">
+          {editableFields}
+          {readonlyFields}
+        </div>
+      )}
     </ModalPerfilBase>
+
     <ConfirmationModal 
       isOpen={showConfirm} 
       title="Descartar alterações?" 
@@ -477,6 +709,13 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, onSave }) => {
         onClose();
       }} 
       onCancel={() => setShowConfirm(false)} 
+    />
+
+    <ModalInformacao
+      isOpen={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      titulo="Nenhuma alteração"
+      mensagem="Nenhum dado foi alterado. Modifique alguma informação antes de salvar."
     />
     </>
   );

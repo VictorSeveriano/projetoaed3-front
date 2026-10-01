@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --color-primary: #6366f1;
@@ -202,6 +202,7 @@ input,select,textarea { font-family:inherit; outline:none; }
 /* === MODAL === */
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px; }
 .modal { background:var(--bg-700); border:1px solid var(--border-color); border-radius:var(--radius-xl); box-shadow:var(--shadow-lg); width:calc(100% - 32px); max-height:90vh; display:flex; flex-direction:column; animation:fadeIn 0.25s ease; }
+.modal--sm { max-width:480px; }
 .modal--md { max-width:520px; }
 .modal--lg { max-width:700px; }
 .modal__header { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border-color); }

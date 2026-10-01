@@ -4,11 +4,7 @@ import api from './api';
  * MotoristasService — Centraliza comunicação com endpoints de motoristas.
  */
 const motoristasService = {
-  async listarTodos(status = null) {
-    const query = status ? `?status=${status}` : '';
-    const { data } = await api.get(`/motoristas${query}`);
-    return data.data;
-  },
+
 
   async listarAnalise() {
     const { data } = await api.get('/motoristas/analise');

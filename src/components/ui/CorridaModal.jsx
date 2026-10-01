@@ -49,6 +49,7 @@ const CorridaModal = ({
   
   const [valorCalculado, setValorCalculado]   = useState(null);
   const [calculandoValor, setCalculandoValor] = useState(false);
+  const [erroPrevia, setErroPrevia]           = useState(null); // { titulo, mensagem }
 
   const isDirty = dataHorario !== '';
 
@@ -67,27 +68,91 @@ const CorridaModal = ({
   useEffect(() => {
     if (!dataHorario || !classe || !rota?.distanciaKm) {
       setValorCalculado(null);
+      setErroPrevia(null);
       return;
     }
-    
+
+    // Validação da distância antes de disparar requisição
+    const dist = Number(rota.distanciaKm);
+    if (!Number.isFinite(dist) || dist <= 0) {
+      setValorCalculado(null);
+      setErroPrevia({
+        titulo: 'Falha na distância',
+        mensagem: 'Não foi possível calcular o valor porque a distância da rota não está disponível. Selecione uma rota válida e tente novamente.',
+      });
+      return;
+    }
+
+    // Validação da data/hora
+    if (!dataHorario) {
+      setValorCalculado(null);
+      setErroPrevia({
+        titulo: 'Data inválida',
+        mensagem: 'Não foi possível calcular o valor porque a data e o horário informados são inválidos. Verifique os dados e tente novamente.',
+      });
+      return;
+    }
+
     let isActive = true;
-    setCalculandoValor(true); // Exibe carregamento imediatamente enquanto debouce
-    
+    setCalculandoValor(true);
+    setErroPrevia(null);
+
     const calcular = async () => {
       try {
-        const data = await corridasService.calcularValorPrevia({
-          distanciaKm: rota.distanciaKm,
+        const resposta = await corridasService.calcularValorPrevia({
+          distanciaKm: dist,
           classe,
           dataHorario: new Date(dataHorario).toISOString()
         });
-        if (isActive) setValorCalculado(data.valor);
+
+        // Valida o retorno do service antes de usar
+        const valorRecebido = resposta?.valor;
+        if (
+          valorRecebido == null ||
+          typeof valorRecebido !== 'number' ||
+          !Number.isFinite(valorRecebido) ||
+          valorRecebido <= 0
+        ) {
+          if (isActive) {
+            setValorCalculado(null);
+            setErroPrevia({
+              titulo: 'Resposta inválida',
+              mensagem: 'O sistema não recebeu um valor válido para esta corrida. A solicitação não pode continuar.',
+            });
+          }
+          return;
+        }
+
+        if (isActive) {
+          setValorCalculado(valorRecebido);
+          setErroPrevia(null);
+        }
       } catch (err) {
-        if (isActive) setValorCalculado(null);
+        if (isActive) {
+          setValorCalculado(null);
+          const msg = err?.response?.data?.message || '';
+          if (msg.toLowerCase().includes('distancia') || msg.toLowerCase().includes('dist\u00e2ncia')) {
+            setErroPrevia({
+              titulo: 'Falha na distância',
+              mensagem: 'Não foi possível calcular o valor porque a distância da rota não está disponível. Selecione uma rota válida e tente novamente.',
+            });
+          } else if (msg.toLowerCase().includes('datahora') || msg.toLowerCase().includes('data') || msg.toLowerCase().includes('hor')) {
+            setErroPrevia({
+              titulo: 'Data inválida',
+              mensagem: 'Não foi possível calcular o valor porque a data e o horário informados são inválidos. Verifique os dados e tente novamente.',
+            });
+          } else {
+            setErroPrevia({
+              titulo: 'Serviço indisponível',
+              mensagem: 'Não foi possível calcular o valor da corrida no momento. Tente novamente em alguns instantes.',
+            });
+          }
+        }
       } finally {
         if (isActive) setCalculandoValor(false);
       }
     };
-    
+
     // Pequeno atraso para evitar muitas requisições se o usuário estiver digitando
     const timeout = setTimeout(calcular, 300);
     return () => {
@@ -113,7 +178,7 @@ const CorridaModal = ({
 
     setLoading(true); setError('');
     try {
-      await corridasService.criar({
+      const corridaCriada = await corridasService.criar({
         usuarioId: usuario?.id,
         origemNome,
         destinoNome,
@@ -129,6 +194,21 @@ const CorridaModal = ({
         classe,
         formaPagamento,
       });
+
+      // Valida que o backend retornou um valor válido
+      const valorRetornado = corridaCriada?.valor;
+      if (
+        valorRetornado == null ||
+        typeof valorRetornado !== 'number' ||
+        !Number.isFinite(valorRetornado) ||
+        valorRetornado <= 0
+      ) {
+        setErroModal({
+          open: true,
+          mensagem: 'A corrida foi criada, mas o sistema não retornou um valor válido. Entre em contato com o suporte.',
+        });
+        return;
+      }
 
       setSuccessMsg('Corrida solicitada com sucesso! Os motoristas elegíveis serão notificados.');
       if (onSuccess) onSuccess();
@@ -369,12 +449,15 @@ const CorridaModal = ({
         variant="warning"
       />
 
-      {/* Modal de erro para indisponibilidade de classe */}
+      {/* Modal de erro para indisponibilidade de classe ou falha na prévia */}
       <ModalErro
-        isOpen={erroModal.open}
-        onClose={() => setErroModal({ open: false, mensagem: '' })}
-        titulo="Classe indisponível"
-        mensagem={erroModal.mensagem}
+        isOpen={erroModal.open || !!erroPrevia}
+        onClose={() => {
+          setErroModal({ open: false, mensagem: '' });
+          setErroPrevia(null);
+        }}
+        titulo={erroModal.open ? 'Classe indisponível' : (erroPrevia?.titulo || 'Erro')}
+        mensagem={erroModal.open ? erroModal.mensagem : (erroPrevia?.mensagem || '')}
       />
     </>
   );
