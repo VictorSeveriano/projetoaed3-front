@@ -10,6 +10,7 @@ import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import ModalInformacao from '../../components/ui/ModalInformacao';
 import { formatarData } from '../../utils/formatters';
+import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
 
 const PERFIL_LABELS = {
   ADMINISTRADOR: 'Administrador',
@@ -26,11 +27,19 @@ const PerfilUsuarioPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [formData, setFormData] = useState({ nome: '', usuario: '', cpf: '', email: '', celular: '', endereco: {} });
-  const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
-  const [infoModal, setInfoModal] = useState(false);
+  const {
+    isEditing, setIsEditing,
+    showConfirm, setShowConfirm,
+    erroModal, setErroModal,
+    infoModal, setInfoModal,
+    formData, setFormData,
+    isAddressDifferent,
+    handleCancelClick,
+    resetForm
+  } = usePerfilEdicao({ 
+    nome: '', usuario: '', cpf: '', email: '', celular: '', 
+    endereco: { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
+  });
 
   useEffect(() => {
     if (!usuario?.id) return;
@@ -52,21 +61,7 @@ const PerfilUsuarioPage = () => {
 
   if (loading) return <Loading message="Carregando perfil..." />;
 
-  const isAddressDifferent = (addr1, addr2) => {
-    const a1 = addr1 || {};
-    const a2 = addr2 || {};
-    return a1.rua !== a2.rua || a1.bairro !== a2.bairro || a1.cidade !== a2.cidade || a1.estado !== a2.estado || a1.numero !== a2.numero || a1.cep !== a2.cep;
-  };
-
   const hasChanges = perfil && (perfil.nome !== formData.nome || perfil.usuario !== formData.usuario || perfil.cpf !== formData.cpf || perfil.email !== formData.email || perfil.celular !== formData.celular || isAddressDifferent(perfil.endereco, formData.endereco));
-
-  const handleCancelClick = () => {
-    if (isEditing && hasChanges) {
-      setShowConfirm(true);
-    } else {
-      setIsEditing(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -179,7 +174,7 @@ const PerfilUsuarioPage = () => {
             {isEditing ? (
               <div style={{ display: 'flex', gap: '8px' }}>
                 <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
-                <Button size="sm" variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+                <Button size="sm" variant="outline" onClick={() => handleCancelClick(hasChanges)}>Cancelar</Button>
               </div>
             ) : (
               <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
@@ -220,9 +215,7 @@ const PerfilUsuarioPage = () => {
         title="Descartar alterações?" 
         message="Você possui alterações não salvas. Deseja perder essas alterações?" 
         onConfirm={() => {
-          setShowConfirm(false);
-          setIsEditing(false);
-          setFormData({
+          resetForm({
             nome: perfil.nome || '', usuario: perfil.usuario || '', cpf: perfil.cpf || '',
             email: perfil.email || '', celular: perfil.celular || '',
             endereco: perfil.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }

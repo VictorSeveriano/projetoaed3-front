@@ -11,6 +11,7 @@ import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import ModalInformacao from '../../components/ui/ModalInformacao';
 import usuariosService from '../../services/usuarios.service';
+import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
 
 const PERFIL_LABELS = {
   ADMINISTRADOR: 'Administrador',
@@ -27,12 +28,16 @@ const PerfilMotoristaPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
-  const [infoModal, setInfoModal] = useState(false);
-  
-  const [formData, setFormData] = useState({
+  const {
+    isEditing, setIsEditing,
+    showConfirm, setShowConfirm,
+    erroModal, setErroModal,
+    infoModal, setInfoModal,
+    formData, setFormData,
+    isAddressDifferent,
+    handleCancelClick,
+    resetForm
+  } = usePerfilEdicao({
     nome: '', usuario: '', cpf: '', celular: '', email: '',
     endereco: { rua: '', numero: '', bairro: '', cidade: '', estado: '', cep: '' },
     cnh: ''
@@ -56,26 +61,12 @@ const PerfilMotoristaPage = () => {
 
   if (loading) return <Loading message="Carregando perfil..." />;
 
-  const isAddressDifferent = (addr1, addr2) => {
-    const a1 = addr1 || {};
-    const a2 = addr2 || {};
-    return a1.rua !== a2.rua || a1.bairro !== a2.bairro || a1.cidade !== a2.cidade || a1.estado !== a2.estado || a1.numero !== a2.numero || a1.cep !== a2.cep;
-  };
-
   const hasChanges = perfil && (
     perfil.usuario?.nome !== formData.nome || perfil.usuario?.usuario !== formData.usuario || 
     perfil.usuario?.cpf !== formData.cpf || perfil.usuario?.celular !== formData.celular || 
     perfil.usuario?.email !== formData.email || perfil.cnh !== formData.cnh || 
     isAddressDifferent(perfil.usuario?.endereco, formData.endereco)
   );
-
-  const handleCancelClick = () => {
-    if (isEditing && hasChanges) {
-      setShowConfirm(true);
-    } else {
-      setIsEditing(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -354,10 +345,8 @@ const PerfilMotoristaPage = () => {
         title="Descartar alterações?" 
         message="Você possui alterações não salvas. Deseja perder essas alterações?" 
         onConfirm={() => {
-          setShowConfirm(false);
-          setIsEditing(false);
           const uData = perfil.usuario || {};
-          setFormData({
+          resetForm({
             nome: uData.nome || '', usuario: uData.usuario || '', cpf: uData.cpf || '', celular: uData.celular || '', email: uData.email || '',
             endereco: uData.endereco || { rua: '', numero: '', bairro: '', cidade: '', estado: '', cep: '' },
             cnh: perfil.cnh || ''
