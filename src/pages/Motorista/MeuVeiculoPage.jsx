@@ -7,6 +7,10 @@ import motoistasService from '../../services/motoristas.service';
 import { useAuth } from '../../context/AuthContext';
 import { STATUS_LABELS, formatarMoeda } from '../../utils/formatters';
 import { Car, Tag, Hash, Calendar, DollarSign } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import ModalErro from '../../components/ui/ModalErro';
+import veiculosService from '../../services/veiculos.service';
 import api from '../../services/api';
 
 /**
@@ -21,6 +25,9 @@ const MeuVeiculoPage = () => {
   const [veiculo, setVeiculo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
   
   const [form, setForm] = useState({ 
     modelo: '', marca: '', ano: '', placa: '', porte: 'PEQUENO', cor: '', quilometragem: '', quantidadePassageiros: 4,
@@ -31,7 +38,15 @@ const MeuVeiculoPage = () => {
   const carregar = () => {
     setLoading(true);
     motoistasService.buscarVeiculo(usuario.id)
-      .then((dados) => setVeiculo(dados))
+      .then((dados) => {
+        setVeiculo(dados);
+        if (dados) {
+          setForm({
+            modelo: dados.modelo || '', marca: dados.marca || '', ano: dados.ano || '', placa: dados.placa || '', porte: dados.porte || 'PEQUENO', cor: dados.cor || '', quilometragem: dados.quilometragem || '', quantidadePassageiros: dados.quantidadePassageiros || 4,
+            possuiArCondicionado: dados.possuiArCondicionado || false, possuiExtintor: dados.possuiExtintor || false, possuiCintoSeguranca: dados.possuiCintoSeguranca || false, documentacaoRegularizada: dados.documentacaoRegularizada || false
+          });
+        }
+      })
       .catch((err) => setError(err.response?.data?.message || 'Erro ao carregar veículo.'))
       .finally(() => setLoading(false));
   };
@@ -148,42 +163,103 @@ const MeuVeiculoPage = () => {
 
   const statusInfo = STATUS_LABELS[veiculo.status] || { label: veiculo.status, color: 'muted' };
 
+  const hasChanges = veiculo && (
+    veiculo.marca !== form.marca || veiculo.modelo !== form.modelo || veiculo.placa !== form.placa || String(veiculo.ano) !== String(form.ano) || veiculo.cor !== form.cor || veiculo.porte !== form.porte ||
+    String(veiculo.quilometragem || '') !== String(form.quilometragem || '') || String(veiculo.quantidadePassageiros) !== String(form.quantidadePassageiros) ||
+    veiculo.possuiArCondicionado !== form.possuiArCondicionado || veiculo.possuiExtintor !== form.possuiExtintor || veiculo.possuiCintoSeguranca !== form.possuiCintoSeguranca || veiculo.documentacaoRegularizada !== form.documentacaoRegularizada
+  );
+
+  const handleCancelClick = () => {
+    if (isEditing && hasChanges) {
+      setShowConfirm(true);
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  const handleSaveEdits = async () => {
+    try {
+      const dataUpdate = { ...form, ano: parseInt(form.ano, 10), quilometragem: parseInt(form.quilometragem, 10) || 0, quantidadePassageiros: parseInt(form.quantidadePassageiros, 10) || 4 };
+      await veiculosService.atualizar(veiculo.id, dataUpdate);
+      carregar();
+      setIsEditing(false);
+    } catch (err) {
+      setErroModal({ aberto: true, mensagem: err.response?.data?.message || 'Erro ao salvar.' });
+    }
+  };
+
   return (
     <div className="page animate-fade-in">
       <Header title="Meu Veículo" subtitle="Informações do veículo vinculado à sua conta" />
 
       <div className="card">
-        <div className="card__header">
+        <div className="card__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 className="card-section-title">Dados do veículo</h2>
+          {isEditing ? (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button size="sm" variant="success" onClick={handleSaveEdits}>Salvar Alterações</Button>
+              <Button size="sm" variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
+          )}
         </div>
         <div className="card__body">
           <div className="perfil-grid">
             <div className="perfil-campo">
               <span className="perfil-campo__icon" aria-hidden="true"><Car size={18} /></span>
               <div>
-                <span className="perfil-campo__label">Modelo</span>
-                <span className="perfil-campo__valor">{veiculo.marca} {veiculo.modelo}</span>
+                <span className="perfil-campo__label">Modelo / Marca</span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', gap: '8px' }}>
+                  {isEditing ? (
+                    <>
+                      <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '50%' }} placeholder="Marca" value={form.marca} onChange={e => setForm({ ...form, marca: e.target.value })} />
+                      <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '50%' }} placeholder="Modelo" value={form.modelo} onChange={e => setForm({ ...form, modelo: e.target.value })} />
+                    </>
+                  ) : (
+                    <span>{veiculo.marca} {veiculo.modelo}</span>
+                  )}
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
               <span className="perfil-campo__icon" aria-hidden="true"><Calendar size={18} /></span>
               <div>
                 <span className="perfil-campo__label">Ano</span>
-                <span className="perfil-campo__valor">{veiculo.ano}</span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditing ? (
+                    <input type="number" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={form.ano} onChange={e => setForm({ ...form, ano: e.target.value })} />
+                  ) : <span>{veiculo.ano}</span>}
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
               <span className="perfil-campo__icon" aria-hidden="true"><Hash size={18} /></span>
               <div>
                 <span className="perfil-campo__label">Placa</span>
-                <span className="perfil-campo__valor">{veiculo.placa}</span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditing ? (
+                    <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={form.placa} onChange={e => setForm({ ...form, placa: e.target.value })} />
+                  ) : <span>{veiculo.placa}</span>}
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
               <span className="perfil-campo__icon" aria-hidden="true"><Tag size={18} /></span>
               <div>
                 <span className="perfil-campo__label">Porte / Tipo</span>
-                <span className="perfil-campo__valor">{veiculo.porte || '—'} / <Badge label={veiculo.tipo || 'NORMAL'} color={veiculo.tipo === 'PREMIUM' ? 'warning' : 'info'} /></span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditing ? (
+                    <select className="input-field" style={{ padding: '4px', height: 'auto' }} value={form.porte} onChange={e => setForm({ ...form, porte: e.target.value })}>
+                      <option value="PEQUENO">PEQUENO</option>
+                      <option value="MEDIO">MEDIO</option>
+                      <option value="GRANDE">GRANDE</option>
+                      <option value="SUV">SUV</option>
+                      <option value="LUXO">LUXO</option>
+                    </select>
+                  ) : <span>{veiculo.porte || '—'}</span>}
+                  / <Badge label={veiculo.tipo || 'NORMAL'} color={veiculo.tipo === 'PREMIUM' ? 'warning' : 'info'} />
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
@@ -208,40 +284,100 @@ const MeuVeiculoPage = () => {
             <div className="perfil-campo">
               <div>
                 <span className="perfil-campo__label">Cor</span>
-                <span className="perfil-campo__valor">{veiculo.cor || '—'}</span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditing ? (
+                    <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={form.cor} onChange={e => setForm({ ...form, cor: e.target.value })} />
+                  ) : <span>{veiculo.cor || '—'}</span>}
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
               <div>
                 <span className="perfil-campo__label">Quilometragem</span>
-                <span className="perfil-campo__valor">{veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—'}</span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditing ? (
+                    <input type="number" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={form.quilometragem} onChange={e => setForm({ ...form, quilometragem: e.target.value })} />
+                  ) : <span>{veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—'}</span>}
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
               <div>
                 <span className="perfil-campo__label">Passageiros</span>
-                <span className="perfil-campo__valor">{veiculo.quantidadePassageiros || '—'}</span>
+                <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditing ? (
+                    <input type="number" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={form.quantidadePassageiros} onChange={e => setForm({ ...form, quantidadePassageiros: e.target.value })} />
+                  ) : <span>{veiculo.quantidadePassageiros || '—'}</span>}
+                </span>
               </div>
             </div>
             <div className="perfil-campo">
               <div>
                 <span className="perfil-campo__label">Itens de Segurança</span>
                 <span className="perfil-campo__valor" style={{ display: 'block', marginTop: '4px' }}>
-                  • Ar-Condicionado: {veiculo.possuiArCondicionado ? 'Sim' : 'Não'}<br/>
-                  • Extintor: {veiculo.possuiExtintor ? 'Sim' : 'Não'}<br/>
-                  • Cinto Segurança: {veiculo.possuiCintoSeguranca ? 'Sim' : 'Não'}
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="checkbox" checked={form.possuiArCondicionado} onChange={e => setForm({...form, possuiArCondicionado: e.target.checked})} />
+                        Possui Ar-Condicionado
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="checkbox" checked={form.possuiExtintor} onChange={e => setForm({...form, possuiExtintor: e.target.checked})} />
+                        Possui Extintor
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="checkbox" checked={form.possuiCintoSeguranca} onChange={e => setForm({...form, possuiCintoSeguranca: e.target.checked})} />
+                        Possui Cinto de Segurança
+                      </label>
+                    </div>
+                  ) : (
+                    <>
+                      • Ar-Condicionado: {veiculo.possuiArCondicionado ? 'Sim' : 'Não'}<br/>
+                      • Extintor: {veiculo.possuiExtintor ? 'Sim' : 'Não'}<br/>
+                      • Cinto Segurança: {veiculo.possuiCintoSeguranca ? 'Sim' : 'Não'}
+                    </>
+                  )}
                 </span>
               </div>
             </div>
             <div className="perfil-campo">
               <div>
                 <span className="perfil-campo__label">Documentação</span>
-                <span className="perfil-campo__valor">{veiculo.documentacaoRegularizada ? 'Regularizada' : 'Pendente/Irregular'}</span>
+                <span className="perfil-campo__valor">
+                  {isEditing ? (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input type="checkbox" checked={form.documentacaoRegularizada} onChange={e => setForm({...form, documentacaoRegularizada: e.target.checked})} />
+                      Documentação Regularizada
+                    </label>
+                  ) : (
+                    veiculo.documentacaoRegularizada ? 'Regularizada' : 'Pendente/Irregular'
+                  )}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <ConfirmationModal 
+        isOpen={showConfirm} 
+        title="Descartar alterações?" 
+        message="Você possui alterações não salvas. Deseja perder essas alterações?" 
+        onConfirm={() => {
+          setShowConfirm(false);
+          setIsEditing(false);
+          setForm({
+            modelo: veiculo.modelo || '', marca: veiculo.marca || '', ano: veiculo.ano || '', placa: veiculo.placa || '', porte: veiculo.porte || 'PEQUENO', cor: veiculo.cor || '', quilometragem: veiculo.quilometragem || '', quantidadePassageiros: veiculo.quantidadePassageiros || 4,
+            possuiArCondicionado: veiculo.possuiArCondicionado || false, possuiExtintor: veiculo.possuiExtintor || false, possuiCintoSeguranca: veiculo.possuiCintoSeguranca || false, documentacaoRegularizada: veiculo.documentacaoRegularizada || false
+          });
+        }} 
+        onCancel={() => setShowConfirm(false)} 
+      />
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal({ aberto: false, mensagem: '' })}
+        titulo="Erro"
+        mensagem={erroModal.mensagem}
+      />
     </div>
   );
 };

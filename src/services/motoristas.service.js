@@ -25,6 +25,11 @@ const motoristasService = {
     return data.data;
   },
 
+  async atualizar(id, dados) {
+    const { data } = await api.patch(`/motoristas/${id}`, dados);
+    return data.data;
+  },
+
   async buscarPorId(id) {
     const { data } = await api.get(`/motoristas/${id}`);
     return data.data;
