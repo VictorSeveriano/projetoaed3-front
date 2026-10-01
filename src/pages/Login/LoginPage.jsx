@@ -71,7 +71,9 @@ const LoginPage = () => {
         default:          navigate('/dashboard'); break;
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Credenciais inválidas.');
+      setError(err.response?.status === 401
+        ? 'Usuário ou senha incorretos. Confira seus dados e tente novamente.'
+        : err.response?.data?.message || 'Não foi possível entrar. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -252,6 +254,7 @@ const LoginPage = () => {
             onAvancar={handleAvancar}
             onVoltar={handleVoltar}
             onSubmit={handleCadastroSubmit}
+            onClearError={() => setError('')}
             loading={loading}
           />
         )}

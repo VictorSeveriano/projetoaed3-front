@@ -121,7 +121,7 @@ const InicioMotoristaPage = () => {
           icon={<CheckCircle size={48} strokeWidth={1.5} color={isPendente ? 'var(--warning-color)' : 'var(--danger-color)'} />}
           title={isPendente ? 'Cadastro em análise' : 'Cadastro Rejeitado'}
           description={isPendente 
-            ? 'Recebemos sua solicitação. O administrador analisará sua CNH em breve.' 
+            ? 'Sua CNH ainda aguarda aprovação de um administrador. O cadastro do veículo ficará disponível após a aprovação do perfil. Você só poderá receber e aceitar corridas quando o perfil e o veículo estiverem aprovados.'
             : 'Sua solicitação foi rejeitada. Entre em contato com o suporte para mais informações.'}
         />
       </div>
