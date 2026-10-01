@@ -28,6 +28,7 @@ import UsuariosPage from '../pages/Admin/UsuariosPage';
 import MotoristasAnalisePage from '../pages/Admin/MotoristasAnalisePage';
 import VeiculosAnalisePage from '../pages/Admin/VeiculosAnalisePage';
 import NotificacoesPage from '../pages/Admin/NotificacoesPage';
+import AuditoriaPage from '../pages/Admin/AuditoriaPage';
 
 /**
  * RedirectInicial — Redireciona para a rota home correta conforme perfil.
@@ -69,6 +70,7 @@ const AppRoutes = () => (
               <Route path="/usuarios"          element={<UsuariosPage />} />
               <Route path="/motoristas/analise" element={<MotoristasAnalisePage />} />
               <Route path="/notificacoes"      element={<NotificacoesPage />} />
+              <Route path="/auditoria"         element={<AuditoriaPage />} />
 
               {/* --- Usuário/Passageiro --- */}
               <Route path="/solicitar-corrida" element={<RotasPage />} />

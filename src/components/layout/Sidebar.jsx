@@ -5,7 +5,7 @@ import notificacoesService from '../../services/notificacoes.service';
 
 import {
   LayoutDashboard, Car, CalendarDays, Network, LogOut,
-  ChevronLeft, ChevronRight, Map, Home, BarChart2, User, Bell
+  ChevronLeft, ChevronRight, Map, Home, BarChart2, User, Bell, ShieldAlert
 } from 'lucide-react';
 
 /**
@@ -26,6 +26,7 @@ const NAV_ITEMS_ADMIN = [
   { to: '/usuarios',              icon: <User size={20} />,            label: 'Usuários'              },
   { to: '/motoristas/analise',    icon: <User size={20} />,            label: 'Análise de Motoristas' },
   { to: '/notificacoes',          icon: <Bell size={20} />,            label: 'Notificações'          },
+  { to: '/auditoria',             icon: <ShieldAlert size={20} />,     label: 'Auditoria'             },
 ];
 
 const NAV_ITEMS_USUARIO = [
