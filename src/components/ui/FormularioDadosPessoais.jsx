@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { TriangleAlert, Search } from 'lucide-react';
 import axios from 'axios';
+import authService from '../../services/auth.service';
 import { formatarCPF, formatarCelular, formatarCEP } from '../../utils/formatters';
 import { validarCPF, validarCelular, validarCEP, validarSenha, validarCNH } from '../../utils/validators';
 
 const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAvancar, onVoltar, onSubmit, loading }) => {
   const [cepLoading, setCepLoading] = useState(false);
+  const [verificandoCadastro, setVerificandoCadastro] = useState(false);
+  const [erroVerificacao, setErroVerificacao] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
 
   const getFieldError = (name, value) => {
-    if (!value && typeof value === 'string' && !value.trim()) {
+    if (typeof value === 'string' && !value.trim()) {
       return 'Campo obrigatório.';
     }
 
@@ -106,6 +109,7 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
 
     // Clear error on change to improve UX
     setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    setErroVerificacao('');
   };
 
   const getInputClass = (name) => {
@@ -121,7 +125,7 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
     );
   };
 
-  const handleAvancar = () => {
+  const handleAvancar = async () => {
     let hasError = false;
     const newErrors = {};
 
@@ -138,8 +142,32 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
     });
 
     setFieldErrors(newErrors);
-    if (!hasError && onAvancar) {
+    setErroVerificacao('');
+    if (hasError || !onAvancar || verificandoCadastro) return;
+
+    setVerificandoCadastro(true);
+    try {
+      const { duplicados } = await authService.verificarDisponibilidadeCadastro({
+        cpf: form.cpf,
+        email: form.email,
+        perfil,
+        cnh: perfil === 'MOTORISTA' ? form.cnh : undefined,
+      });
+      const errosDuplicidade = {};
+      if (duplicados.cpf) errosDuplicidade.cpf = 'CPF já cadastrado no sistema.';
+      if (duplicados.email) errosDuplicidade.email = 'E-mail já cadastrado no sistema.';
+      if (duplicados.cnh) errosDuplicidade.cnh = 'CNH já cadastrada no sistema.';
+
+      if (Object.keys(errosDuplicidade).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...errosDuplicidade }));
+        return;
+      }
+
       onAvancar(2);
+    } catch (err) {
+      setErroVerificacao(err.response?.data?.message || 'Não foi possível verificar os dados. Tente novamente.');
+    } finally {
+      setVerificandoCadastro(false);
     }
   };
 
@@ -192,6 +220,11 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
           <TriangleAlert size={16} /> {error}
         </div>
       )}
+      {erroVerificacao && (
+        <div className="login-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <TriangleAlert size={16} /> {erroVerificacao}
+        </div>
+      )}
 
       {etapa === 1 && (
         <>
@@ -199,7 +232,7 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
             <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Etapa 1 de 3</h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Dados pessoais</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+          <fieldset disabled={verificandoCadastro} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', border: 0, margin: 0, padding: 0, minWidth: 0 }}>
             <div className="input-group">
               <label className="input-label" htmlFor="form-nome">Nome Completo *</label>
               <input 
@@ -267,11 +300,11 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
               {renderError('email')}
             </div>
 
-          </div>
+          </fieldset>
           
           <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
-             <button type="button" className="btn btn-primary" onClick={handleAvancar} style={{ minWidth: '120px' }}>
-               Avançar →
+             <button type="button" className="btn btn-primary" onClick={handleAvancar} disabled={verificandoCadastro} style={{ minWidth: '120px' }}>
+               {verificandoCadastro ? 'Verificando dados...' : 'Avançar →'}
              </button>
           </div>
         </>
