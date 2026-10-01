@@ -5,10 +5,13 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilUsuario, ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
 import ModalErro from '../../components/ui/ModalErro';
+import Modal from '../../components/ui/Modal';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import FormularioDadosPessoais from '../../components/ui/FormularioDadosPessoais';
 import usuariosService from '../../services/usuarios.service';
 import motoristasService from '../../services/motoristas.service';
 import veiculosService from '../../services/veiculos.service';
-import { User, Search, Filter } from 'lucide-react';
+import { User, Search, Filter, Plus, Car, Shield } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
 const UsuariosPage = () => {
@@ -26,6 +29,20 @@ const UsuariosPage = () => {
   const [veiculoSelecionado, setVeiculoSelecionado] = useState(null);
 
   const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
+
+  // Criar usuario state
+  const [modalEscolhaOpen, setModalEscolhaOpen] = useState(false);
+  const [modalCadastroOpen, setModalCadastroOpen] = useState(false);
+  const [perfilSelecionado, setPerfilSelecionado] = useState('');
+  const [etapaCadastro, setEtapaCadastro] = useState(1);
+  const defaultForm = {
+    nome: '', cpf: '', celular: '', email: '',
+    endereco: { cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' },
+    senha: '', senhaConfirmacao: '', cnh: '',
+  };
+  const [formCadastro, setFormCadastro] = useState(defaultForm);
+  const [salvandoCadastro, setSalvandoCadastro] = useState(false);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
 
   // Filters state
   const [filtroPesquisa, setFiltroPesquisa] = useState('');
@@ -125,6 +142,51 @@ const UsuariosPage = () => {
     }
   };
 
+  const isFormDirty = () => JSON.stringify(formCadastro) !== JSON.stringify(defaultForm);
+
+  const handleOpenCadastro = (perfil) => {
+    setPerfilSelecionado(perfil);
+    setModalEscolhaOpen(false);
+    setFormCadastro(defaultForm);
+    setEtapaCadastro(1);
+    setModalCadastroOpen(true);
+  };
+
+  const handleCloseCadastroRequest = () => {
+    if (isFormDirty()) {
+      setShowConfirmCancel(true);
+    } else {
+      setModalCadastroOpen(false);
+    }
+  };
+
+  const handleConfirmCancel = () => {
+    setShowConfirmCancel(false);
+    setModalCadastroOpen(false);
+    setFormCadastro(defaultForm);
+    setEtapaCadastro(1);
+  };
+
+  const handleSaveNovoUsuario = async () => {
+    setSalvandoCadastro(true);
+    try {
+      await usuariosService.criar({ ...formCadastro, perfil: perfilSelecionado });
+      setModalCadastroOpen(false);
+      setFormCadastro(defaultForm);
+      setEtapaCadastro(1);
+      carregar();
+    } catch (err) {
+      console.error(err);
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro ao criar usuário',
+        mensagem: err.response?.data?.message || 'Ocorreu um erro ao criar o usuário.',
+      });
+    } finally {
+      setSalvandoCadastro(false);
+    }
+  };
+
   return (
     <div className="page animate-fade-in">
       <Header title="Usuários" subtitle="Gerencie os usuários cadastrados no sistema" />
@@ -164,6 +226,11 @@ const UsuariosPage = () => {
             </select>
           </div>
         </div>
+
+        <button className="btn btn-primary" onClick={() => setModalEscolhaOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Plus size={18} />
+          Criar usuário
+        </button>
       </div>
 
       {loading ? (
@@ -257,6 +324,127 @@ const UsuariosPage = () => {
         onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
         titulo={erroModal.titulo}
         mensagem={erroModal.mensagem}
+      />
+
+      <Modal
+        isOpen={modalEscolhaOpen}
+        onClose={() => setModalEscolhaOpen(false)}
+        title="Escolha o perfil"
+        size="sm"
+      >
+        <style>{`
+          .profile-select-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 16px;
+            background-color: var(--bg-800);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            color: var(--text-primary);
+          }
+          .profile-select-btn:hover {
+            border-color: var(--color-primary-glow);
+            background-color: var(--bg-700);
+            transform: translateY(-2px);
+          }
+          .profile-select-btn:active,
+          .profile-select-btn:focus-visible {
+            outline: none;
+            border-color: var(--color-primary);
+            background-color: var(--bg-700);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+          }
+          .profile-select-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--color-primary);
+            flex-shrink: 0;
+          }
+          .profile-select-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: block;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+          }
+          .profile-select-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: block;
+          }
+        `}</style>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '8px 0 16px' }}>
+          <button className="profile-select-btn" onClick={() => handleOpenCadastro('USUARIO')}>
+            <div className="profile-select-icon">
+              <User size={24} />
+            </div>
+            <div>
+              <span className="profile-select-title">Passageiro</span>
+              <span className="profile-select-desc">Solicita viagens no sistema</span>
+            </div>
+          </button>
+          
+          <button className="profile-select-btn" onClick={() => handleOpenCadastro('MOTORISTA')}>
+            <div className="profile-select-icon">
+              <Car size={24} />
+            </div>
+            <div>
+              <span className="profile-select-title">Motorista</span>
+              <span className="profile-select-desc">Realiza as viagens para os passageiros</span>
+            </div>
+          </button>
+          
+          <button className="profile-select-btn" onClick={() => handleOpenCadastro('ADMINISTRADOR')}>
+            <div className="profile-select-icon">
+              <Shield size={24} />
+            </div>
+            <div>
+              <span className="profile-select-title">Administrador</span>
+              <span className="profile-select-desc">Gerencia usuários e sistema</span>
+            </div>
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalCadastroOpen}
+        onClose={handleCloseCadastroRequest}
+        title={`Novo ${perfilSelecionado === 'USUARIO' ? 'Passageiro' : perfilSelecionado === 'MOTORISTA' ? 'Motorista' : 'Administrador'}`}
+        size="lg"
+      >
+        <div style={{ padding: '0 8px' }}>
+          <FormularioDadosPessoais
+            form={formCadastro}
+            setForm={setFormCadastro}
+            perfil={perfilSelecionado}
+            etapa={etapaCadastro}
+            onAvancar={setEtapaCadastro}
+            onVoltar={setEtapaCadastro}
+            onSubmit={handleSaveNovoUsuario}
+            loading={salvandoCadastro}
+          />
+        </div>
+      </Modal>
+
+      <ConfirmationModal
+        isOpen={showConfirmCancel}
+        onClose={() => setShowConfirmCancel(false)}
+        onConfirm={handleConfirmCancel}
+        title="Descartar alterações?"
+        message="Você possui alterações não salvas. Deseja sair e perder essas alterações?"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        variant="warning"
       />
     </div>
   );

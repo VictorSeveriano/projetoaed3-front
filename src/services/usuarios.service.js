@@ -27,6 +27,11 @@ const usuariosService = {
     const { data } = await api.get(`/usuarios/${id}/corridas`);
     return data.data;
   },
+
+  async criar(dados) {
+    const { data } = await api.post('/usuarios', dados);
+    return data.data;
+  },
 };
 
 export default usuariosService;
