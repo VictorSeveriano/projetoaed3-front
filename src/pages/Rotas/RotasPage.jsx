@@ -5,6 +5,7 @@ import CorridaModal from '../../components/ui/CorridaModal';
 import rotasService from '../../services/rotas.service';
 import useLocationSearch from '../../hooks/useLocationSearch';
 import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check, Search, X, Loader } from 'lucide-react';
+import { LocalizacaoInput } from '../../components/ui/LocalizacaoInput';
 
 /**
  * RotasPage — Pagina de solicitacao de corrida.
@@ -255,116 +256,6 @@ const RotasPage = () => {
     setCorridaModal({ open: true });
   };
 
-  // --- Renderiza campo com autocomplete ---
-  const renderCampoLocalizacao = (campo, id, label, placeholder, listRef, extraAcoes = null) => {
-    const listId = id + '-sugestoes';
-    const origemOuDestino = label.toLowerCase();
-    return (
-      <section className="rotas-section" aria-label={label}>
-        <h2 className="rotas-section__title">
-          <MapPin size={16} aria-hidden="true" />
-          {label}
-        </h2>
-        <div className="autocomplete-wrapper" ref={listRef}>
-          <div className="rotas-origem-row" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <input
-                id={id}
-                className="input-field"
-                placeholder={placeholder}
-                value={campo.texto}
-                autoComplete="off"
-                aria-label={label}
-                aria-autocomplete="list"
-                aria-expanded={campo.mostrarSugestoes && campo.sugestoes.length > 0}
-                aria-controls={listId}
-                aria-activedescendant={
-                  campo.activeIndex >= 0 ? `${listId}-item-${campo.activeIndex}` : undefined
-                }
-                onChange={(e) => { setError(''); campo.setTexto(e.target.value); }}
-                onFocus={() => { if (campo.sugestoes.length > 0) campo.setMostrarSugestoes(true); }}
-                onKeyDown={(e) => handleKeyDown(e, campo, listId)}
-              />
-              {/* Icone de status no campo */}
-              <span className="autocomplete-field-icon" aria-hidden="true">
-                {campo.buscando
-                  ? <Loader size={14} className="spin-icon" />
-                  : campo.selecionada
-                    ? <Check size={14} style={{ color: 'var(--color-success)' }} />
-                    : campo.texto.length >= 3
-                      ? <Search size={14} />
-                      : null
-                }
-              </span>
-            </div>
-            {/* Botao limpar campo */}
-            {campo.texto && (
-              <button
-                type="button"
-                className="autocomplete-clear-btn"
-                aria-label={'Limpar ' + origemOuDestino}
-                onClick={() => { campo.limpar(); setError(''); }}
-              >
-                <X size={14} />
-              </button>
-            )}
-            {extraAcoes}
-          </div>
-
-          {/* Dropdown de sugestoes */}
-          {campo.mostrarSugestoes && campo.sugestoes.length > 0 && (
-            <ul
-              id={listId}
-              role="listbox"
-              aria-label={'Sugestoes de ' + origemOuDestino}
-              className="autocomplete-list"
-            >
-              {campo.sugestoes.map((s, i) => (
-                <li
-                  key={i}
-                  id={`${listId}-item-${i}`}
-                  role="option"
-                  aria-selected={campo.activeIndex === i}
-                  className={'autocomplete-item' + (campo.activeIndex === i ? ' autocomplete-item--active' : '')}
-                  onMouseDown={(e) => {
-                    // mouseDown em vez de click para evitar fechar antes do clique ser processado
-                    e.preventDefault();
-                    campo.selecionar(s);
-                    setError('');
-                  }}
-                  onMouseEnter={() => campo.setActiveIndex(i)}
-                >
-                  <MapPin size={12} className="autocomplete-item__icon" aria-hidden="true" />
-                  <span className="autocomplete-item__texto">{s.descricao}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Estados de feedback sem sugestoes */}
-          {campo.mostrarSugestoes && !campo.buscando && campo.sugestoes.length === 0 && campo.texto.length >= 3 && !campo.selecionada && (
-            <p className="autocomplete-status autocomplete-status--empty" role="status">
-              Nenhum local encontrado para esta busca.
-            </p>
-          )}
-          {campo.erro && (
-            <p className="autocomplete-status autocomplete-status--error" role="alert">
-              {campo.erro}
-            </p>
-          )}
-
-          {/* Badge de confirmacao */}
-          {campo.selecionada && (
-            <p className="rotas-geo-info" aria-live="polite">
-              <Check size={14} aria-hidden="true" />
-              Localizacao confirmada
-            </p>
-          )}
-        </div>
-      </section>
-    );
-  };
-
   // --- Render ---
   return (
     <div className="page animate-fade-in">
@@ -378,26 +269,32 @@ const RotasPage = () => {
         <div className="rotas-panel">
 
           {/* Campo Origem com autocomplete */}
-          {renderCampoLocalizacao(
-            origem,
-            'input-origem',
-            'Origem',
-            'Digite a origem...',
-            origemListRef,
-            <Button id="btn-gps" variant="ghost" size="sm" onClick={usarGps} loading={loadingGps} title="Usar minha localizacao atual">
-              <Navigation size={16} aria-hidden="true" />
-              GPS
-            </Button>,
-          )}
+          <LocalizacaoInput
+            campo={origem}
+            id="input-origem"
+            label="Origem"
+            placeholder="Digite a origem..."
+            listRef={origemListRef}
+            handleKeyDown={handleKeyDown}
+            setError={setError}
+            extraAcoes={
+              <Button id="btn-gps" variant="ghost" size="sm" onClick={usarGps} loading={loadingGps} title="Usar minha localizacao atual">
+                <Navigation size={16} aria-hidden="true" />
+                GPS
+              </Button>
+            }
+          />
 
           {/* Campo Destino com autocomplete */}
-          {renderCampoLocalizacao(
-            destino,
-            'input-destino',
-            'Destino',
-            'Digite o destino...',
-            destinoListRef,
-          )}
+          <LocalizacaoInput
+            campo={destino}
+            id="input-destino"
+            label="Destino"
+            placeholder="Digite o destino..."
+            listRef={destinoListRef}
+            handleKeyDown={handleKeyDown}
+            setError={setError}
+          />
 
           <Button id="btn-calcular-rotas" onClick={calcularRotas} loading={loading} className="w-full">
             <Route size={16} aria-hidden="true" />
