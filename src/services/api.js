@@ -28,7 +28,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url?.replace(/\/+$/, '');
+    const isLoginRequest = url?.endsWith('/auth/login');
+
+    if (error.response?.status === 401 && !isLoginRequest) {
       sessionStorage.clear();
       window.location.href = '/login';
     }
