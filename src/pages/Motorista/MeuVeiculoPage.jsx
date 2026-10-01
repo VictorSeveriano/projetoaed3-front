@@ -23,6 +23,7 @@ import api from '../../services/api';
 const MeuVeiculoPage = () => {
   const { usuario } = useAuth();
   const [veiculo, setVeiculo] = useState(null);
+  const [motoristaPerfil, setMotoristaPerfil] = useState(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -37,9 +38,13 @@ const MeuVeiculoPage = () => {
 
   const carregar = () => {
     setLoading(true);
-    motoistasService.buscarVeiculo(usuario.id)
-      .then((dados) => {
+    Promise.all([
+      motoistasService.buscarVeiculo(usuario.id),
+      motoistasService.buscarPorUsuarioId(usuario.id),
+    ])
+      .then(([dados, perfil]) => {
         setVeiculo(dados);
+        setMotoristaPerfil(perfil);
         if (dados) {
           setForm({
             modelo: dados.modelo || '', marca: dados.marca || '', ano: dados.ano || '', placa: dados.placa || '', porte: dados.porte || 'PEQUENO', cor: dados.cor || '', quilometragem: dados.quilometragem || '', quantidadePassageiros: dados.quantidadePassageiros || 4,
@@ -80,6 +85,25 @@ const MeuVeiculoPage = () => {
       <div className="page animate-fade-in">
         <Header title="Meu Veículo" subtitle="Veículo associado à sua conta" />
         <div className="form-error" role="alert">{error}</div>
+      </div>
+    );
+  }
+
+  if (motoristaPerfil?.statusCadastro !== 'APROVADO') {
+    const mensagem = motoristaPerfil?.statusCadastro === 'PENDENTE'
+      ? 'Sua CNH ainda aguarda aprovação de um administrador. O cadastro do veículo ficará disponível após a aprovação do perfil. Você só poderá receber e aceitar corridas quando o perfil e o veículo estiverem aprovados.'
+      : motoristaPerfil
+        ? 'Seu perfil de motorista não está aprovado. Entre em contato com um administrador para verificar os requisitos antes de cadastrar um veículo ou receber corridas.'
+        : 'Envie sua solicitação de motorista e aguarde a aprovação da CNH antes de cadastrar um veículo ou receber corridas.';
+
+    return (
+      <div className="page animate-fade-in">
+        <Header title="Meu Veículo" subtitle="Veículo associado à sua conta" />
+        <EmptyState
+          icon={<Car size={48} strokeWidth={1.5} />}
+          title="Requisitos pendentes"
+          description={mensagem}
+        />
       </div>
     );
   }
@@ -191,6 +215,12 @@ const MeuVeiculoPage = () => {
   return (
     <div className="page animate-fade-in">
       <Header title="Meu Veículo" subtitle="Informações do veículo vinculado à sua conta" />
+
+      {veiculo.statusAprovacao !== 'APROVADO' && (
+        <div className="form-error" role="status" style={{ marginBottom: '16px' }}>
+          O administrador ainda precisa aprovar seu veículo. Até a aprovação, você não receberá nem poderá aceitar corridas.
+        </div>
+      )}
 
       <div className="card">
         <div className="card__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

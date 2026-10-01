@@ -5,7 +5,7 @@ import authService from '../../services/auth.service';
 import { formatarCPF, formatarCelular, formatarCEP } from '../../utils/formatters';
 import { validarCPF, validarCelular, validarCEP, validarSenha, validarCNH } from '../../utils/validators';
 
-const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAvancar, onVoltar, onSubmit, loading }) => {
+const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAvancar, onVoltar, onSubmit, onClearError, loading }) => {
   const [cepLoading, setCepLoading] = useState(false);
   const [verificandoCadastro, setVerificandoCadastro] = useState(false);
   const [erroVerificacao, setErroVerificacao] = useState('');
@@ -83,6 +83,7 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    onClearError?.();
     
     // Formatting and preventing non-numeric inputs for numeric fields
     let formattedValue = value;
@@ -124,6 +125,10 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
       </div>
     );
   };
+
+  const hasDuplicateErrors = ['cpf', 'email', 'cnh'].some((field) =>
+    fieldErrors[field]?.includes('já cadastrado no sistema.')
+  );
 
   const handleAvancar = async () => {
     let hasError = false;
@@ -303,7 +308,7 @@ const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAv
           </fieldset>
           
           <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
-             <button type="button" className="btn btn-primary" onClick={handleAvancar} disabled={verificandoCadastro} style={{ minWidth: '120px' }}>
+             <button type="button" className="btn btn-primary" onClick={handleAvancar} disabled={verificandoCadastro || hasDuplicateErrors} style={{ minWidth: '120px' }}>
                {verificandoCadastro ? 'Verificando dados...' : 'Avançar →'}
              </button>
           </div>
