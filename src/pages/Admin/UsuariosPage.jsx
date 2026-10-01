@@ -62,9 +62,9 @@ const UsuariosPage = () => {
   const abrirMotorista = async (usuarioId) => {
     try {
       // O perfil do motorista fica em /api/motoristas/perfil/:usuarioId
-      const { data } = await motoristasService.buscarPorUsuarioId(usuarioId);
-      if (data) {
-        setMotoristaSelecionado(data);
+      const motorista = await motoristasService.buscarPorUsuarioId(usuarioId);
+      if (motorista) {
+        setMotoristaSelecionado(motorista);
         setModalMotoristaOpen(true);
         setModalUsuarioOpen(false); // fecha o de usuário
       } else {
