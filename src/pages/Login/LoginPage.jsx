@@ -252,6 +252,7 @@ const LoginPage = () => {
             onAvancar={handleAvancar}
             onVoltar={handleVoltar}
             onSubmit={handleCadastroSubmit}
+            onClearError={() => setError('')}
             loading={loading}
           />
         )}
