@@ -14,6 +14,12 @@ import veiculosService from '../../services/veiculos.service';
 import { User, Search, Filter, Plus, Car, Shield } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
+const defaultForm = {
+  nome: '', cpf: '', celular: '', email: '',
+  endereco: { cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' },
+  senha: '', senhaConfirmacao: '', cnh: '',
+};
+
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +41,6 @@ const UsuariosPage = () => {
   const [modalCadastroOpen, setModalCadastroOpen] = useState(false);
   const [perfilSelecionado, setPerfilSelecionado] = useState('');
   const [etapaCadastro, setEtapaCadastro] = useState(1);
-  const defaultForm = {
-    nome: '', cpf: '', celular: '', email: '',
-    endereco: { cep: '', rua: '', numero: '', bairro: '', cidade: '', estado: '' },
-    senha: '', senhaConfirmacao: '', cnh: '',
-  };
   const [formCadastro, setFormCadastro] = useState(defaultForm);
   const [salvandoCadastro, setSalvandoCadastro] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
