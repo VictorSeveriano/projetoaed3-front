@@ -6,6 +6,11 @@ const authService = {
     return data;
   },
 
+  async verificarDisponibilidadeCadastro(dados) {
+    const { data } = await api.post('/auth/verificar-disponibilidade-cadastro', dados);
+    return data.data;
+  },
+
   async cadastrar(dados) {
     const { data } = await api.post('/auth/cadastrar', dados);
     return data;
