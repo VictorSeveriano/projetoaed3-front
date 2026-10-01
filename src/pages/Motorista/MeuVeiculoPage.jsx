@@ -30,7 +30,7 @@ const MeuVeiculoPage = () => {
   const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
   
   const [form, setForm] = useState({ 
-    modelo: '', marca: '', ano: '', placa: '', porte: 'PEQUENO', cor: '', quilometragem: '', quantidadePassageiros: 4,
+    modelo: '', marca: '', ano: '', placa: '', porte: 'Pequeno', cor: '', quilometragem: '', quantidadePassageiros: 4,
     possuiArCondicionado: false, possuiExtintor: false, possuiCintoSeguranca: false, documentacaoRegularizada: false
   });
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +42,7 @@ const MeuVeiculoPage = () => {
         setVeiculo(dados);
         if (dados) {
           setForm({
-            modelo: dados.modelo || '', marca: dados.marca || '', ano: dados.ano || '', placa: dados.placa || '', porte: dados.porte || 'PEQUENO', cor: dados.cor || '', quilometragem: dados.quilometragem || '', quantidadePassageiros: dados.quantidadePassageiros || 4,
+            modelo: dados.modelo || '', marca: dados.marca || '', ano: dados.ano || '', placa: dados.placa || '', porte: dados.porte || 'Pequeno', cor: dados.cor || '', quilometragem: dados.quilometragem || '', quantidadePassageiros: dados.quantidadePassageiros || 4,
             possuiArCondicionado: dados.possuiArCondicionado || false, possuiExtintor: dados.possuiExtintor || false, possuiCintoSeguranca: dados.possuiCintoSeguranca || false, documentacaoRegularizada: dados.documentacaoRegularizada || false
           });
         }
@@ -111,11 +111,9 @@ const MeuVeiculoPage = () => {
               <div className="input-group" style={{ gridColumn: '1 / -1' }}>
                 <label className="input-label">Porte do Veículo</label>
                 <select className="input-field" value={form.porte} onChange={e => setForm({...form, porte: e.target.value})}>
-                  <option value="PEQUENO">Pequeno (Hatch)</option>
-                  <option value="MEDIO">Médio (Sedan)</option>
-                  <option value="GRANDE">Grande (Minivan)</option>
-                  <option value="SUV">SUV</option>
-                  <option value="LUXO">Luxo</option>
+                  <option value="Pequeno">Pequeno</option>
+                  <option value="Medio">Médio</option>
+                  <option value="Grande">Grande</option>
                 </select>
               </div>
               <div className="input-group">
@@ -251,22 +249,12 @@ const MeuVeiculoPage = () => {
                 <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {isEditing ? (
                     <select className="input-field" style={{ padding: '4px', height: 'auto' }} value={form.porte} onChange={e => setForm({ ...form, porte: e.target.value })}>
-                      <option value="PEQUENO">PEQUENO</option>
-                      <option value="MEDIO">MEDIO</option>
-                      <option value="GRANDE">GRANDE</option>
-                      <option value="SUV">SUV</option>
-                      <option value="LUXO">LUXO</option>
+                      <option value="Pequeno">Pequeno</option>
+                      <option value="Medio">Médio</option>
+                      <option value="Grande">Grande</option>
                     </select>
                   ) : <span>{veiculo.porte || '—'}</span>}
-                  / <Badge label={veiculo.tipo || 'NORMAL'} color={veiculo.tipo === 'PREMIUM' ? 'warning' : 'info'} />
                 </span>
-              </div>
-            </div>
-            <div className="perfil-campo">
-              <span className="perfil-campo__icon" aria-hidden="true"><DollarSign size={18} /></span>
-              <div>
-                <span className="perfil-campo__label">Tarifa base</span>
-                <span className="perfil-campo__valor">{formatarMoeda(veiculo.tarifaBase)}/km</span>
               </div>
             </div>
             <div className="perfil-campo">
@@ -366,7 +354,7 @@ const MeuVeiculoPage = () => {
           setShowConfirm(false);
           setIsEditing(false);
           setForm({
-            modelo: veiculo.modelo || '', marca: veiculo.marca || '', ano: veiculo.ano || '', placa: veiculo.placa || '', porte: veiculo.porte || 'PEQUENO', cor: veiculo.cor || '', quilometragem: veiculo.quilometragem || '', quantidadePassageiros: veiculo.quantidadePassageiros || 4,
+            modelo: veiculo.modelo || '', marca: veiculo.marca || '', ano: veiculo.ano || '', placa: veiculo.placa || '', porte: veiculo.porte || 'Pequeno', cor: veiculo.cor || '', quilometragem: veiculo.quilometragem || '', quantidadePassageiros: veiculo.quantidadePassageiros || 4,
             possuiArCondicionado: veiculo.possuiArCondicionado || false, possuiExtintor: veiculo.possuiExtintor || false, possuiCintoSeguranca: veiculo.possuiCintoSeguranca || false, documentacaoRegularizada: veiculo.documentacaoRegularizada || false
           });
         }} 

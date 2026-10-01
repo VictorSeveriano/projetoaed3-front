@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
@@ -6,19 +7,36 @@ import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import auditoriaService from '../../services/auditoria.service';
+import usuariosService from '../../services/usuarios.service';
 import { ShieldAlert, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 const AuditoriaPage = () => {
+  const { usuario } = useAuth();
   const [registros, setRegistros] = useState([]);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
-  const [filtros, setFiltros] = useState({ perfil: '', modulo: '', acao: '', resultado: '' });
+  const [filtros, setFiltros] = useState({ usuarioId: '' });
   
+  const [usuarios, setUsuarios] = useState([]);
   const [registroSelecionado, setRegistroSelecionado] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  if (usuario?.perfil !== 'ADMINISTRADOR') {
+    return <Navigate to="/" replace />;
+  }
+
+  const carregarUsuarios = async () => {
+    try {
+      const res = await usuariosService.listarTodos();
+      if (res) setUsuarios(res);
+    } catch (err) {
+      console.error('Erro ao carregar usuários:', err);
+    }
+  };
 
   const carregar = async (paginaAtual = page, filtrosAtuais = filtros) => {
     setLoading(true);
@@ -34,6 +52,10 @@ const AuditoriaPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    carregarUsuarios();
+  }, []);
 
   useEffect(() => {
     carregar(page, filtros);
@@ -71,35 +93,20 @@ const AuditoriaPage = () => {
       {/* Ferramentas e Filtros */}
       <div className="tools-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <form onSubmit={aplicarFiltros} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', width: '100%', alignItems: 'center' }}>
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
+          <div className="input-group" style={{ marginBottom: 0, minWidth: '250px' }}>
             <div style={{ position: 'relative' }}>
               <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <select name="perfil" value={filtros.perfil} onChange={handleFilterChange} className="input-field" style={{ paddingLeft: '40px', marginBottom: 0 }}>
-                <option value="">Todos (Perfis)</option>
-                <option value="USUARIO">Passageiros</option>
-                <option value="MOTORISTA">Motoristas</option>
-                <option value="ADMINISTRADOR">Administradores</option>
+              <select name="usuarioId" value={filtros.usuarioId} onChange={handleFilterChange} className="input-field" style={{ paddingLeft: '40px', marginBottom: 0 }}>
+                <option value="">Todos os Usuários</option>
+                {usuarios.map(u => (
+                  <option key={u.id} value={u.id}>{u.nome} ({u.perfil})</option>
+                ))}
               </select>
             </div>
           </div>
-          
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
-            <input type="text" name="modulo" placeholder="Módulo (ex. VEICULOS)" value={filtros.modulo} onChange={handleFilterChange} className="input-field" style={{ marginBottom: 0 }} />
-          </div>
-
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
-            <input type="text" name="acao" placeholder="Ação (ex. ALTERACAO)" value={filtros.acao} onChange={handleFilterChange} className="input-field" style={{ marginBottom: 0 }} />
-          </div>
-
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
-            <select name="resultado" value={filtros.resultado} onChange={handleFilterChange} className="input-field" style={{ marginBottom: 0 }}>
-              <option value="">Resultado</option>
-              <option value="SUCESSO">Sucesso</option>
-              <option value="FALHA">Falha</option>
-            </select>
-          </div>
 
           <Button type="submit" variant="primary">Filtrar</Button>
+          <Button type="button" variant="ghost" onClick={() => { setFiltros({ usuarioId: '' }); setPage(1); carregar(1, { usuarioId: '' }); }}>Limpar</Button>
         </form>
       </div>
 

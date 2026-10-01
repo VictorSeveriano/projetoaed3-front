@@ -5,6 +5,7 @@ const veiculosService = {
     const params = new URLSearchParams();
     if (filtros.status) params.append('status', filtros.status);
     if (filtros.motoristaId) params.append('motoristaId', filtros.motoristaId);
+    if (filtros.porte) params.append('porte', filtros.porte);
     
     const { data } = await api.get(`/veiculos?${params.toString()}`);
     return data.data;

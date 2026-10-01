@@ -3,10 +3,7 @@ import api from './api';
 const auditoriaService = {
   async listar(filtros = {}, page = 1, limit = 20) {
     const params = new URLSearchParams({ page, limit });
-    if (filtros.perfil) params.append('perfil', filtros.perfil);
-    if (filtros.modulo) params.append('modulo', filtros.modulo);
-    if (filtros.acao) params.append('acao', filtros.acao);
-    if (filtros.resultado) params.append('resultado', filtros.resultado);
+    if (filtros.usuarioId) params.append('usuarioId', filtros.usuarioId);
 
     const { data } = await api.get(`/auditoria?${params.toString()}`);
     return data; // { data: [...], meta: { total, page, ... } }
