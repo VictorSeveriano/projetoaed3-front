@@ -4,6 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
+import ModalErro from '../../components/ui/ModalErro';
 import motoristasService from '../../services/motoristas.service';
 import veiculosService from '../../services/veiculos.service';
 import { Users } from 'lucide-react';
@@ -16,6 +17,7 @@ const MotoristasPage = () => {
   const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
   const [modalVeiculoOpen, setModalVeiculoOpen] = useState(false);
   const [veiculoSelecionado, setVeiculoSelecionado] = useState(null);
+  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
   const carregar = async () => {
     setLoading(true);
@@ -48,7 +50,11 @@ const MotoristasPage = () => {
       setVeiculoSelecionado(prev => ({ ...prev, classe }));
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Erro ao salvar classe do veículo.');
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao salvar classe do veículo.',
+      });
     }
   };
 
@@ -129,6 +135,13 @@ const MotoristasPage = () => {
         veiculo={veiculoSelecionado}
         isAdmin={true}
         onSaveClasse={handleSaveClasse}
+      />
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        titulo={erroModal.titulo}
+        mensagem={erroModal.mensagem}
       />
     </div>
   );

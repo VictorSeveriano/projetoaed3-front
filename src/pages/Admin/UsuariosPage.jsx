@@ -4,6 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilUsuario, ModalPerfilMotorista } from '../../components/ui/ModaisPerfil';
+import ModalErro from '../../components/ui/ModalErro';
 import usuariosService from '../../services/usuarios.service';
 import motoristasService from '../../services/motoristas.service';
 import { User, Search, Filter } from 'lucide-react';
@@ -19,6 +20,8 @@ const UsuariosPage = () => {
   
   const [modalMotoristaOpen, setModalMotoristaOpen] = useState(false);
   const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
+
+  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
   // Filters state
   const [filtroPesquisa, setFiltroPesquisa] = useState('');
@@ -55,24 +58,36 @@ const UsuariosPage = () => {
       setUsuarioSelecionado(prev => ({ ...prev, ...dados }));
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Erro ao salvar os dados do usuário.');
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao salvar os dados do usuário.',
+      });
     }
   };
 
   const abrirMotorista = async (usuarioId) => {
     try {
       // O perfil do motorista fica em /api/motoristas/perfil/:usuarioId
-      const { data } = await motoristasService.buscarPorUsuarioId(usuarioId);
-      if (data) {
-        setMotoristaSelecionado(data);
+      const motorista = await motoristasService.buscarPorUsuarioId(usuarioId);
+      if (motorista) {
+        setMotoristaSelecionado(motorista);
         setModalMotoristaOpen(true);
         setModalUsuarioOpen(false); // fecha o de usuário
       } else {
-        alert('Este usuário ainda não possui registro de motorista aprovado/ativo.');
+        setErroModal({
+          aberto: true,
+          titulo: 'Aviso',
+          mensagem: 'Este usuário ainda não possui registro de motorista aprovado/ativo.',
+        });
       }
     } catch (err) {
       console.error(err);
-      alert('Não foi possível carregar o perfil de motorista deste usuário.');
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: 'Não foi possível carregar o perfil de motorista deste usuário.',
+      });
     }
   };
 
@@ -181,6 +196,13 @@ const UsuariosPage = () => {
         isOpen={modalMotoristaOpen}
         onClose={() => setModalMotoristaOpen(false)}
         motorista={motoristaSelecionado}
+      />
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        titulo={erroModal.titulo}
+        mensagem={erroModal.mensagem}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import ModalErro from '../../components/ui/ModalErro';
 import veiculosService from '../../services/veiculos.service';
 import { Car } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
@@ -14,6 +15,7 @@ const VeiculosAnalisePage = () => {
   const [loading, setLoading] = useState(true);
   const [acao, setAcao] = useState(null); // { tipo: 'aprovar' | 'rejeitar', veiculo: obj }
   const [classeSelecionada, setClasseSelecionada] = useState('BASICO');
+  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
   const carregar = async () => {
     setLoading(true);
@@ -40,7 +42,11 @@ const VeiculosAnalisePage = () => {
       await carregar();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Erro ao processar ação');
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao processar ação',
+      });
     } finally {
       setAcao(null);
       setClasseSelecionada('BASICO');
@@ -142,6 +148,13 @@ const VeiculosAnalisePage = () => {
           </div>
         </div>
       )}
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        titulo={erroModal.titulo}
+        mensagem={erroModal.mensagem}
+      />
     </>
   );
 };

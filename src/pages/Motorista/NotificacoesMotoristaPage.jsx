@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import ModalErro from '../../components/ui/ModalErro';
 import api from '../../services/api';
 import corridasService from '../../services/corridas.service';
 import { Bell, Check, CheckCircle, XCircle } from 'lucide-react';
@@ -26,6 +27,7 @@ const NotificacoesMotoristaPage = () => {
   const [loading, setLoading] = useState(true);
   const [acaoLoading, setAcaoLoading] = useState(null); // corridaId em processamento
   const [confirmarAcao, setConfirmarAcao] = useState(null); // { tipo: 'aceitar'|'recusar', corridaId, notifId }
+  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
   const carregar = useCallback(async () => {
     if (!usuario?.id) return;
@@ -66,7 +68,11 @@ const NotificacoesMotoristaPage = () => {
       await carregar();
     } catch (err) {
       console.error('Erro ao aceitar corrida:', err.response?.data?.message || err.message);
-      alert(err.response?.data?.message || 'Erro ao aceitar a corrida.');
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao aceitar a corrida.',
+      });
     } finally {
       setAcaoLoading(null);
     }
@@ -216,6 +222,13 @@ const NotificacoesMotoristaPage = () => {
         confirmText="Recusar"
         cancelText="Voltar"
         variant="warning"
+      />
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        titulo={erroModal.titulo}
+        mensagem={erroModal.mensagem}
       />
     </div>
   );
