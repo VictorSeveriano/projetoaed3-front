@@ -4,7 +4,6 @@ import Header from '../../components/layout/Header';
 import Loading from '../../components/ui/Loading';
 import CorridasTabs from '../../components/ui/CorridasTabs';
 import corridasService from '../../services/corridas.service';
-import veiculosService from '../../services/veiculos.service';
 
 /**
  * CorridasPage — Página de corridas compartilhada entre Admin, Usuário e Motorista.
@@ -27,13 +26,14 @@ const CorridasPage = () => {
     setLoading(true);
     setError('');
     try {
-      const [corridasRes, carrosRes] = await Promise.all([
-        corridasService.listarPorPerfil(''),
-        veiculosService.listarTodos().catch(() => ({ data: [] })),
-      ]);
+      const corridasRes = await corridasService.listarPorPerfil('');
       setCorridas(corridasRes || []);
       const mapa = {};
-      (carrosRes?.data || carrosRes || []).forEach((c) => { mapa[c.id] = c; });
+      (corridasRes || []).forEach((c) => { 
+        if (c.veiculo) {
+          mapa[c.veiculoId] = c.veiculo; 
+        }
+      });
       setCarrosMap(mapa);
     } catch (err) {
       setError('Erro ao carregar corridas.');

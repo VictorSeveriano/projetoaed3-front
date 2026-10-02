@@ -65,7 +65,7 @@ const InicioMotoristaPage = () => {
     setSubmitting(true);
     setError('');
     try {
-      await api.post('/motoristas', { usuarioId: usuario.id, cnh: cnhForm });
+      await api.post('/motoristas', { cnh: cnhForm });
       await carregarPerfil();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao enviar solicitação.');

@@ -78,7 +78,7 @@ const MeuVeiculoPage = () => {
     setSubmitting(true);
     setError('');
     try {
-      await api.post('/veiculos', { ...form, ano: parseInt(form.ano, 10), usuarioId: usuario.id });
+      await api.post('/veiculos', { ...form, ano: parseInt(form.ano, 10) });
       carregar();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao cadastrar veículo.');

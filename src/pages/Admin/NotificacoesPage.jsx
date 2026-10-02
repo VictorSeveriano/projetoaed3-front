@@ -9,6 +9,7 @@ import { Bell, Check } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import notificacoesService from '../../services/notificacoes.service';
 
 const NotificacoesPage = () => {
   const { usuario } = useAuth();
@@ -20,8 +21,8 @@ const NotificacoesPage = () => {
     if (!usuario?.id) return;
     setLoading(true);
     try {
-      const { data } = await api.get(`/notificacoes?destinatarioId=${usuario.id}`);
-      setNotificacoes(data.data?.notificacoes || []);
+      const dados = await notificacoesService.listar();
+      setNotificacoes(dados?.notificacoes || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -33,7 +34,7 @@ const NotificacoesPage = () => {
 
   const handleLerTodas = async () => {
     try {
-      await api.patch(`/notificacoes/ler-todas?destinatarioId=${usuario.id}`);
+      await notificacoesService.lerTodas();
       carregar();
       window.dispatchEvent(new Event('notificacoes-atualizadas'));
     } catch (e) {}
@@ -42,7 +43,7 @@ const NotificacoesPage = () => {
   const handleNotificacaoClick = async (n) => {
     if (!n.lida) {
       try {
-        await api.patch(`/notificacoes/${n.id}/ler`);
+        await notificacoesService.ler(n.id);
         window.dispatchEvent(new Event('notificacoes-atualizadas'));
       } catch (e) {}
     }
