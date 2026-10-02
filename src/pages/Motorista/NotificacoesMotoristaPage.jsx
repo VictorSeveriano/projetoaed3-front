@@ -48,12 +48,14 @@ const NotificacoesMotoristaPage = () => {
     try {
       await notificacoesService.lerTodas();
       carregar();
+      window.dispatchEvent(new Event('notificacoes-atualizadas'));
     } catch (e) {}
   };
 
   const handleMarcarLida = async (id) => {
     try {
       await notificacoesService.ler(id);
+      window.dispatchEvent(new Event('notificacoes-atualizadas'));
     } catch (e) {}
   };
 
@@ -100,6 +102,13 @@ const NotificacoesMotoristaPage = () => {
     RECUSADA:  { label: 'Recusada', color: 'danger'  },
   };
 
+  const handleNotificacaoClick = async (n) => {
+    if (!n.lida) {
+      await handleMarcarLida(n.id);
+      carregar();
+    }
+  };
+
   return (
     <div className="page animate-fade-in">
       <Header
@@ -135,8 +144,10 @@ const NotificacoesMotoristaPage = () => {
               <div
                 key={n.id}
                 className="card"
+                onClick={() => handleNotificacaoClick(n)}
                 style={{
                   padding: '16px',
+                  cursor: 'pointer',
                   borderLeft: !n.lida
                     ? '4px solid var(--color-primary)'
                     : isNovaCorrida

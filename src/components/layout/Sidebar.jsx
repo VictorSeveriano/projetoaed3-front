@@ -67,7 +67,7 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   }, [usuario?.perfil]);
 
   useEffect(() => {
-    if (usuario?.perfil === 'ADMINISTRADOR') {
+    if (usuario?.perfil === 'ADMINISTRADOR' || usuario?.perfil === 'MOTORISTA') {
       const carregarNotificacoes = () => {
         notificacoesService.listar()
           .then(dados => setNaoLidas(dados?.naoLidas || 0))
@@ -139,7 +139,9 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
               <span className="sidebar__link-icon">{item.icon}</span>
               <span className="sidebar__link-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 {item.label}
-                {item.to === '/notificacoes' && usuario?.perfil === 'ADMINISTRADOR' && naoLidas > 0 && (
+                {((item.to === '/notificacoes' && usuario?.perfil === 'ADMINISTRADOR') || 
+                  (item.to === '/notificacoes-motorista' && usuario?.perfil === 'MOTORISTA')) 
+                  && naoLidas > 0 && (
                   <span style={{
                     backgroundColor: 'var(--color-danger)', 
                     color: 'white', 

@@ -44,6 +44,7 @@ const NotificacoesPage = () => {
       try {
         await notificacoesService.ler(n.id);
         window.dispatchEvent(new Event('notificacoes-atualizadas'));
+        carregar();
       } catch (e) {}
     }
     if (n.tipo === 'SOLICITACAO_MOTORISTA') navigate('/motoristas/analise');
