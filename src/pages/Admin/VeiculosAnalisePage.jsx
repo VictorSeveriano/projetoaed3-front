@@ -14,7 +14,6 @@ const VeiculosAnalisePage = () => {
   const [pendentes, setPendentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [acao, setAcao] = useState(null); // { tipo: 'aprovar' | 'rejeitar', veiculo: obj }
-  const [classeSelecionada, setClasseSelecionada] = useState('BASICO');
   const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
   const carregar = async () => {
@@ -35,7 +34,7 @@ const VeiculosAnalisePage = () => {
     if (!acao) return;
     try {
       if (acao.tipo === 'aprovar') {
-        await veiculosService.aprovar(acao.veiculo.id, classeSelecionada);
+        await veiculosService.aprovar(acao.veiculo.id);
       } else {
         await veiculosService.rejeitar(acao.veiculo.id);
       }
@@ -49,7 +48,6 @@ const VeiculosAnalisePage = () => {
       });
     } finally {
       setAcao(null);
-      setClasseSelecionada('BASICO');
     }
   };
 
@@ -120,26 +118,20 @@ const VeiculosAnalisePage = () => {
         <div className="modal-overlay" onClick={() => setAcao(null)}>
           <div className="modal modal--md" onClick={e => e.stopPropagation()}>
             <div className="modal__header">
-              <h2 className="modal__title">Aprovar Veículo e Definir Classe</h2>
+              <h2 className="modal__title">Aprovar Veículo</h2>
               <button className="modal__close" onClick={() => setAcao(null)}>✕</button>
             </div>
             <div className="modal__body">
               <p style={{ marginBottom: '16px' }}>
                 Você está aprovando o veículo <strong>{acao.veiculo.marca} {acao.veiculo.modelo}</strong> ({acao.veiculo.placa}).
               </p>
-              <div className="input-group">
-                <label className="input-label">Classe de Serviço</label>
-                <select 
-                  className="input-field" 
-                  value={classeSelecionada} 
-                  onChange={e => setClasseSelecionada(e.target.value)}
-                >
-                  <option value="BASICO">Básico</option>
-                  <option value="NORMAL">Normal</option>
-                  <option value="PREMIUM">Premium</option>
-                </select>
-                <span className="input-hint">A classe afeta a tarifação futura do veículo. O porte informado é {acao.veiculo.porte}.</span>
-              </div>
+              <p>
+                Porte: <strong>{acao.veiculo.porte}</strong> <br />
+                Classe de serviço: <strong>{acao.veiculo.classe || 'Indefinida'}</strong>
+              </p>
+              <p style={{ marginTop: '16px', fontSize: '14px', color: '#666' }}>
+                A classe de serviço é determinada automaticamente pelo porte do veículo.
+              </p>
             </div>
             <div className="modal__footer">
               <Button variant="outline" onClick={() => setAcao(null)}>Cancelar</Button>

@@ -5,6 +5,10 @@ import api from './api';
  */
 const motoristasService = {
 
+  async solicitar(dados) {
+    const { data } = await api.post('/motoristas', dados);
+    return data.data;
+  },
 
   async listarAnalise() {
     const { data } = await api.get('/motoristas/analise');

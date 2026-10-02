@@ -21,8 +21,8 @@ const veiculosService = {
     return data.data;
   },
 
-  async aprovar(id, classe) {
-    const { data } = await api.patch(`/veiculos/${id}/aprovar`, { classe });
+  async aprovar(id) {
+    const { data } = await api.patch(`/veiculos/${id}/aprovar`);
     return data.data;
   },
 

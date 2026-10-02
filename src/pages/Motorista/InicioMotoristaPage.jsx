@@ -4,7 +4,6 @@ import StatCard from '../../components/ui/StatCard';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import motoistasService from '../../services/motoristas.service';
-import api from '../../services/api';
 import { formatarMoeda } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { validarCNH } from '../../utils/validators';
@@ -33,8 +32,8 @@ const InicioMotoristaPage = () => {
   const carregarPerfil = async () => {
     if (!usuario?.id) return;
     try {
-      const { data } = await api.get(`/motoristas/perfil/${usuario.id}`);
-      setMotoristaPerfil(data.data); // pode ser null se não solicitou
+      const data = await motoistasService.buscarPorUsuarioId(usuario.id);
+      setMotoristaPerfil(data); // pode ser null se não solicitou
     } catch (err) {
       console.error(err);
       setMotoristaPerfil(null);
@@ -65,7 +64,7 @@ const InicioMotoristaPage = () => {
     setSubmitting(true);
     setError('');
     try {
-      await api.post('/motoristas', { cnh: cnhForm });
+      await motoistasService.solicitar({ cnh: cnhForm });
       await carregarPerfil();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao enviar solicitação.');

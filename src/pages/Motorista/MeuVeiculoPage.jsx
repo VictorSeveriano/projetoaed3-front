@@ -11,7 +11,6 @@ import Button from '../../components/ui/Button';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import veiculosService from '../../services/veiculos.service';
-import api from '../../services/api';
 import { VeiculoFormCadastro } from '../../components/ui/VeiculoFormCadastro';
 import { VeiculoCardEdicao } from '../../components/ui/VeiculoCardEdicao';
 
@@ -78,7 +77,7 @@ const MeuVeiculoPage = () => {
     setSubmitting(true);
     setError('');
     try {
-      await api.post('/veiculos', { ...form, ano: parseInt(form.ano, 10) });
+      await veiculosService.cadastrar({ ...form, ano: parseInt(form.ano, 10) });
       carregar();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao cadastrar veículo.');
