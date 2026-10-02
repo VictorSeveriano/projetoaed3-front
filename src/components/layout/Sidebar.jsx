@@ -69,7 +69,7 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   useEffect(() => {
     if (usuario?.perfil === 'ADMINISTRADOR') {
       const carregarNotificacoes = () => {
-        notificacoesService.listar(usuario.id)
+        notificacoesService.listar()
           .then(dados => setNaoLidas(dados?.naoLidas || 0))
           .catch(() => setNaoLidas(0));
       };

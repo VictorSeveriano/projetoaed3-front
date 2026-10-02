@@ -179,7 +179,6 @@ const CorridaModal = ({
     setLoading(true); setError('');
     try {
       const corridaCriada = await corridasService.criar({
-        usuarioId: usuario?.id,
         origemNome,
         destinoNome,
         origemLat: origemGeocodificada?.lat || null,

@@ -44,7 +44,6 @@ const CorridasTabs = ({
   podeCancelar = false,
   podeFinalizar = false,
   podeConfirmarPagamento = false, // Motorista: confirma pagamento após corrida
-  motoristaUsuarioId = null,       // ID do usuário motorista para confirmar pagamento
   onAcao,
 }) => {
   const [abaAtiva, setAbaAtiva]           = useState('TODAS');
@@ -98,7 +97,7 @@ const CorridasTabs = ({
     if (!corridaToConfirmarPag) return;
     setConfirmandoPag(true); setActionError('');
     try {
-      await corridasService.confirmarPagamento(corridaToConfirmarPag, motoristaUsuarioId);
+      await corridasService.confirmarPagamento(corridaToConfirmarPag);
       setCorridaToConfirmarPag(null);
       if (onAcao) onAcao();
     } catch (err) {

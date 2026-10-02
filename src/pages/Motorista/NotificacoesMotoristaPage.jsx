@@ -33,7 +33,7 @@ const NotificacoesMotoristaPage = () => {
     if (!usuario?.id) return;
     setLoading(true);
     try {
-      const { data } = await api.get(`/notificacoes?destinatarioId=${usuario.id}`);
+      const { data } = await api.get('/notificacoes');
       setNotificacoes(data.data?.notificacoes || []);
     } catch (err) {
       console.error(err);
@@ -46,7 +46,7 @@ const NotificacoesMotoristaPage = () => {
 
   const handleLerTodas = async () => {
     try {
-      await api.patch(`/notificacoes/ler-todas?destinatarioId=${usuario.id}`);
+      await api.patch('/notificacoes/ler-todas');
       carregar();
     } catch (e) {}
   };
@@ -63,7 +63,7 @@ const NotificacoesMotoristaPage = () => {
     setAcaoLoading(corridaId);
     setConfirmarAcao(null);
     try {
-      await corridasService.aceitar(corridaId, usuario.id);
+      await corridasService.aceitar(corridaId);
       if (notifId) await handleMarcarLida(notifId);
       await carregar();
     } catch (err) {
@@ -84,7 +84,7 @@ const NotificacoesMotoristaPage = () => {
     setAcaoLoading(corridaId);
     setConfirmarAcao(null);
     try {
-      await corridasService.recusar(corridaId, usuario.id);
+      await corridasService.recusar(corridaId);
       if (notifId) await handleMarcarLida(notifId);
       await carregar();
     } catch (err) {

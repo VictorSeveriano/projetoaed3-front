@@ -28,7 +28,7 @@ const CorridasPage = () => {
     setError('');
     try {
       const [corridasRes, carrosRes] = await Promise.all([
-        corridasService.listarPorPerfil(usuario.id, usuario.perfil, ''),
+        corridasService.listarPorPerfil(''),
         veiculosService.listarTodos().catch(() => ({ data: [] })),
       ]);
       setCorridas(corridasRes || []);
@@ -65,7 +65,6 @@ const CorridasPage = () => {
         podeCancelar={isAdmin || isUsuario}
         podeFinalizar={isAdmin}
         podeConfirmarPagamento={isMotorista}
-        motoristaUsuarioId={isMotorista ? usuario?.id : null}
         onAcao={carregar}
       />
     </div>
