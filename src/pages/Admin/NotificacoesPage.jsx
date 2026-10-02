@@ -4,7 +4,6 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
-import api from '../../services/api';
 import { Bell, Check } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';

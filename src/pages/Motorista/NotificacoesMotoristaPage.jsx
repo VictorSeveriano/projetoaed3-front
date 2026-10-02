@@ -6,7 +6,7 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
-import api from '../../services/api';
+import notificacoesService from '../../services/notificacoes.service';
 import corridasService from '../../services/corridas.service';
 import { Bell, Check, CheckCircle, XCircle } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
@@ -33,8 +33,8 @@ const NotificacoesMotoristaPage = () => {
     if (!usuario?.id) return;
     setLoading(true);
     try {
-      const { data } = await api.get('/notificacoes');
-      setNotificacoes(data.data?.notificacoes || []);
+      const data = await notificacoesService.listar();
+      setNotificacoes(data?.notificacoes || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,14 +46,14 @@ const NotificacoesMotoristaPage = () => {
 
   const handleLerTodas = async () => {
     try {
-      await api.patch('/notificacoes/ler-todas');
+      await notificacoesService.lerTodas();
       carregar();
     } catch (e) {}
   };
 
   const handleMarcarLida = async (id) => {
     try {
-      await api.patch(`/notificacoes/${id}/ler`);
+      await notificacoesService.ler(id);
     } catch (e) {}
   };
 
