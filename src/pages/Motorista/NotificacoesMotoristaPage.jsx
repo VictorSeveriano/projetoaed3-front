@@ -29,6 +29,15 @@ const NotificacoesMotoristaPage = () => {
   const [confirmarAcao, setConfirmarAcao] = useState(null); // { tipo: 'aceitar'|'recusar', corridaId, notifId }
   const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
+  const exibirErro = useCallback((err, mensagemPadrao) => {
+    const mensagem = err?.response?.data?.message || mensagemPadrao;
+    setErroModal({
+      aberto: true,
+      titulo: 'Erro',
+      mensagem,
+    });
+  }, []);
+
   const carregar = useCallback(async () => {
     if (!usuario?.id) return;
     setLoading(true);
@@ -36,27 +45,35 @@ const NotificacoesMotoristaPage = () => {
       const data = await notificacoesService.listar();
       setNotificacoes(data?.notificacoes || []);
     } catch (err) {
-      console.error(err);
+      exibirErro(err, 'Não foi possível carregar as notificações.');
     } finally {
       setLoading(false);
     }
-  }, [usuario?.id]);
+  }, [usuario?.id, exibirErro]);
 
   useEffect(() => { carregar(); }, [carregar]);
 
   const handleLerTodas = async () => {
     try {
       await notificacoesService.lerTodas();
-      carregar();
+      await carregar();
       window.dispatchEvent(new Event('notificacoes-atualizadas'));
-    } catch (e) {}
+    } catch (err) {
+      exibirErro(err, 'Não foi possível marcar todas as notificações como lidas.');
+    }
   };
 
-  const handleMarcarLida = async (id) => {
+  const handleMarcarLida = async (id, { silencioso = false } = {}) => {
     try {
       await notificacoesService.ler(id);
       window.dispatchEvent(new Event('notificacoes-atualizadas'));
-    } catch (e) {}
+      return true;
+    } catch (err) {
+      if (!silencioso) {
+        exibirErro(err, 'Não foi possível marcar a notificação como lida.');
+      }
+      return false;
+    }
   };
 
   const handleAceitar = async () => {
@@ -66,15 +83,10 @@ const NotificacoesMotoristaPage = () => {
     setConfirmarAcao(null);
     try {
       await corridasService.aceitar(corridaId);
-      if (notifId) await handleMarcarLida(notifId);
+      if (notifId) await handleMarcarLida(notifId, { silencioso: true });
       await carregar();
     } catch (err) {
-      console.error('Erro ao aceitar corrida:', err.response?.data?.message || err.message);
-      setErroModal({
-        aberto: true,
-        titulo: 'Erro',
-        mensagem: err.response?.data?.message || 'Erro ao aceitar a corrida.',
-      });
+      exibirErro(err, 'Erro ao aceitar a corrida.');
     } finally {
       setAcaoLoading(null);
     }
@@ -87,10 +99,10 @@ const NotificacoesMotoristaPage = () => {
     setConfirmarAcao(null);
     try {
       await corridasService.recusar(corridaId);
-      if (notifId) await handleMarcarLida(notifId);
+      if (notifId) await handleMarcarLida(notifId, { silencioso: true });
       await carregar();
     } catch (err) {
-      console.error('Erro ao recusar corrida:', err.response?.data?.message || err.message);
+      exibirErro(err, 'Erro ao recusar a corrida.');
     } finally {
       setAcaoLoading(null);
     }
@@ -104,8 +116,10 @@ const NotificacoesMotoristaPage = () => {
 
   const handleNotificacaoClick = async (n) => {
     if (!n.lida) {
-      await handleMarcarLida(n.id);
-      carregar();
+      const ok = await handleMarcarLida(n.id);
+      if (ok) {
+        await carregar();
+      }
     }
   };
 
@@ -181,7 +195,7 @@ const NotificacoesMotoristaPage = () => {
 
                   {/* Botões de ação para corridas pendentes */}
                   {isPendente && n.referenciaId && (
-                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                       <Button
                         id={`btn-aceitar-${n.referenciaId}`}
                         variant="success"

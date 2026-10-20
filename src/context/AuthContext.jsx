@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import authService from '../services/auth.service';
+import { AUTH_STORAGE_KEYS, clearAuthSession } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(() => {
     try {
-      const stored = sessionStorage.getItem('usuario');
+      const stored = sessionStorage.getItem(AUTH_STORAGE_KEYS.USUARIO);
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -16,8 +17,8 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (usuarioInput, senha) => {
     const response = await authService.login(usuarioInput, senha);
     const { token, usuario: userData } = response.data;
-    sessionStorage.setItem('auth_token', token);
-    sessionStorage.setItem('usuario', JSON.stringify(userData));
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, token);
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.USUARIO, JSON.stringify(userData));
     setUsuario(userData);
     return userData;
   }, []);
@@ -31,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(() => {
-    sessionStorage.clear();
+    clearAuthSession();
     setUsuario(null);
   }, []);
 

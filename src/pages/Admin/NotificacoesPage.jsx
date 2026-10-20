@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
+import ModalErro from '../../components/ui/ModalErro';
 import { Bell, Check } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
@@ -14,29 +15,40 @@ const NotificacoesPage = () => {
   const { usuario } = useAuth();
   const [notificacoes, setNotificacoes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
   const navigate = useNavigate();
 
-  const carregar = async () => {
+  const exibirErro = useCallback((err, mensagemPadrao) => {
+    setErroModal({
+      aberto: true,
+      titulo: 'Erro',
+      mensagem: err?.response?.data?.message || mensagemPadrao,
+    });
+  }, []);
+
+  const carregar = useCallback(async () => {
     if (!usuario?.id) return;
     setLoading(true);
     try {
       const dados = await notificacoesService.listar();
       setNotificacoes(dados?.notificacoes || []);
     } catch (err) {
-      console.error(err);
+      exibirErro(err, 'Não foi possível carregar as notificações.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [usuario?.id, exibirErro]);
 
-  useEffect(() => { carregar(); }, [usuario?.id]);
+  useEffect(() => { carregar(); }, [carregar]);
 
   const handleLerTodas = async () => {
     try {
       await notificacoesService.lerTodas();
-      carregar();
+      await carregar();
       window.dispatchEvent(new Event('notificacoes-atualizadas'));
-    } catch (e) {}
+    } catch (err) {
+      exibirErro(err, 'Não foi possível marcar todas as notificações como lidas.');
+    }
   };
 
   const handleNotificacaoClick = async (n) => {
@@ -44,8 +56,11 @@ const NotificacoesPage = () => {
       try {
         await notificacoesService.ler(n.id);
         window.dispatchEvent(new Event('notificacoes-atualizadas'));
-        carregar();
-      } catch (e) {}
+        await carregar();
+      } catch (err) {
+        exibirErro(err, 'Não foi possível marcar a notificação como lida.');
+        return;
+      }
     }
     if (n.tipo === 'SOLICITACAO_MOTORISTA') navigate('/motoristas/analise');
     if (n.tipo === 'SOLICITACAO_VEICULO') navigate('/veiculos/analise');
@@ -95,6 +110,13 @@ const NotificacoesPage = () => {
           ))}
         </div>
       )}
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        titulo={erroModal.titulo}
+        mensagem={erroModal.mensagem}
+      />
     </div>
   );
 };

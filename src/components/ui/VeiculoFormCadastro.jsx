@@ -9,23 +9,24 @@ export const VeiculoFormCadastro = ({ form, setForm, handleSubmit, submitting })
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div className="input-group">
             <label className="input-label">Marca</label>
-            <input type="text" className="input-field" placeholder="Ex: Toyota" value={form.marca} onChange={e => setForm({...form, marca: e.target.value})} />
+            <input type="text" className="input-field" placeholder="Ex: Toyota" required value={form.marca} onChange={e => setForm({...form, marca: e.target.value})} />
           </div>
           <div className="input-group">
             <label className="input-label">Modelo</label>
-            <input type="text" className="input-field" placeholder="Ex: Corolla" value={form.modelo} onChange={e => setForm({...form, modelo: e.target.value})} />
+            <input type="text" className="input-field" placeholder="Ex: Corolla" required value={form.modelo} onChange={e => setForm({...form, modelo: e.target.value})} />
           </div>
           <div className="input-group">
             <label className="input-label">Ano</label>
-            <input type="number" className="input-field" placeholder="Ex: 2024" value={form.ano} onChange={e => setForm({...form, ano: e.target.value})} />
+            <input type="number" className="input-field" placeholder="Ex: 2024" required value={form.ano} onChange={e => setForm({...form, ano: e.target.value})} />
           </div>
           <div className="input-group">
             <label className="input-label">Placa</label>
-            <input type="text" className="input-field" placeholder="Ex: ABC-1234" value={form.placa} onChange={e => setForm({...form, placa: e.target.value})} />
+            <input type="text" className="input-field" placeholder="Ex: ABC-1234" required value={form.placa} onChange={e => setForm({...form, placa: e.target.value})} />
           </div>
           <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="input-label">Porte do Veículo</label>
-            <select className="input-field" value={form.porte} onChange={e => setForm({...form, porte: e.target.value})}>
+            <label className="input-label">Porte do Veículo *</label>
+            <select className="input-field" required value={form.porte} onChange={e => setForm({...form, porte: e.target.value})}>
+              <option value="" disabled>Selecione o porte...</option>
               <option value="Pequeno">Pequeno</option>
               <option value="Medio">Médio</option>
               <option value="Grande">Grande</option>

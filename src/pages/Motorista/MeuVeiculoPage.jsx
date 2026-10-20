@@ -15,7 +15,7 @@ import { VeiculoFormCadastro } from '../../components/ui/VeiculoFormCadastro';
 import { VeiculoCardEdicao } from '../../components/ui/VeiculoCardEdicao';
 
 const FORM_INICIAL = {
-  modelo: '', marca: '', ano: '', placa: '', porte: 'Pequeno', cor: '', quilometragem: '', quantidadePassageiros: 4,
+  modelo: '', marca: '', ano: '', placa: '', porte: '', cor: '', quilometragem: '', quantidadePassageiros: 4,
   possuiArCondicionado: false, possuiExtintor: false, possuiCintoSeguranca: false, documentacaoRegularizada: false
 };
 
@@ -37,10 +37,7 @@ const MeuVeiculoPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
   
-  const [form, setForm] = useState({ 
-    modelo: '', marca: '', ano: '', placa: '', porte: 'Pequeno', cor: '', quilometragem: '', quantidadePassageiros: 4,
-    possuiArCondicionado: false, possuiExtintor: false, possuiCintoSeguranca: false, documentacaoRegularizada: false
-  });
+  const [form, setForm] = useState(FORM_INICIAL);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -55,7 +52,7 @@ const MeuVeiculoPage = () => {
         setMotoristaPerfil(perfil);
         if (dados) {
           setForm({
-            modelo: dados.modelo || '', marca: dados.marca || '', ano: dados.ano || '', placa: dados.placa || '', porte: dados.porte || 'Pequeno', cor: dados.cor || '', quilometragem: dados.quilometragem || '', quantidadePassageiros: dados.quantidadePassageiros || 4,
+            modelo: dados.modelo || '', marca: dados.marca || '', ano: dados.ano || '', placa: dados.placa || '', porte: dados.porte || '', cor: dados.cor || '', quilometragem: dados.quilometragem || '', quantidadePassageiros: dados.quantidadePassageiros || 4,
             possuiArCondicionado: dados.possuiArCondicionado || false, possuiExtintor: dados.possuiExtintor || false, possuiCintoSeguranca: dados.possuiCintoSeguranca || false, documentacaoRegularizada: dados.documentacaoRegularizada || false
           });
         }
@@ -70,8 +67,8 @@ const MeuVeiculoPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.modelo || !form.marca || !form.ano || !form.placa) {
-      setError('Preencha todos os campos.');
+    if (!form.modelo || !form.marca || !form.ano || !form.placa || !form.porte) {
+      setError('Preencha todos os campos obrigatórios, incluindo o porte do veículo.');
       return;
     }
     setSubmitting(true);
@@ -88,7 +85,7 @@ const MeuVeiculoPage = () => {
 
   if (loading) return <Loading message="Carregando veículo..." />;
 
-  if (error) {
+  if (error && !veiculo && motoristaPerfil?.statusCadastro !== 'APROVADO') {
     return (
       <div className="page animate-fade-in">
         <Header title="Meu Veículo" subtitle="Veículo associado à sua conta" />
@@ -120,15 +117,14 @@ const MeuVeiculoPage = () => {
     return (
       <div className="page animate-fade-in">
         <Header title="Meu Veículo" subtitle="Cadastre seu veículo para realizar corridas" />
+        {error && <div className="form-error" role="alert" style={{ maxWidth: '600px', margin: '0 auto 16px' }}>{error}</div>}
         <VeiculoFormCadastro form={form} setForm={setForm} handleSubmit={handleSubmit} submitting={submitting} />
       </div>
     );
   }
 
-  const statusInfo = STATUS_LABELS[veiculo.status] || { label: veiculo.status, color: 'muted' };
-
   const hasChanges = veiculo && (
-    veiculo.marca !== form.marca || veiculo.modelo !== form.modelo || veiculo.placa !== form.placa || String(veiculo.ano) !== String(form.ano) || veiculo.cor !== form.cor || veiculo.porte !== form.porte ||
+    veiculo.marca !== form.marca || veiculo.modelo !== form.modelo || veiculo.placa !== form.placa || String(veiculo.ano) !== String(form.ano) || veiculo.cor !== form.cor ||
     String(veiculo.quilometragem || '') !== String(form.quilometragem || '') || String(veiculo.quantidadePassageiros) !== String(form.quantidadePassageiros) ||
     veiculo.possuiArCondicionado !== form.possuiArCondicionado || veiculo.possuiExtintor !== form.possuiExtintor || veiculo.possuiCintoSeguranca !== form.possuiCintoSeguranca || veiculo.documentacaoRegularizada !== form.documentacaoRegularizada
   );
@@ -143,7 +139,13 @@ const MeuVeiculoPage = () => {
 
   const handleSaveEdits = async () => {
     try {
-      const dataUpdate = { ...form, ano: parseInt(form.ano, 10), quilometragem: parseInt(form.quilometragem, 10) || 0, quantidadePassageiros: parseInt(form.quantidadePassageiros, 10) || 4 };
+      const { porte: _porteIgnorado, ...camposEditaveis } = form;
+      const dataUpdate = {
+        ...camposEditaveis,
+        ano: parseInt(form.ano, 10),
+        quilometragem: parseInt(form.quilometragem, 10) || 0,
+        quantidadePassageiros: parseInt(form.quantidadePassageiros, 10) || 4,
+      };
       await veiculosService.atualizar(veiculo.id, dataUpdate);
       carregar();
       setIsEditing(false);
@@ -197,7 +199,7 @@ const MeuVeiculoPage = () => {
           setShowConfirm(false);
           setIsEditing(false);
           setForm({
-            modelo: veiculo.modelo || '', marca: veiculo.marca || '', ano: veiculo.ano || '', placa: veiculo.placa || '', porte: veiculo.porte || 'Pequeno', cor: veiculo.cor || '', quilometragem: veiculo.quilometragem || '', quantidadePassageiros: veiculo.quantidadePassageiros || 4,
+            modelo: veiculo.modelo || '', marca: veiculo.marca || '', ano: veiculo.ano || '', placa: veiculo.placa || '', porte: veiculo.porte || '', cor: veiculo.cor || '', quilometragem: veiculo.quilometragem || '', quantidadePassageiros: veiculo.quantidadePassageiros || 4,
             possuiArCondicionado: veiculo.possuiArCondicionado || false, possuiExtintor: veiculo.possuiExtintor || false, possuiCintoSeguranca: veiculo.possuiCintoSeguranca || false, documentacaoRegularizada: veiculo.documentacaoRegularizada || false
           });
         }} 

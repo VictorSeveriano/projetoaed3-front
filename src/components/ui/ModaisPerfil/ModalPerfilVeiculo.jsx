@@ -27,7 +27,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
         ano: veiculo.ano || '',
         placa: veiculo.placa || '',
         cor: veiculo.cor || '',
-        porte: veiculo.porte || 'Pequeno',
+        porte: veiculo.porte || '',
       });
     }
     setIsEditing(false);
@@ -41,7 +41,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
     String(formData.ano) !== String(veiculo.ano || '') ||
     formData.placa !== (veiculo.placa || '') ||
     formData.cor !== (veiculo.cor || '') ||
-    formData.porte !== (veiculo.porte || '');
+    (isAdmin && formData.porte !== (veiculo.porte || ''));
 
   const handleClose = () => {
     if (isEditing && hasChanges) { setShowConfirm(true); } else { onClose(); }
@@ -49,7 +49,10 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
 
   const handleSave = async () => {
     if (!hasChanges) { setInfoOpen(true); return; }
-    if (onSave) await onSave(veiculo.id, formData);
+    const payload = isAdmin
+      ? formData
+      : (({ porte: _porteIgnorado, ...resto }) => resto)(formData);
+    if (onSave) await onSave(veiculo.id, payload);
     setIsEditing(false);
   };
 
@@ -102,8 +105,9 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
       <div className="perfil-campo">
         <span className="perfil-campo__label">Porte</span>
         <span className="perfil-campo__valor">
-          {isEditing ? (
+          {isEditing && isAdmin ? (
             <select className="input-field" style={{ padding: '4px', height: 'auto' }} value={formData.porte} onChange={e => setFormData({ ...formData, porte: e.target.value })}>
+              <option value="" disabled>Selecione o porte...</option>
               {PORTES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           ) : <span>{PORTES.find(p => p.value === veiculo.porte)?.label || veiculo.porte || '—'}</span>}
@@ -147,7 +151,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
             {isEditing ? (
               <div style={{ display: 'flex', gap: '8px' }}>
                 <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
-                <Button size="sm" variant="outline" onClick={() => { setFormData({ marca: veiculo.marca || '', modelo: veiculo.modelo || '', ano: veiculo.ano || '', placa: veiculo.placa || '', cor: veiculo.cor || '', porte: veiculo.porte || 'Pequeno' }); setIsEditing(false); }}>Cancelar</Button>
+                <Button size="sm" variant="outline" onClick={() => { setFormData({ marca: veiculo.marca || '', modelo: veiculo.modelo || '', ano: veiculo.ano || '', placa: veiculo.placa || '', cor: veiculo.cor || '', porte: veiculo.porte || '' }); setIsEditing(false); }}>Cancelar</Button>
               </div>
             ) : (
               <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>

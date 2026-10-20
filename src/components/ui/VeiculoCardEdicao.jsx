@@ -6,6 +6,7 @@ import { STATUS_LABELS, formatarMoeda } from '../../utils/formatters';
 
 export const VeiculoCardEdicao = ({ veiculo, form, setForm, isEditing, setIsEditing, handleCancelClick, handleSaveEdits, handleDelete, deleting }) => {
   const statusInfo = STATUS_LABELS[veiculo.status] || { label: veiculo.status, color: 'muted' };
+  const classeExibida = veiculo.classe || veiculo.categoria;
 
   return (
     <div className="card">
@@ -70,13 +71,12 @@ export const VeiculoCardEdicao = ({ veiculo, form, setForm, isEditing, setIsEdit
             <div>
               <span className="perfil-campo__label">Porte</span>
               <span className="perfil-campo__valor">
-                {isEditing ? (
-                  <select className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={form.porte} onChange={e => setForm({ ...form, porte: e.target.value })}>
-                    <option value="Pequeno">Pequeno</option>
-                    <option value="Medio">Médio</option>
-                    <option value="Grande">Grande</option>
-                  </select>
-                ) : veiculo.porte}
+                <span>{veiculo.porte === 'Medio' ? 'Médio' : veiculo.porte}</span>
+                {isEditing && (
+                  <small style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                    Somente o administrador pode alterar o porte
+                  </small>
+                )}
               </span>
             </div>
           </div>
@@ -135,7 +135,7 @@ export const VeiculoCardEdicao = ({ veiculo, form, setForm, isEditing, setIsEdit
             </div>
             <div className="perfil-campo">
               <span className="perfil-campo__label">Classe Designada</span>
-              <div><Badge label={veiculo.categoria || 'Não avaliado'} color={veiculo.categoria ? 'primary' : 'muted'} /></div>
+              <div><Badge label={classeExibida || 'Não avaliado'} color={classeExibida ? 'primary' : 'muted'} /></div>
             </div>
             <div className="perfil-campo">
               <span className="perfil-campo__icon" aria-hidden="true"><DollarSign size={18} /></span>

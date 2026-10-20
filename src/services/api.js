@@ -2,6 +2,20 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+export const AUTH_STORAGE_KEYS = Object.freeze({
+  TOKEN: 'auth_token',
+  USUARIO: 'usuario',
+});
+
+/**
+ * Remove exclusivamente as chaves de sessão de autenticação do sessionStorage,
+ * preservando outros dados temporários de navegação ou formulários.
+ */
+export const clearAuthSession = () => {
+  sessionStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+  sessionStorage.removeItem(AUTH_STORAGE_KEYS.USUARIO);
+};
+
 /**
  * Instancia configurada do axios.
  * Interceptors preparados para adicionar token de autenticacao.
@@ -15,7 +29,7 @@ const api = axios.create({
 // Interceptor de requisicao: adiciona token automaticamente
 api.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('auth_token');
+    const token = sessionStorage.getItem(AUTH_STORAGE_KEYS.TOKEN);
     if (token) {
       config.headers['x-auth-token'] = token;
     }
@@ -32,7 +46,7 @@ api.interceptors.response.use(
     const isLoginRequest = url?.endsWith('/auth/login');
 
     if (error.response?.status === 401 && !isLoginRequest) {
-      sessionStorage.clear();
+      clearAuthSession();
       window.location.href = '/login';
     }
     return Promise.reject(error);
