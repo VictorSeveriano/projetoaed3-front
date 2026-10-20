@@ -6,6 +6,11 @@ import Input from './Input';
 import Button from './Button';
 import corridasService from '../../services/corridas.service';
 import { formatarMoeda } from '../../utils/formatters';
+import {
+  converterDataHorarioComercialParaISO,
+  obterMinDatetimeComercial,
+  montarPayloadCriacaoCorrida,
+} from '../../utils/corridaPayload';
 import { useAuth } from '../../context/AuthContext';
 import { Route, Check, TriangleAlert, Car, MapPin, Clock } from 'lucide-react';
 
@@ -83,8 +88,11 @@ const CorridaModal = ({
       return;
     }
 
-    // Validação da data/hora
-    if (!dataHorario) {
+    // Validação e conversão de data/hora no fuso comercial (America/Sao_Paulo)
+    let dataHorarioIso;
+    try {
+      dataHorarioIso = converterDataHorarioComercialParaISO(dataHorario);
+    } catch {
       setValorCalculado(null);
       setErroPrevia({
         titulo: 'Data inválida',
@@ -102,7 +110,7 @@ const CorridaModal = ({
         const resposta = await corridasService.calcularValorPrevia({
           distanciaKm: dist,
           classe,
-          dataHorario: new Date(dataHorario).toISOString()
+          dataHorario: dataHorarioIso,
         });
 
         // Valida o retorno do service antes de usar
@@ -176,23 +184,26 @@ const CorridaModal = ({
     }
     if (!rota) { setError('Selecione uma rota primeiro.'); return; }
 
-    setLoading(true); setError('');
+    let payload;
     try {
-      const corridaCriada = await corridasService.criar({
+      payload = montarPayloadCriacaoCorrida({
         origemNome,
         destinoNome,
-        origemLat: origemGeocodificada?.lat || null,
-        origemLng: origemGeocodificada?.lng || null,
-        destinoLat: destinoGeocodificada?.lat || null,
-        destinoLng: destinoGeocodificada?.lng || null,
-        rotaCaminho: rota.caminho,
-        polyline: rota.polyline || null,
-        distanciaKm: rota.distanciaKm,
-        duracaoMin: rota.duracaoMin,
-        dataHorario: new Date(dataHorario).toISOString(),
+        origemGeocodificada,
+        destinoGeocodificada,
+        rota,
+        dataHorario,
         classe,
         formaPagamento,
       });
+    } catch (validationErr) {
+      setError(validationErr.message || 'Dados da corrida inválidos.');
+      return;
+    }
+
+    setLoading(true); setError('');
+    try {
+      const corridaCriada = await corridasService.criar(payload);
 
       // Valida que o backend retornou um valor válido
       const valorRetornado = corridaCriada?.valor;
@@ -226,8 +237,7 @@ const CorridaModal = ({
     } finally { setLoading(false); }
   };
 
-  const minDatetime = new Date(Date.now() + 5 * 60 * 1000)
-    .toISOString().slice(0, 16);
+  const minDatetime = obterMinDatetimeComercial();
 
   const CLASSES = [
     { value: 'BASICO',  label: 'Pequeno', desc: 'Hatch ou sedan compacto' },

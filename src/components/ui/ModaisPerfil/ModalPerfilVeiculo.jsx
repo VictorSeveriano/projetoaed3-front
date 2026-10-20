@@ -62,6 +62,11 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
   const statusOpColor = { DISPONIVEL: 'success', EM_CORRIDA: 'warning', INDISPONIVEL: 'muted' };
   const classeLabel = { BASICO: 'Básico', NORMAL: 'Normal', PREMIUM: 'Premium' };
   const classeColor = { BASICO: 'info', NORMAL: 'info', PREMIUM: 'warning' };
+  const porteParaClasse = { Pequeno: 'BASICO', Medio: 'NORMAL', Grande: 'PREMIUM' };
+  const classeExibida =
+    isEditing && isAdmin && formData.porte && porteParaClasse[formData.porte]
+      ? porteParaClasse[formData.porte]
+      : veiculo.classe;
 
   const fi = (label, value) => (
     <div className="perfil-campo">
@@ -118,7 +123,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
 
   const readonlyFields = (
     <>
-      {fi('Classe de Serviço', <Badge label={classeLabel[veiculo.classe] || veiculo.classe || '—'} color={classeColor[veiculo.classe] || 'muted'} />)}
+      {fi('Classe de Serviço', <Badge label={classeLabel[classeExibida] || classeExibida || '—'} color={classeColor[classeExibida] || 'muted'} />)}
       {fi('Quilometragem', veiculo.quilometragem ? `${veiculo.quilometragem} km` : '—')}
       {fi('Passageiros', veiculo.quantidadePassageiros || '—')}
       {fi('Ar-Condicionado', veiculo.possuiArCondicionado ? 'Sim' : 'Não')}

@@ -1,8 +1,11 @@
+import { BUSINESS_TIMEZONE } from './corridaPayload.js';
+
 export const formatarData = (dateStr) => {
   if (!dateStr) return '—';
-  const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
+  const ehApenasDia = typeof dateStr === 'string' && !dateStr.includes('T');
+  const date = new Date(ehApenasDia ? dateStr + 'T00:00:00-03:00' : dateStr);
   if (isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('pt-BR');
+  return date.toLocaleDateString('pt-BR', { timeZone: BUSINESS_TIMEZONE });
 };
 
 export const formatarDataHorario = (isoStr) => {
@@ -10,13 +13,14 @@ export const formatarDataHorario = (isoStr) => {
   const date = new Date(isoStr);
   if (isNaN(date.getTime())) return '—';
   return date.toLocaleString('pt-BR', {
+    timeZone: BUSINESS_TIMEZONE,
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 };
 
 export const formatarMoeda = (valor) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor ?? 0);
 
 export const STATUS_LABELS = {
   SOLICITADA:   { label: 'Solicitada',   color: 'info'    },

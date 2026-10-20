@@ -31,11 +31,6 @@ const veiculosService = {
     return data.data;
   },
 
-  async editarClasse(id, classe) {
-    const { data } = await api.patch(`/veiculos/${id}/classe`, { classe });
-    return data.data;
-  },
-
   async atualizar(id, dados) {
     const { data } = await api.patch(`/veiculos/${id}`, dados);
     return data.data;

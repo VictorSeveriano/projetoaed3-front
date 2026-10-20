@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { MapPin, AlertTriangle, Loader } from 'lucide-react';
+import { possuiCoordenadasValidas } from '../../utils/corridaPayload';
 
 /**
  * MapView — Componente reutilizável de mapa Google Maps.
@@ -103,7 +104,7 @@ const MapView = ({ locations = [], origin = null, destination = null, polyline =
     }
 
     locations.forEach((local) => {
-      if (!local.latitude || !local.longitude) return;
+      if (!possuiCoordenadasValidas(local.latitude, local.longitude)) return;
 
       const marker = new window.google.maps.Marker({
         position: { lat: local.latitude, lng: local.longitude },

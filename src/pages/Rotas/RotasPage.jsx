@@ -4,6 +4,11 @@ import Button from '../../components/ui/Button';
 import CorridaModal from '../../components/ui/CorridaModal';
 import rotasService from '../../services/rotas.service';
 import useLocationSearch from '../../hooks/useLocationSearch';
+import {
+  possuiCoordenadasValidas,
+  normalizarLatitudeOpcional,
+  normalizarLongitudeOpcional,
+} from '../../utils/corridaPayload';
 import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check, Search, X, Loader } from 'lucide-react';
 import { LocalizacaoInput } from '../../components/ui/LocalizacaoInput';
 
@@ -64,7 +69,7 @@ const RotasPage = () => {
 
     if (rotaSelecionada && rotaSelecionada.pontos) {
       rotaSelecionada.pontos.forEach((ponto, idx) => {
-        if (!ponto.latitude || !ponto.longitude) return;
+        if (!possuiCoordenadasValidas(ponto.latitude, ponto.longitude)) return;
         const isOrigem  = idx === 0;
         const isDestino = idx === rotaSelecionada.pontos.length - 1;
         const icon = {
@@ -103,7 +108,7 @@ const RotasPage = () => {
     } else if (rotaSelecionada && rotaSelecionada.pontos.length >= 2) {
       const bounds = new window.google.maps.LatLngBounds();
       rotaSelecionada.pontos
-        .filter((p) => p.latitude && p.longitude)
+        .filter((p) => possuiCoordenadasValidas(p.latitude, p.longitude))
         .forEach((p) => bounds.extend({ lat: p.latitude, lng: p.longitude }));
       if (!bounds.isEmpty()) mapRef.current.fitBounds(bounds, { padding: 80 });
     }
@@ -220,16 +225,31 @@ const RotasPage = () => {
       return;
     }
 
-    const origemPayload = {
-      nome: origem.selecionada.descricao,
-      lat: origem.selecionada.latitude,
-      lng: origem.selecionada.longitude,
-    };
-    const destinoPayload = {
-      nome: destino.selecionada.descricao,
-      lat: destino.selecionada.latitude,
-      lng: destino.selecionada.longitude,
-    };
+    let origemPayload;
+    let destinoPayload;
+    try {
+      const oLat = normalizarLatitudeOpcional(origem.selecionada.latitude, 'origem.lat');
+      const oLng = normalizarLongitudeOpcional(origem.selecionada.longitude, 'origem.lng');
+      const dLat = normalizarLatitudeOpcional(destino.selecionada.latitude, 'destino.lat');
+      const dLng = normalizarLongitudeOpcional(destino.selecionada.longitude, 'destino.lng');
+      if (oLat === null || oLng === null || dLat === null || dLng === null) {
+        setError('As coordenadas de origem e destino são obrigatórias.');
+        return;
+      }
+      origemPayload = {
+        nome: origem.selecionada.descricao,
+        lat: oLat,
+        lng: oLng,
+      };
+      destinoPayload = {
+        nome: destino.selecionada.descricao,
+        lat: dLat,
+        lng: dLng,
+      };
+    } catch (coordErr) {
+      setError(coordErr.message || 'Coordenadas de origem ou destino inválidas.');
+      return;
+    }
 
     setLoading(true); setError(''); setRotas([]); setRotaSelecionada(null);
     try {
@@ -394,8 +414,16 @@ const RotasPage = () => {
         rota={rotaSelecionada}
         origemNome={origem.selecionada?.descricao || ''}
         destinoNome={destino.selecionada?.descricao || ''}
-        origemGeocodificada={origem.selecionada ? { lat: origem.selecionada.latitude, lng: origem.selecionada.longitude } : null}
-        destinoGeocodificada={destino.selecionada ? { lat: destino.selecionada.latitude, lng: destino.selecionada.longitude } : null}
+        origemGeocodificada={
+          origem.selecionada
+            ? { lat: origem.selecionada.latitude ?? null, lng: origem.selecionada.longitude ?? null }
+            : null
+        }
+        destinoGeocodificada={
+          destino.selecionada
+            ? { lat: destino.selecionada.latitude ?? null, lng: destino.selecionada.longitude ?? null }
+            : null
+        }
         onSuccess={() => {
           setRotas([]);
           setRotaSelecionada(null);
