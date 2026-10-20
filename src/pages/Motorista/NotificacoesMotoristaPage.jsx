@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -6,75 +6,33 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
-import notificacoesService from '../../services/notificacoes.service';
 import corridasService from '../../services/corridas.service';
 import { Bell, Check, CheckCircle, XCircle } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
-import { useAuth } from '../../context/AuthContext';
+import { useNotificacoes } from '../../hooks/useNotificacoes';
+
+const ACAO_LABELS = {
+  PENDENTE:  { label: 'Pendente',  color: 'warning' },
+  ACEITA:    { label: 'Aceita',    color: 'success' },
+  RECUSADA:  { label: 'Recusada', color: 'danger'  },
+};
 
 /**
  * NotificacoesMotoristaPage — Página de notificações do motorista.
- *
- * Exibe todas as notificações do motorista.
- * Para notificações do tipo NOVA_CORRIDA com acaoMotorista='PENDENTE',
- * exibe os botões de Aceitar e Recusar.
- *
- * Reutiliza a mesma estrutura visual da NotificacoesPage do admin.
  */
 const NotificacoesMotoristaPage = () => {
-  const { usuario } = useAuth();
-  const [notificacoes, setNotificacoes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    notificacoes,
+    loading,
+    erroModal,
+    exibirErro,
+    fecharErro,
+    carregar,
+    handleLerTodas,
+    handleMarcarLida,
+  } = useNotificacoes();
   const [acaoLoading, setAcaoLoading] = useState(null); // corridaId em processamento
   const [confirmarAcao, setConfirmarAcao] = useState(null); // { tipo: 'aceitar'|'recusar', corridaId, notifId }
-  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
-
-  const exibirErro = useCallback((err, mensagemPadrao) => {
-    const mensagem = err?.response?.data?.message || mensagemPadrao;
-    setErroModal({
-      aberto: true,
-      titulo: 'Erro',
-      mensagem,
-    });
-  }, []);
-
-  const carregar = useCallback(async () => {
-    if (!usuario?.id) return;
-    setLoading(true);
-    try {
-      const data = await notificacoesService.listar();
-      setNotificacoes(data?.notificacoes || []);
-    } catch (err) {
-      exibirErro(err, 'Não foi possível carregar as notificações.');
-    } finally {
-      setLoading(false);
-    }
-  }, [usuario?.id, exibirErro]);
-
-  useEffect(() => { carregar(); }, [carregar]);
-
-  const handleLerTodas = async () => {
-    try {
-      await notificacoesService.lerTodas();
-      await carregar();
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
-    } catch (err) {
-      exibirErro(err, 'Não foi possível marcar todas as notificações como lidas.');
-    }
-  };
-
-  const handleMarcarLida = async (id, { silencioso = false } = {}) => {
-    try {
-      await notificacoesService.ler(id);
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
-      return true;
-    } catch (err) {
-      if (!silencioso) {
-        exibirErro(err, 'Não foi possível marcar a notificação como lida.');
-      }
-      return false;
-    }
-  };
 
   const handleAceitar = async () => {
     if (!confirmarAcao) return;
@@ -106,12 +64,6 @@ const NotificacoesMotoristaPage = () => {
     } finally {
       setAcaoLoading(null);
     }
-  };
-
-  const ACAO_LABELS = {
-    PENDENTE:  { label: 'Pendente',  color: 'warning' },
-    ACEITA:    { label: 'Aceita',    color: 'success' },
-    RECUSADA:  { label: 'Recusada', color: 'danger'  },
   };
 
   const handleNotificacaoClick = async (n) => {
@@ -193,7 +145,6 @@ const NotificacoesMotoristaPage = () => {
                     </small>
                   </div>
 
-                  {/* Botões de ação para corridas pendentes */}
                   {isPendente && n.referenciaId && (
                     <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                       <Button
@@ -225,7 +176,6 @@ const NotificacoesMotoristaPage = () => {
         </div>
       )}
 
-      {/* Modal de confirmação de aceite */}
       <ConfirmationModal
         isOpen={confirmarAcao?.tipo === 'aceitar'}
         onClose={() => setConfirmarAcao(null)}
@@ -237,7 +187,6 @@ const NotificacoesMotoristaPage = () => {
         variant="info"
       />
 
-      {/* Modal de confirmação de recusa */}
       <ConfirmationModal
         isOpen={confirmarAcao?.tipo === 'recusar'}
         onClose={() => setConfirmarAcao(null)}
@@ -251,7 +200,7 @@ const NotificacoesMotoristaPage = () => {
 
       <ModalErro
         isOpen={erroModal.aberto}
-        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        onClose={fecharErro}
         titulo={erroModal.titulo}
         mensagem={erroModal.mensagem}
       />

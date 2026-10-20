@@ -11,10 +11,7 @@ import VeiculosPage from '../pages/Veiculos/VeiculosPage';
 import CorridasPage from '../pages/Corridas/CorridasPage';
 import RotasPage from '../pages/Rotas/RotasPage';
 
-// Páginas do usuário/passageiro
-import PerfilUsuarioPage from '../pages/Usuario/PerfilUsuarioPage';
-
-// Roteador de perfil (mantido)
+// Roteador de perfil
 import PerfilRouter from '../pages/PerfilRouter';
 
 // Páginas do motorista
@@ -23,7 +20,7 @@ import RelatorioMotoristaPage from '../pages/Motorista/RelatorioMotoristaPage';
 import MeuVeiculoPage from '../pages/Motorista/MeuVeiculoPage';
 import NotificacoesMotoristaPage from '../pages/Motorista/NotificacoesMotoristaPage';
 
-// Páginas Admin (novas)
+// Páginas Admin
 import UsuariosPage from '../pages/Admin/UsuariosPage';
 import MotoristasAnalisePage from '../pages/Admin/MotoristasAnalisePage';
 import VeiculosAnalisePage from '../pages/Admin/VeiculosAnalisePage';
@@ -72,14 +69,13 @@ const AppRoutes = () => (
               <Route path="/notificacoes"      element={<NotificacoesPage />} />
               <Route path="/auditoria"         element={<AuditoriaPage />} />
 
-              {/* --- Usuário/Passageiro --- */}
+              {/* --- Usuário/Passageiro e Compartilhadas --- */}
               <Route path="/solicitar-corrida" element={<RotasPage />} />
               <Route path="/minhas-corridas"   element={<CorridasPage />} />
               <Route path="/perfil"            element={<PerfilRouter />} />
 
               {/* --- Motorista --- */}
               <Route path="/inicio"            element={<InicioMotoristaPage />} />
-              <Route path="/minhas-corridas"   element={<CorridasPage />} />
               <Route path="/relatorio"         element={<RelatorioMotoristaPage />} />
               <Route path="/meu-veiculo"       element={<MeuVeiculoPage />} />
               <Route path="/notificacoes-motorista" element={<NotificacoesMotoristaPage />} />

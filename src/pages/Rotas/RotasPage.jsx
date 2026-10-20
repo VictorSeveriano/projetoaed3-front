@@ -9,7 +9,7 @@ import {
   normalizarLatitudeOpcional,
   normalizarLongitudeOpcional,
 } from '../../utils/corridaPayload';
-import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check, Search, X, Loader } from 'lucide-react';
+import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check } from 'lucide-react';
 import { LocalizacaoInput } from '../../components/ui/LocalizacaoInput';
 
 /**
@@ -176,7 +176,6 @@ const RotasPage = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Simula uma sugestao selecionada com os dados do GPS
         const sugestaoGps = {
           descricao: 'Localizacao Atual (GPS)',
           logradouro: '', numero: '', complemento: '',
@@ -193,7 +192,7 @@ const RotasPage = () => {
   };
 
   // --- Navega pelo teclado no dropdown ---
-  const handleKeyDown = useCallback((e, campo, listId) => {
+  const handleKeyDown = useCallback((e, campo) => {
     if (!campo.mostrarSugestoes && !campo.sugestoes.length) return;
 
     if (e.key === 'ArrowDown') {
@@ -215,7 +214,6 @@ const RotasPage = () => {
 
   // --- Calcular rotas ---
   const calcularRotas = async () => {
-    // Validar selecoes — nunca geocodificar no momento do clique
     if (!origem.selecionada) {
       setError('Nao foi selecionada uma localizacao valida para a origem.');
       return;

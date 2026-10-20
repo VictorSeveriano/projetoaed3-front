@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from '../../components/layout/Header';
 import Loading from '../../components/ui/Loading';
 import StatCard from '../../components/ui/StatCard';
-import ChartCard from '../../components/ui/ChartCard';
-import motoistasService from '../../services/motoristas.service';
+import ChartCard, { ChartTooltip } from '../../components/ui/ChartCard';
+import motoristasService from '../../services/motoristas.service';
 import { formatarMoeda } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -20,29 +20,8 @@ const MESES = [
 
 const ANOS = [2026, 2025, 2024];
 
-const CustomTooltip = ({ active, payload, label, formatter }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="chart-tooltip">
-        <p className="chart-tooltip__label">{label}</p>
-        <p className="chart-tooltip__value">
-          {formatter ? formatter(payload[0].value) : payload[0].value}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
 /**
  * RelatorioMotoristaPage — Relatório mensal do motorista autenticado.
- *
- * Regras (seção 6):
- * - Km rodados e valor das corridas: somente FINALIZADAS.
- * - Corridas concluídas: contagem de FINALIZADAS.
- * - Corridas canceladas: contagem de CANCELADAS.
- * - Valor nunca chamado de "lucro", "salário" ou "rendimento líquido".
- * - Cálculo feito no backend; aqui apenas exibição.
  */
 const RelatorioMotoristaPage = () => {
   const { usuario } = useAuth();
@@ -57,7 +36,7 @@ const RelatorioMotoristaPage = () => {
     if (!usuario?.id) return;
     setLoading(true); setError(''); setRelatorio(null);
     try {
-      const dados = await motoistasService.getRelatorio(usuario.id, mes, ano);
+      const dados = await motoristasService.getRelatorio(usuario.id, mes, ano);
       setRelatorio(dados);
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao carregar relatório.');
@@ -77,7 +56,6 @@ const RelatorioMotoristaPage = () => {
         subtitle="Desempenho das suas corridas no mês selecionado"
       />
 
-      {/* Filtro de período */}
       <div className="relatorio-filtro card">
         <div className="card__body">
           <div className="relatorio-filtro__campos">
@@ -121,7 +99,6 @@ const RelatorioMotoristaPage = () => {
 
       {!loading && !error && relatorio && (
         <>
-          {/* Indicadores principais */}
           <div className="stats-grid">
             <StatCard
               icon={<Target size={28} />}
@@ -173,7 +150,6 @@ const RelatorioMotoristaPage = () => {
             />
           </div>
 
-          {/* Gráfico de corridas por dia */}
           {relatorio.corridasPorDia && relatorio.corridasPorDia.length > 0 ? (
             <ChartCard
               title={`Corridas por dia — ${periodoLabel}`}
@@ -187,13 +163,12 @@ const RelatorioMotoristaPage = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                   <XAxis dataKey="dia" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip content={<CustomTooltip formatter={(v) => `${v} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                  <Tooltip content={<ChartTooltip formatter={(v) => `${v} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                   <Bar dataKey="quantidade" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           ) : (
-            /* Mensagem explícita quando não há dados — nunca gráfico zerado sem explicação */
             <div className="card">
               <div className="card__body">
                 <p className="relatorio-vazio" role="status">
@@ -203,7 +178,6 @@ const RelatorioMotoristaPage = () => {
             </div>
           )}
 
-          {/* Nota sobre o valor */}
           <div className="relatorio-nota card">
             <div className="card__body">
               <p className="relatorio-nota__texto">
@@ -215,7 +189,6 @@ const RelatorioMotoristaPage = () => {
         </>
       )}
 
-      {/* Estado sem dados após carregar */}
       {!loading && !error && relatorio && relatorio.totalCorridas === 0 && (
         <div className="card">
           <div className="card__body">

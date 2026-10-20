@@ -1,27 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
 import StatCard from '../../components/ui/StatCard';
-import ChartCard from '../../components/ui/ChartCard';
+import ChartCard, { ChartTooltip } from '../../components/ui/ChartCard';
 import dashboardService from '../../services/dashboard.service';
 import { formatarMoeda } from '../../utils/formatters';
-import { Car, CheckCircle, Calendar, MapPin, DollarSign, Target, Route } from 'lucide-react';
+import { Car, Calendar, DollarSign, Target } from 'lucide-react';
 import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
-
-const CustomTooltip = ({ active, payload, label, formatter }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="chart-tooltip">
-        <p className="chart-tooltip__label">{label}</p>
-        <p className="chart-tooltip__value">
-          {formatter ? formatter(payload[0].value) : payload[0].value}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({ totalCorridas: 0, corridasAtivas: 0, veiculosDisponiveis: 0, faturamentoTotal: 0 });
@@ -101,7 +87,7 @@ const DashboardPage = () => {
                 tickFormatter={(value) => `R$ ${value}`} 
                 width={80}
               />
-              <Tooltip content={<CustomTooltip formatter={(val) => formatarMoeda(val)} />} />
+              <Tooltip content={<ChartTooltip formatter={(val) => formatarMoeda(val)} />} />
               <Area type="monotone" dataKey="valor" stroke="#10b981" fillOpacity={1} fill="url(#colorValor)" strokeWidth={3} />
             </AreaChart>
           </ResponsiveContainer>
@@ -118,7 +104,7 @@ const DashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
               <XAxis dataKey="mes" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
               <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip formatter={(val) => `${val} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Tooltip content={<ChartTooltip formatter={(val) => `${val} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
               <Bar dataKey="quantidade" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
             </BarChart>
           </ResponsiveContainer>
@@ -135,7 +121,7 @@ const DashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
               <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
               <YAxis dataKey="nome" type="category" stroke="#94a3b8" tick={{ fill: '#f1f5f9', fontSize: 10 }} width={120} />
-              <Tooltip content={<CustomTooltip formatter={(val) => `${val} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Tooltip content={<ChartTooltip formatter={(val) => `${val} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
               <Bar dataKey="quantidade" fill="#f59e0b" radius={[0, 4, 4, 0]} maxBarSize={30} />
             </BarChart>
           </ResponsiveContainer>
@@ -152,7 +138,7 @@ const DashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
               <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
               <YAxis dataKey="nome" type="category" stroke="#94a3b8" tick={{ fill: '#f1f5f9', fontSize: 12 }} width={100} />
-              <Tooltip content={<CustomTooltip formatter={(val) => `${val} solicitacoes`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Tooltip content={<ChartTooltip formatter={(val) => `${val} solicitacoes`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
               <Bar dataKey="quantidade" fill="#0ea5e9" radius={[0, 4, 4, 0]} maxBarSize={30} />
             </BarChart>
           </ResponsiveContainer>
@@ -169,7 +155,7 @@ const DashboardPage = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
               <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} allowDecimals={false} />
               <YAxis dataKey="nome" type="category" stroke="#94a3b8" tick={{ fill: '#f1f5f9', fontSize: 12 }} width={100} />
-              <Tooltip content={<CustomTooltip formatter={(val) => `${val} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+              <Tooltip content={<ChartTooltip formatter={(val) => `${val} corrida(s)`} />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
               <Bar dataKey="quantidade" fill="#8b5cf6" radius={[0, 4, 4, 0]} maxBarSize={30} />
             </BarChart>
           </ResponsiveContainer>

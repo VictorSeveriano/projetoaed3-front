@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
 import Loading from '../../components/ui/Loading';
-import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
-import motoistasService from '../../services/motoristas.service';
+import motoristasService from '../../services/motoristas.service';
 import { useAuth } from '../../context/AuthContext';
-import { STATUS_LABELS, formatarMoeda } from '../../utils/formatters';
-import { Car, Tag, Hash, Calendar, DollarSign } from 'lucide-react';
-import Button from '../../components/ui/Button';
+import { Car } from 'lucide-react';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import veiculosService from '../../services/veiculos.service';
@@ -44,8 +41,8 @@ const MeuVeiculoPage = () => {
   const carregar = () => {
     setLoading(true);
     Promise.all([
-      motoistasService.buscarVeiculo(usuario.id),
-      motoistasService.buscarPorUsuarioId(usuario.id),
+      motoristasService.buscarVeiculo(usuario.id),
+      motoristasService.buscarPorUsuarioId(usuario.id),
     ])
       .then(([dados, perfil]) => {
         setVeiculo(dados);
@@ -203,7 +200,7 @@ const MeuVeiculoPage = () => {
             possuiArCondicionado: veiculo.possuiArCondicionado || false, possuiExtintor: veiculo.possuiExtintor || false, possuiCintoSeguranca: veiculo.possuiCintoSeguranca || false, documentacaoRegularizada: veiculo.documentacaoRegularizada || false
           });
         }} 
-        onCancel={() => setShowConfirm(false)} 
+        onClose={() => setShowConfirm(false)} 
       />
       <ConfirmationModal
         isOpen={showDeleteConfirm}

@@ -11,8 +11,7 @@ import {
   obterMinDatetimeComercial,
   montarPayloadCriacaoCorrida,
 } from '../../utils/corridaPayload';
-import { useAuth } from '../../context/AuthContext';
-import { Route, Check, TriangleAlert, Car, MapPin, Clock } from 'lucide-react';
+import { Route, Check, TriangleAlert, MapPin, Clock } from 'lucide-react';
 
 /**
  * CorridaModal — Modal de confirmacao de solicitacao de corrida.
@@ -42,7 +41,6 @@ const CorridaModal = ({
   isOpen, onClose, rota, origemNome, destinoNome,
   origemGeocodificada, destinoGeocodificada, onSuccess,
 }) => {
-  const { usuario } = useAuth();
   const [dataHorario, setDataHorario]   = useState('');
   const [classe, setClasse]             = useState('NORMAL');
   const [formaPagamento, setFormaPagamento] = useState('DINHEIRO');

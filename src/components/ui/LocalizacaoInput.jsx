@@ -31,7 +31,7 @@ export const LocalizacaoInput = ({
               }
               onChange={(e) => { setError(''); campo.setTexto(e.target.value); }}
               onFocus={() => { if (campo.sugestoes.length > 0) campo.setMostrarSugestoes(true); }}
-              onKeyDown={(e) => handleKeyDown(e, campo, listId)}
+              onKeyDown={(e) => handleKeyDown(e, campo)}
             />
             {/* Icone de status no campo */}
             <span className="autocomplete-field-icon" aria-hidden="true">
@@ -75,7 +75,6 @@ export const LocalizacaoInput = ({
                 aria-selected={campo.activeIndex === i}
                 className={'autocomplete-item' + (campo.activeIndex === i ? ' autocomplete-item--active' : '')}
                 onMouseDown={(e) => {
-                  // mouseDown em vez de click para evitar fechar antes do clique ser processado
                   e.preventDefault();
                   campo.selecionar(s);
                   setError('');

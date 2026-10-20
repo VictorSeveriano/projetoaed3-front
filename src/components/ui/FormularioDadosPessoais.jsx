@@ -7,7 +7,7 @@ import { EtapaSenha } from './FormularioWizard/EtapaSenha';
 
 const FormularioDadosPessoais = ({ form, setForm, error, perfil, etapa = 1, onAvancar, onVoltar, onSubmit, onClearError, loading }) => {
   const {
-    fieldErrors, setFieldErrors, cepLoading, verificandoCadastro, setVerificandoCadastro,
+    setFieldErrors, cepLoading, verificandoCadastro, setVerificandoCadastro,
     erroVerificacao, setErroVerificacao, getFieldError, handleBlur, handleChange,
     handleCepSearch, getInputClass, renderError, hasDuplicateErrors
   } = useFormularioValidacao({ form, setForm, onClearError });

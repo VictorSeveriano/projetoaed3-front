@@ -5,19 +5,12 @@ import Badge from '../../components/ui/Badge';
 import motoristasService from '../../services/motoristas.service';
 import { useAuth } from '../../context/AuthContext';
 import { STATUS_LABELS } from '../../utils/formatters';
-import { User, AtSign, Shield } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import ModalInformacao from '../../components/ui/ModalInformacao';
 import usuariosService from '../../services/usuarios.service';
 import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
-
-const PERFIL_LABELS = {
-  ADMINISTRADOR: 'Administrador',
-  USUARIO: 'Passageiro',
-  MOTORISTA: 'Motorista',
-};
 
 /**
  * PerfilMotoristaPage — Perfil do motorista autenticado.
@@ -57,15 +50,17 @@ const PerfilMotoristaPage = () => {
       })
       .catch((err) => setError(err.response?.data?.message || 'Erro ao carregar perfil.'))
       .finally(() => setLoading(false));
-  }, [usuario?.id]);
+  }, [usuario?.id, setFormData]);
 
   if (loading) return <Loading message="Carregando perfil..." />;
 
-  const hasChanges = perfil && (
-    perfil.usuario?.nome !== formData.nome || perfil.usuario?.usuario !== formData.usuario || 
-    perfil.usuario?.cpf !== formData.cpf || perfil.usuario?.celular !== formData.celular || 
-    perfil.usuario?.email !== formData.email || perfil.cnh !== formData.cnh || 
-    isAddressDifferent(perfil.usuario?.endereco, formData.endereco)
+  const hasChanges = Boolean(
+    perfil && (
+      perfil.usuario?.nome !== formData.nome || perfil.usuario?.usuario !== formData.usuario || 
+      perfil.usuario?.cpf !== formData.cpf || perfil.usuario?.celular !== formData.celular || 
+      perfil.usuario?.email !== formData.email || perfil.cnh !== formData.cnh || 
+      isAddressDifferent(perfil.usuario?.endereco, formData.endereco)
+    )
   );
 
   const handleSave = async () => {
@@ -74,18 +69,15 @@ const PerfilMotoristaPage = () => {
       return;
     }
     try {
-      // 1. Atualiza o usuario (dados pessoais e endereço)
       const uData = {
         nome: formData.nome, usuario: formData.usuario, cpf: formData.cpf, celular: formData.celular, email: formData.email, endereco: formData.endereco
       };
       await usuariosService.atualizar(usuario.id, uData);
       
-      // 2. Atualiza o motorista (cnh)
       if (formData.cnh !== perfil.cnh) {
         await motoristasService.atualizar(perfil.id, { cnh: formData.cnh });
       }
 
-      // Reload
       const dados = await motoristasService.buscarPorUsuarioId(usuario.id);
       setPerfil(dados);
       setIsEditing(false);
@@ -261,13 +253,12 @@ const PerfilMotoristaPage = () => {
         <div className="card" style={isEditing ? { display: 'flex', flexDirection: 'column', gap: '24px', background: 'transparent', boxShadow: 'none' } : {}}>
           {isEditing ? (
             <>
-              {/* SECÃO 1: CAMPOS EDITÁVEIS */}
               <div className="card" style={{ marginBottom: 0 }}>
                 <div className="card__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h2 className="card-section-title" style={{ color: 'var(--text-primary)' }}>Campos Editáveis</h2>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Button size="sm" variant="success" onClick={handleSave}>Salvar Alterações</Button>
-                    <Button size="sm" variant="outline" onClick={handleCancelClick}>Cancelar</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCancelClick(hasChanges)}>Cancelar</Button>
                   </div>
                 </div>
                 <div className="card__body">
@@ -283,7 +274,6 @@ const PerfilMotoristaPage = () => {
                 </div>
               </div>
 
-              {/* SECÃO 2: CAMPOS SOMENTE LEITURA */}
               <div className="card" style={{ marginBottom: 0, background: 'var(--bg-800)' }}>
                 <div className="card__header">
                   <h2 className="card-section-title" style={{ color: 'var(--text-muted)' }}>Campos Somente Leitura</h2>
@@ -352,7 +342,7 @@ const PerfilMotoristaPage = () => {
             cnh: perfil.cnh || ''
           });
         }} 
-        onCancel={() => setShowConfirm(false)} 
+        onClose={() => setShowConfirm(false)} 
       />
       <ModalErro
         isOpen={erroModal.aberto}

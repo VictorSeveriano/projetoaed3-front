@@ -4,6 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import Button from '../../components/ui/Button';
+import ModalErro from '../../components/ui/ModalErro';
 import veiculosService from '../../services/veiculos.service';
 import motoristasService from '../../services/motoristas.service';
 import { STATUS_LABELS } from '../../utils/formatters';
@@ -20,7 +21,6 @@ const PORTES = [
 
 const PORTE_LABELS = { Pequeno: 'Pequeno', Medio: 'Médio', Grande: 'Grande' };
 const CLASSE_LABELS = { BASICO: 'Básico', NORMAL: 'Normal', PREMIUM: 'Premium' };
-const CLASSE_COLORS = { BASICO: 'info', NORMAL: 'info', PREMIUM: 'warning' };
 
 const CarroCard = ({ carro, onVisualizar }) => {
   const statusInfo = STATUS_LABELS[carro.status] || { label: carro.status, color: 'muted' };
@@ -61,6 +61,7 @@ const VeiculosPage = () => {
   const [veiculos, setVeiculos] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [porte, setPorte]       = useState('');
+  const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
 
   // Modal veículo
   const [veiculoSelecionado, setVeiculoSelecionado] = useState(null);
@@ -94,7 +95,10 @@ const VeiculosPage = () => {
       setVeiculoSelecionado(null);
       carregar();
     } catch (err) {
-      alert(err?.response?.data?.message || 'Erro ao salvar veículo.');
+      setErroModal({
+        aberto: true,
+        mensagem: err?.response?.data?.message || 'Erro ao salvar veículo.',
+      });
     }
   };
 
@@ -154,6 +158,13 @@ const VeiculosPage = () => {
         motorista={motoristaSelecionado}
         isAdmin={true}
         onSave={null}
+      />
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal({ aberto: false, mensagem: '' })}
+        titulo="Erro"
+        mensagem={erroModal.mensagem}
       />
     </div>
   );

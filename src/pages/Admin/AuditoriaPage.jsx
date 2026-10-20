@@ -9,7 +9,7 @@ import Button from '../../components/ui/Button';
 import auditoriaService from '../../services/auditoria.service';
 import usuariosService from '../../services/usuarios.service';
 import { ShieldAlert, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatarData } from '../../utils/formatters';
+import { formatarDataHorario } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 
 const AuditoriaPage = () => {
@@ -135,7 +135,7 @@ const AuditoriaPage = () => {
               <tbody>
                 {registros.map(r => (
                   <tr key={r.id} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => { setRegistroSelecionado(r); setModalOpen(true); }}>
-                    <td className="data-table__cell">{formatarData(r.criadoEm, true)}</td>
+                    <td className="data-table__cell">{formatarDataHorario(r.criadoEm)}</td>
                     <td className="data-table__cell">{r.usuario?.nome || '—'}</td>
                     <td className="data-table__cell">{getPerfilBadge(r.perfil)}</td>
                     <td className="data-table__cell"><strong>{r.modulo}</strong></td>
@@ -169,7 +169,7 @@ const AuditoriaPage = () => {
         <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Detalhes da Auditoria" size="md">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div><small style={{ color: 'var(--text-muted)' }}>Data/Hora:</small><div>{formatarData(registroSelecionado.criadoEm, true)}</div></div>
+              <div><small style={{ color: 'var(--text-muted)' }}>Data/Hora:</small><div>{formatarDataHorario(registroSelecionado.criadoEm)}</div></div>
               <div><small style={{ color: 'var(--text-muted)' }}>Módulo / Ação:</small><div>{registroSelecionado.modulo} / {registroSelecionado.acao}</div></div>
               <div><small style={{ color: 'var(--text-muted)' }}>Resultado:</small><div>{getResultadoBadge(registroSelecionado.resultado)}</div></div>
               <div><small style={{ color: 'var(--text-muted)' }}>Perfil Autenticado:</small><div>{getPerfilBadge(registroSelecionado.perfil)}</div></div>

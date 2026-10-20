@@ -4,9 +4,8 @@ import Button from './Button';
 import EmptyState from './EmptyState';
 import ConfirmationModal from './ConfirmationModal';
 import corridasService from '../../services/corridas.service';
-import veiculosService from '../../services/veiculos.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
-import { CalendarOff, MapPin, Clock, Route } from 'lucide-react';
+import { CalendarOff, MapPin, Route } from 'lucide-react';
 
 const FORMA_PAGAMENTO_LABELS = {
   DINHEIRO:       'Dinheiro',
@@ -43,7 +42,7 @@ const CorridasTabs = ({
   error = '',
   podeCancelar = false,
   podeFinalizar = false,
-  podeConfirmarPagamento = false, // Motorista: confirma pagamento após corrida
+  podeConfirmarPagamento = false,
   onAcao,
 }) => {
   const [abaAtiva, setAbaAtiva]           = useState('TODAS');

@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { CarFront, TriangleAlert } from 'lucide-react';
 import FormularioDadosPessoais from '../../components/ui/FormularioDadosPessoais';
 import Modal from '../../components/ui/Modal';
-import { validarCPF, validarCelular, validarCEP } from '../../utils/validators';
 
 const LoginPage = () => {
   const [form, setForm] = useState({ 

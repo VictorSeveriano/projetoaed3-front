@@ -5,11 +5,9 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilUsuario, ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
 import ModalErro from '../../components/ui/ModalErro';
-import Modal from '../../components/ui/Modal';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalEscolhaPerfil from '../../components/ui/ModalEscolhaPerfil';
 import ModalCadastroUsuario from '../../components/ui/ModalCadastroUsuario';
-import FormularioDadosPessoais from '../../components/ui/FormularioDadosPessoais';
 import usuariosService from '../../services/usuarios.service';
 import motoristasService from '../../services/motoristas.service';
 import veiculosService from '../../services/veiculos.service';
@@ -64,8 +62,6 @@ const UsuariosPage = () => {
   };
 
   useEffect(() => { 
-    // Debounce na pesquisa nao é estritamente necessario aqui pois há um botao ou a gente busca on enter/blur.
-    // Vamos chamar carregar() toda vez que perfil mudar, e pesquisa só se apertar enter ou botao.
     carregar(); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtroPerfil]);
@@ -78,7 +74,7 @@ const UsuariosPage = () => {
   const handleSaveUsuario = async (id, dados) => {
     try {
       await usuariosService.atualizar(id, dados);
-      await carregar(); // Recarrega a lista com os novos dados
+      await carregar();
       setUsuarioSelecionado(prev => ({ ...prev, ...dados }));
     } catch (err) {
       console.error(err);
@@ -122,12 +118,11 @@ const UsuariosPage = () => {
 
   const abrirMotorista = async (usuarioId) => {
     try {
-      // O perfil do motorista fica em /api/motoristas/perfil/:usuarioId
       const motorista = await motoristasService.buscarPorUsuarioId(usuarioId);
       if (motorista) {
         setMotoristaSelecionado(motorista);
         setModalMotoristaOpen(true);
-        setModalUsuarioOpen(false); // fecha o de usuário
+        setModalUsuarioOpen(false);
       } else {
         setErroModal({
           aberto: true,

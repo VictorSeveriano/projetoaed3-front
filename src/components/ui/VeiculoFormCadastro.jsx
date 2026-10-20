@@ -1,5 +1,4 @@
 import React from 'react';
-import { Car } from 'lucide-react';
 
 export const VeiculoFormCadastro = ({ form, setForm, handleSubmit, submitting }) => {
   return (

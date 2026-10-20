@@ -3,7 +3,6 @@ import Header from '../../components/layout/Header';
 import Loading from '../../components/ui/Loading';
 import usuariosService from '../../services/usuarios.service';
 import { useAuth } from '../../context/AuthContext';
-import { User, AtSign, Shield } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
@@ -11,6 +10,7 @@ import ModalErro from '../../components/ui/ModalErro';
 import ModalInformacao from '../../components/ui/ModalInformacao';
 import { formatarData } from '../../utils/formatters';
 import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
+import { CamposEnderecoPerfil } from '../../components/ui/ModaisPerfil/ModalPerfilBase';
 
 const PERFIL_LABELS = {
   ADMINISTRADOR: 'Administrador',
@@ -57,11 +57,20 @@ const PerfilUsuarioPage = () => {
       })
       .catch((err) => setError(err.response?.data?.message || 'Erro ao carregar perfil.'))
       .finally(() => setLoading(false));
-  }, [usuario?.id]);
+  }, [usuario?.id, setFormData]);
 
   if (loading) return <Loading message="Carregando perfil..." />;
 
-  const hasChanges = perfil && (perfil.nome !== formData.nome || perfil.usuario !== formData.usuario || perfil.cpf !== formData.cpf || perfil.email !== formData.email || perfil.celular !== formData.celular || isAddressDifferent(perfil.endereco, formData.endereco));
+  const hasChanges = Boolean(
+    perfil && (
+      perfil.nome !== formData.nome ||
+      perfil.usuario !== formData.usuario ||
+      perfil.cpf !== formData.cpf ||
+      perfil.email !== formData.email ||
+      perfil.celular !== formData.celular ||
+      isAddressDifferent(perfil.endereco, formData.endereco)
+    )
+  );
 
   const handleSave = async () => {
     if (!hasChanges) {
@@ -111,34 +120,12 @@ const PerfilUsuarioPage = () => {
           ) : <span>{perfil?.celular || '—'}</span>}
         </span>
       </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Endereço</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {isEditing ? (
-            <>
-              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Rua" value={formData.endereco.rua || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} />
-              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Bairro" value={formData.endereco.bairro || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Número" value={formData.endereco.numero || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} />
-                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="CEP" value={formData.endereco.cep || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} />
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Cidade" value={formData.endereco.cidade || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} />
-                <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="UF" value={formData.endereco.estado || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} />
-              </div>
-            </>
-          ) : (
-            <span>
-              {perfil?.endereco ? (
-                <>
-                  {perfil.endereco.rua}, {perfil.endereco.numero} - {perfil.endereco.bairro}<br />
-                  {perfil.endereco.cidade}/{perfil.endereco.estado} - CEP: {perfil.endereco.cep}
-                </>
-              ) : '—'}
-            </span>
-          )}
-        </span>
-      </div>
+      <CamposEnderecoPerfil
+        isEditing={isEditing}
+        enderecoAtual={perfil?.endereco}
+        formEndereco={formData.endereco}
+        onChangeEndereco={(endereco) => setFormData({ ...formData, endereco })}
+      />
     </>
   );
 
@@ -221,7 +208,7 @@ const PerfilUsuarioPage = () => {
             endereco: perfil.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
           });
         }} 
-        onCancel={() => setShowConfirm(false)} 
+        onClose={() => setShowConfirm(false)} 
       />
       <ModalErro
         isOpen={erroModal.aberto}

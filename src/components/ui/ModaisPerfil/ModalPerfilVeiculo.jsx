@@ -1,34 +1,29 @@
-import React, { useState } from 'react';
-import Modal from '../Modal';
+import React, { useState, useEffect } from 'react';
 import Badge from '../Badge';
-import Button from '../Button';
-import ConfirmationModal from '../ConfirmationModal';
-import ModalInformacao from '../ModalInformacao';
-import { formatarData, formatarMoeda, STATUS_LABELS } from '../../../utils/formatters';
-
 import { ModalPerfilBase } from './ModalPerfilBase';
+
+const PORTES = [
+  { value: 'Pequeno', label: 'Pequeno' },
+  { value: 'Medio', label: 'Médio' },
+  { value: 'Grande', label: 'Grande' },
+];
+
+const criarEstadoInicial = (veiculo) => ({
+  marca: veiculo?.marca || '',
+  modelo: veiculo?.modelo || '',
+  ano: veiculo?.ano || '',
+  placa: veiculo?.placa || '',
+  cor: veiculo?.cor || '',
+  porte: veiculo?.porte || '',
+});
+
 export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, onSave, onVerMotorista }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [formData, setFormData] = useState(() => criarEstadoInicial(veiculo));
 
-  const PORTES = [
-    { value: 'Pequeno', label: 'Pequeno' },
-    { value: 'Medio', label: 'Médio' },
-    { value: 'Grande', label: 'Grande' },
-  ];
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (veiculo) {
-      setFormData({
-        marca: veiculo.marca || '',
-        modelo: veiculo.modelo || '',
-        ano: veiculo.ano || '',
-        placa: veiculo.placa || '',
-        cor: veiculo.cor || '',
-        porte: veiculo.porte || '',
-      });
+      setFormData(criarEstadoInicial(veiculo));
     }
     setIsEditing(false);
   }, [veiculo]);
@@ -43,16 +38,16 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
     formData.cor !== (veiculo.cor || '') ||
     (isAdmin && formData.porte !== (veiculo.porte || ''));
 
-  const handleClose = () => {
-    if (isEditing && hasChanges) { setShowConfirm(true); } else { onClose(); }
-  };
-
   const handleSave = async () => {
-    if (!hasChanges) { setInfoOpen(true); return; }
     const payload = isAdmin
       ? formData
       : (({ porte: _porteIgnorado, ...resto }) => resto)(formData);
     if (onSave) await onSave(veiculo.id, payload);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData(criarEstadoInicial(veiculo));
     setIsEditing(false);
   };
 
@@ -149,53 +144,18 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
   );
 
   return (
-    <>
-      <ModalPerfilBase isOpen={isOpen} onClose={handleClose} title="Perfil do Veículo">
-        {isAdmin && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-            {isEditing ? (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
-                <Button size="sm" variant="outline" onClick={() => { setFormData({ marca: veiculo.marca || '', modelo: veiculo.modelo || '', ano: veiculo.ano || '', placa: veiculo.placa || '', cor: veiculo.cor || '', porte: veiculo.porte || '' }); setIsEditing(false); }}>Cancelar</Button>
-              </div>
-            ) : (
-              <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
-            )}
-          </div>
-        )}
-
-        {isEditing ? (
-          <>
-            <div>
-              <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '12px' }}>Campos Editáveis</h3>
-              <div className="perfil-grid">{editableFields}</div>
-            </div>
-            <div style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-              <h3 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>Campos Somente Leitura</h3>
-              <div className="perfil-grid">{readonlyFields}</div>
-            </div>
-          </>
-        ) : (
-          <div className="perfil-grid">
-            {editableFields}
-            {readonlyFields}
-          </div>
-        )}
-      </ModalPerfilBase>
-
-      <ConfirmationModal
-        isOpen={showConfirm}
-        title="Descartar alterações?"
-        message="Você possui alterações não salvas. Deseja fechar e perder essas alterações?"
-        onConfirm={() => { setShowConfirm(false); setIsEditing(false); onClose(); }}
-        onCancel={() => setShowConfirm(false)}
-      />
-      <ModalInformacao
-        isOpen={infoOpen}
-        onClose={() => setInfoOpen(false)}
-        titulo="Nenhuma alteração"
-        mensagem="Nenhum dado foi alterado. Modifique alguma informação antes de salvar."
-      />
-    </>
+    <ModalPerfilBase
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Perfil do Veículo"
+      canEdit={isAdmin}
+      isEditing={isEditing}
+      onStartEdit={() => setIsEditing(true)}
+      onCancelEdit={handleCancelEdit}
+      onSave={handleSave}
+      hasChanges={hasChanges}
+      editableFields={editableFields}
+      readonlyFields={readonlyFields}
+    />
   );
 };

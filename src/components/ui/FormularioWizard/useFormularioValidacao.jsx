@@ -1,10 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import authService from '../../../services/auth.service';
 import { formatarCPF, formatarCelular, formatarCEP } from '../../../utils/formatters';
 import { validarCPF, validarCelular, validarCEP, validarSenha, validarCNH } from '../../../utils/validators';
 import { TriangleAlert } from 'lucide-react';
-import React from 'react';
 
 export const useFormularioValidacao = ({ form, setForm, onClearError }) => {
   const [fieldErrors, setFieldErrors] = useState({});
@@ -100,7 +98,7 @@ export const useFormularioValidacao = ({ form, setForm, onClearError }) => {
           }
         }));
       }
-    } catch (err) {
+    } catch {
       setFieldErrors(prev => ({ ...prev, 'endereco.cep': 'Erro ao consultar CEP.' }));
     } finally {
       setCepLoading(false);

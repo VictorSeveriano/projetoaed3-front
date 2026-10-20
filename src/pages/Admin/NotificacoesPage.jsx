@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -7,60 +7,26 @@ import EmptyState from '../../components/ui/EmptyState';
 import ModalErro from '../../components/ui/ModalErro';
 import { Bell, Check } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
-import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import notificacoesService from '../../services/notificacoes.service';
+import { useNotificacoes } from '../../hooks/useNotificacoes';
 
 const NotificacoesPage = () => {
-  const { usuario } = useAuth();
-  const [notificacoes, setNotificacoes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
+  const {
+    notificacoes,
+    loading,
+    erroModal,
+    fecharErro,
+    carregar,
+    handleLerTodas,
+    handleMarcarLida,
+  } = useNotificacoes();
   const navigate = useNavigate();
-
-  const exibirErro = useCallback((err, mensagemPadrao) => {
-    setErroModal({
-      aberto: true,
-      titulo: 'Erro',
-      mensagem: err?.response?.data?.message || mensagemPadrao,
-    });
-  }, []);
-
-  const carregar = useCallback(async () => {
-    if (!usuario?.id) return;
-    setLoading(true);
-    try {
-      const dados = await notificacoesService.listar();
-      setNotificacoes(dados?.notificacoes || []);
-    } catch (err) {
-      exibirErro(err, 'Não foi possível carregar as notificações.');
-    } finally {
-      setLoading(false);
-    }
-  }, [usuario?.id, exibirErro]);
-
-  useEffect(() => { carregar(); }, [carregar]);
-
-  const handleLerTodas = async () => {
-    try {
-      await notificacoesService.lerTodas();
-      await carregar();
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
-    } catch (err) {
-      exibirErro(err, 'Não foi possível marcar todas as notificações como lidas.');
-    }
-  };
 
   const handleNotificacaoClick = async (n) => {
     if (!n.lida) {
-      try {
-        await notificacoesService.ler(n.id);
-        window.dispatchEvent(new Event('notificacoes-atualizadas'));
-        await carregar();
-      } catch (err) {
-        exibirErro(err, 'Não foi possível marcar a notificação como lida.');
-        return;
-      }
+      const ok = await handleMarcarLida(n.id);
+      if (!ok) return;
+      await carregar();
     }
     if (n.tipo === 'SOLICITACAO_MOTORISTA') navigate('/motoristas/analise');
     if (n.tipo === 'SOLICITACAO_VEICULO') navigate('/veiculos/analise');
@@ -113,7 +79,7 @@ const NotificacoesPage = () => {
 
       <ModalErro
         isOpen={erroModal.aberto}
-        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        onClose={fecharErro}
         titulo={erroModal.titulo}
         mensagem={erroModal.mensagem}
       />

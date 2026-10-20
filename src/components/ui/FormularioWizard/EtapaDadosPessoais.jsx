@@ -1,7 +1,7 @@
 import React from 'react';
 import authService from '../../../services/auth.service';
 
-export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDuplicateErrors, getInputClass, handleChange, handleBlur, renderError, handleAvancar, getFieldError, setFieldErrors, setErroVerificacao, setVerificandoCadastro, onAvancar }) => {
+export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDuplicateErrors, getInputClass, handleChange, handleBlur, renderError, getFieldError, setFieldErrors, setErroVerificacao, setVerificandoCadastro, onAvancar }) => {
   
   const handleAvancarWrapper = async () => {
     let hasError = false;

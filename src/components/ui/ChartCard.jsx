@@ -3,6 +3,23 @@ import Card from './Card';
 import Loading from './Loading';
 
 /**
+ * Tooltip compartilhado para gráficos Recharts (DashboardPage e RelatorioMotoristaPage).
+ */
+export const ChartTooltip = ({ active, payload, label, formatter }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="chart-tooltip">
+        <p className="chart-tooltip__label">{label}</p>
+        <p className="chart-tooltip__value">
+          {formatter ? formatter(payload[0].value) : payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+/**
  * ChartCard encapsula o comportamento de exibir graficos com estados visuais consistentes.
  */
 const ChartCard = ({ title, loading, error, empty, children, className = '' }) => {

@@ -23,11 +23,6 @@ const usuariosService = {
     return data.data;
   },
 
-  async listarCorridas(id) {
-    const { data } = await api.get(`/usuarios/${id}/corridas`);
-    return data.data;
-  },
-
   async criar(dados) {
     const { data } = await api.post('/usuarios', dados);
     return data.data;
