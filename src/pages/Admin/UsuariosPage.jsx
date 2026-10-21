@@ -52,7 +52,8 @@ const UsuariosPage = () => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const res = await usuariosService.listarTodos({ search: filtroPesquisa, perfil: filtroPerfil });
+      const termoBusca = filtroPesquisa.trim();
+      const res = await usuariosService.listarTodos({ search: termoBusca, perfil: filtroPerfil });
       setUsuarios(res || []);
     } catch (err) {
       console.error(err);
@@ -61,10 +62,13 @@ const UsuariosPage = () => {
     }
   };
 
-  useEffect(() => { 
-    carregar(); 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroPerfil]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      carregar();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [filtroPesquisa, filtroPerfil]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
