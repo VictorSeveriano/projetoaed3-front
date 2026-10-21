@@ -4,6 +4,7 @@ import { formatarData } from '../../../utils/formatters';
 import { ModalPerfilBase } from './ModalPerfilBase';
 import { CamposEnderecoPerfil } from '../CamposEnderecoPerfil';
 import { ENDERECO_VAZIO, isAddressDifferent } from '../../../utils/endereco';
+import CampoPerfil from '../CampoPerfil';
 
 const criarEstadoInicial = (motorista) => {
   const u = motorista?.usuario || {};
@@ -53,76 +54,51 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = tru
     setIsEditing(false);
   };
 
+  // Campos editáveis apenas por admin usam isEditing && isAdmin como condição
   const editableFields = (
     <>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Nome</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing && isAdmin ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
-          ) : (
-            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.nome || '—'}</span>
-          )}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Usuário</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing && isAdmin ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.usuario} onChange={e => setFormData({ ...formData, usuario: e.target.value })} />
-          ) : (
-            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>@{u.usuario || '—'}</span>
-          )}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">E-mail</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing && isAdmin ? (
-            <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-          ) : (
-            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.email || '—'}</span>
-          )}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Celular</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing && isAdmin ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
-          ) : (
-            <span style={{ color: !isAdmin && isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.celular || '—'}</span>
-          )}
-        </span>
-      </div>
+      <CampoPerfil
+        label="Nome"
+        valor={u.nome || '—'}
+        isEditing={isEditing && isAdmin}
+        inputProps={{ type: 'text', value: formData.nome, onChange: e => setFormData({ ...formData, nome: e.target.value }) }}
+        readonlyColor={!isAdmin && isEditing ? 'var(--text-muted)' : undefined}
+      />
+      <CampoPerfil
+        label="Usuário"
+        valor={`@${u.usuario || '—'}`}
+        isEditing={isEditing && isAdmin}
+        inputProps={{ type: 'text', value: formData.usuario, onChange: e => setFormData({ ...formData, usuario: e.target.value }) }}
+        readonlyColor={!isAdmin && isEditing ? 'var(--text-muted)' : undefined}
+      />
+      <CampoPerfil
+        label="E-mail"
+        valor={u.email || '—'}
+        isEditing={isEditing && isAdmin}
+        inputProps={{ type: 'email', value: formData.email, onChange: e => setFormData({ ...formData, email: e.target.value }) }}
+        readonlyColor={!isAdmin && isEditing ? 'var(--text-muted)' : undefined}
+      />
+      <CampoPerfil
+        label="Celular"
+        valor={u.celular || '—'}
+        isEditing={isEditing && isAdmin}
+        inputProps={{ type: 'text', value: formData.celular, onChange: e => setFormData({ ...formData, celular: e.target.value }) }}
+        readonlyColor={!isAdmin && isEditing ? 'var(--text-muted)' : undefined}
+      />
       {isAdmin && (
-        <div className="perfil-campo">
-          <span className="perfil-campo__label">CPF</span>
-          <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isEditing ? (
-              <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
-            ) : (
-              <span>{u.cpf || '—'}</span>
-            )}
-          </span>
-        </div>
+        <CampoPerfil
+          label="CPF"
+          valor={u.cpf || '—'}
+          isEditing={isEditing}
+          inputProps={{ type: 'text', value: formData.cpf, onChange: e => setFormData({ ...formData, cpf: e.target.value }) }}
+        />
       )}
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">CNH</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input
-              type="text"
-              className="input-field"
-              style={{ padding: '4px', height: 'auto', width: '100%' }}
-              value={formData.cnh}
-              onChange={e => setFormData({ ...formData, cnh: e.target.value })}
-            />
-          ) : (
-            <span>{motorista.cnh || '—'}</span>
-          )}
-        </span>
-      </div>
+      <CampoPerfil
+        label="CNH"
+        valor={motorista.cnh || '—'}
+        isEditing={isEditing}
+        inputProps={{ type: 'text', value: formData.cnh, onChange: e => setFormData({ ...formData, cnh: e.target.value }) }}
+      />
       {isAdmin && (
         <CamposEnderecoPerfil
           isEditing={isEditing}

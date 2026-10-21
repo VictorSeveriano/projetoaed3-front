@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Badge from '../Badge';
 import { ModalPerfilBase } from './ModalPerfilBase';
+import CampoPerfil from '../CampoPerfil';
 
 const PORTES = [
   { value: 'Pequeno', label: 'Pequeno' },
@@ -63,6 +64,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
       ? porteParaClasse[formData.porte]
       : veiculo.classe;
 
+  /** Campo read-only com cor atenuada durante a edição */
   const fi = (label, value) => (
     <div className="perfil-campo">
       <span className="perfil-campo__label">{label}</span>
@@ -72,36 +74,12 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
 
   const editableFields = (
     <>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Marca</span>
-        <span className="perfil-campo__valor">
-          {isEditing ? <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.marca} onChange={e => setFormData({ ...formData, marca: e.target.value })} /> : <span>{veiculo.marca || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Modelo</span>
-        <span className="perfil-campo__valor">
-          {isEditing ? <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.modelo} onChange={e => setFormData({ ...formData, modelo: e.target.value })} /> : <span>{veiculo.modelo || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Ano</span>
-        <span className="perfil-campo__valor">
-          {isEditing ? <input type="number" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.ano} onChange={e => setFormData({ ...formData, ano: e.target.value })} /> : <span>{veiculo.ano || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Placa</span>
-        <span className="perfil-campo__valor">
-          {isEditing ? <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.placa} onChange={e => setFormData({ ...formData, placa: e.target.value })} /> : <span>{veiculo.placa || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Cor</span>
-        <span className="perfil-campo__valor">
-          {isEditing ? <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cor} onChange={e => setFormData({ ...formData, cor: e.target.value })} /> : <span>{veiculo.cor || '—'}</span>}
-        </span>
-      </div>
+      <CampoPerfil label="Marca"  valor={veiculo.marca  || '—'} isEditing={isEditing} inputProps={{ type: 'text',   value: formData.marca,  onChange: e => setFormData({ ...formData, marca:  e.target.value }) }} />
+      <CampoPerfil label="Modelo" valor={veiculo.modelo || '—'} isEditing={isEditing} inputProps={{ type: 'text',   value: formData.modelo, onChange: e => setFormData({ ...formData, modelo: e.target.value }) }} />
+      <CampoPerfil label="Ano"    valor={veiculo.ano    || '—'} isEditing={isEditing} inputProps={{ type: 'number', value: formData.ano,    onChange: e => setFormData({ ...formData, ano:    e.target.value }) }} />
+      <CampoPerfil label="Placa"  valor={veiculo.placa  || '—'} isEditing={isEditing} inputProps={{ type: 'text',   value: formData.placa,  onChange: e => setFormData({ ...formData, placa:  e.target.value }) }} />
+      <CampoPerfil label="Cor"    valor={veiculo.cor    || '—'} isEditing={isEditing} inputProps={{ type: 'text',   value: formData.cor,    onChange: e => setFormData({ ...formData, cor:    e.target.value }) }} />
+      {/* Porte usa <select>, não cabe no CampoPerfil genérico */}
       <div className="perfil-campo">
         <span className="perfil-campo__label">Porte</span>
         <span className="perfil-campo__valor">

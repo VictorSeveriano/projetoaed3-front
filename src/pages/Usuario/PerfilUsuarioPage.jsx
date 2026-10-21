@@ -11,6 +11,7 @@ import ModalInformacao from '../../components/ui/ModalInformacao';
 import { formatarData } from '../../utils/formatters';
 import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
 import { CamposEnderecoPerfil } from '../../components/ui/CamposEnderecoPerfil';
+import CampoPerfil from '../../components/ui/CampoPerfil';
 
 const PERFIL_LABELS = {
   ADMINISTRADOR: 'Administrador',
@@ -88,38 +89,30 @@ const PerfilUsuarioPage = () => {
 
   const editableFields = (
     <>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Nome Completo</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
-          ) : <span>{perfil?.nome || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Usuário</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.usuario} onChange={e => setFormData({ ...formData, usuario: e.target.value })} />
-          ) : <span>@{perfil?.usuario || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">E-mail</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-          ) : <span>{perfil?.email || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Celular</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
-          ) : <span>{perfil?.celular || '—'}</span>}
-        </span>
-      </div>
+      <CampoPerfil
+        label="Nome Completo"
+        valor={perfil?.nome || '—'}
+        isEditing={isEditing}
+        inputProps={{ type: 'text', value: formData.nome, onChange: e => setFormData({ ...formData, nome: e.target.value }) }}
+      />
+      <CampoPerfil
+        label="Usuário"
+        valor={`@${perfil?.usuario || '—'}`}
+        isEditing={isEditing}
+        inputProps={{ type: 'text', value: formData.usuario, onChange: e => setFormData({ ...formData, usuario: e.target.value }) }}
+      />
+      <CampoPerfil
+        label="E-mail"
+        valor={perfil?.email || '—'}
+        isEditing={isEditing}
+        inputProps={{ type: 'email', value: formData.email, onChange: e => setFormData({ ...formData, email: e.target.value }) }}
+      />
+      <CampoPerfil
+        label="Celular"
+        valor={perfil?.celular || '—'}
+        isEditing={isEditing}
+        inputProps={{ type: 'text', value: formData.celular, onChange: e => setFormData({ ...formData, celular: e.target.value }) }}
+      />
       <CamposEnderecoPerfil
         isEditing={isEditing}
         enderecoAtual={perfil?.endereco}

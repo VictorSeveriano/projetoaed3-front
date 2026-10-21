@@ -11,6 +11,8 @@ import ModalErro from '../../components/ui/ModalErro';
 import ModalInformacao from '../../components/ui/ModalInformacao';
 import usuariosService from '../../services/usuarios.service';
 import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
+import { CamposEnderecoPerfil } from '../../components/ui/CamposEnderecoPerfil';
+import CampoPerfil from '../../components/ui/CampoPerfil';
 
 /**
  * PerfilMotoristaPage — Perfil do motorista autenticado.
@@ -70,7 +72,8 @@ const PerfilMotoristaPage = () => {
     }
     try {
       const uData = {
-        nome: formData.nome, usuario: formData.usuario, cpf: formData.cpf, celular: formData.celular, email: formData.email, endereco: formData.endereco
+        nome: formData.nome, usuario: formData.usuario, cpf: formData.cpf,
+        celular: formData.celular, email: formData.email, endereco: formData.endereco
       };
       await usuariosService.atualizar(usuario.id, uData);
       
@@ -87,93 +90,15 @@ const PerfilMotoristaPage = () => {
   };
 
   const u = perfil?.usuario || {};
-  const e = u.endereco || {};
   const v = perfil?.veiculo;
 
   const dadosBasicosFields = (
     <>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Nome</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} />
-          ) : <span>{u.nome || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Usuário</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.usuario} onChange={e => setFormData({ ...formData, usuario: e.target.value })} />
-          ) : <span>@{u.usuario || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">E-mail</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="email" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-          ) : <span>{u.email || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Celular</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })} />
-          ) : <span>{u.celular || '—'}</span>}
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">CNH (Motorista)</span>
-        <span className="perfil-campo__valor" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isEditing ? (
-            <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} value={formData.cnh} onChange={e => setFormData({ ...formData, cnh: e.target.value })} />
-          ) : <span>{perfil?.cnh || '—'}</span>}
-        </span>
-      </div>
-    </>
-  );
-
-  const enderecoFields = isEditing ? (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1' }}>
-      <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Rua" value={formData.endereco.rua || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} />
-      <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Bairro" value={formData.endereco.bairro || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} />
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Número" value={formData.endereco.numero || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} />
-        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="CEP" value={formData.endereco.cep || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} />
-      </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="Cidade" value={formData.endereco.cidade || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} />
-        <input type="text" className="input-field" style={{ padding: '4px', height: 'auto', width: '100%' }} placeholder="UF" value={formData.endereco.estado || ''} onChange={e => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} />
-      </div>
-    </div>
-  ) : (
-    <>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Rua</span>
-        <span className="perfil-campo__valor">{e.rua || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Número</span>
-        <span className="perfil-campo__valor">{e.numero || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Bairro</span>
-        <span className="perfil-campo__valor">{e.bairro || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Cidade</span>
-        <span className="perfil-campo__valor">{e.cidade || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Estado</span>
-        <span className="perfil-campo__valor">{e.estado || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">CEP</span>
-        <span className="perfil-campo__valor">{e.cep || '—'}</span>
-      </div>
+      <CampoPerfil label="Nome"          valor={u.nome    || '—'} isEditing={isEditing} inputProps={{ type: 'text',  value: formData.nome,    onChange: e => setFormData({ ...formData, nome:    e.target.value }) }} />
+      <CampoPerfil label="Usuário"       valor={`@${u.usuario || '—'}`} isEditing={isEditing} inputProps={{ type: 'text',  value: formData.usuario, onChange: e => setFormData({ ...formData, usuario: e.target.value }) }} />
+      <CampoPerfil label="E-mail"        valor={u.email   || '—'} isEditing={isEditing} inputProps={{ type: 'email', value: formData.email,   onChange: e => setFormData({ ...formData, email:   e.target.value }) }} />
+      <CampoPerfil label="Celular"       valor={u.celular || '—'} isEditing={isEditing} inputProps={{ type: 'text',  value: formData.celular, onChange: e => setFormData({ ...formData, celular: e.target.value }) }} />
+      <CampoPerfil label="CNH (Motorista)" valor={perfil?.cnh || '—'} isEditing={isEditing} inputProps={{ type: 'text', value: formData.cnh, onChange: e => setFormData({ ...formData, cnh: e.target.value }) }} />
     </>
   );
 
@@ -204,30 +129,12 @@ const PerfilMotoristaPage = () => {
 
   const veiculoFields = v ? (
     <>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Marca</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.marca || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Modelo</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.modelo || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Placa</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.placa || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Ano</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.ano || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Cor</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.cor || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Porte</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.porte || '—'}</span>
-      </div>
+      <div className="perfil-campo"><span className="perfil-campo__label">Marca</span><span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.marca || '—'}</span></div>
+      <div className="perfil-campo"><span className="perfil-campo__label">Modelo</span><span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.modelo || '—'}</span></div>
+      <div className="perfil-campo"><span className="perfil-campo__label">Placa</span><span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.placa || '—'}</span></div>
+      <div className="perfil-campo"><span className="perfil-campo__label">Ano</span><span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.ano || '—'}</span></div>
+      <div className="perfil-campo"><span className="perfil-campo__label">Cor</span><span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.cor || '—'}</span></div>
+      <div className="perfil-campo"><span className="perfil-campo__label">Porte</span><span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.porte || '—'}</span></div>
       <div className="perfil-campo">
         <span className="perfil-campo__label">Classe</span>
         <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{v.classe ? <Badge label={v.classe} color="info" /> : '—'}</span>
@@ -269,7 +176,12 @@ const PerfilMotoristaPage = () => {
 
                   <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '16px', color: 'var(--text-muted)' }}>Endereço</h3>
                   <div className="perfil-grid">
-                    {enderecoFields}
+                    <CamposEnderecoPerfil
+                      isEditing={isEditing}
+                      enderecoAtual={u.endereco}
+                      formEndereco={formData.endereco}
+                      onChangeEndereco={(endereco) => setFormData({ ...formData, endereco })}
+                    />
                   </div>
                 </div>
               </div>
@@ -313,7 +225,12 @@ const PerfilMotoristaPage = () => {
                   <div>
                     <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Endereço</h3>
                     <div className="perfil-grid">
-                      {enderecoFields}
+                      <CamposEnderecoPerfil
+                        isEditing={false}
+                        enderecoAtual={u.endereco}
+                        formEndereco={formData.endereco}
+                        onChangeEndereco={(endereco) => setFormData({ ...formData, endereco })}
+                      />
                     </div>
                   </div>
                   {v && (
