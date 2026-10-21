@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
+import { pushModal, popModal, isTopModal } from '../../utils/modalStack';
 
 /**
  * Modal — Componente base reutilizável de diálogo.
@@ -7,7 +8,8 @@ import { createPortal } from 'react-dom';
  * Melhorias de acessibilidade:
  * - titleId gerado dinamicamente via useId() para evitar IDs duplicados
  *   quando múltiplos modais são abertos simultaneamente
- * - Fecha no ESC
+ * - Fecha no ESC — apenas o modal do topo da pilha responde ao evento,
+ *   evitando que um único ESC feche vários modais empilhados ao mesmo tempo
  * - Devolve o foco ao elemento que estava ativo antes de abrir o modal
  * - Bloqueia scroll do body enquanto aberto
  *
@@ -23,14 +25,23 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
   const generatedId = useId();
   const titleId = 'modal-title-' + generatedId.replace(/:/g, '');
   const previousFocusRef = useRef(null);
+  // Nível deste modal na pilha global (atribuído ao abrir, liberado ao fechar)
+  const modalLevelRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       // Salva o elemento com foco antes de abrir o modal
       previousFocusRef.current = document.activeElement;
       document.body.style.overflow = 'hidden';
+      // Registra este modal como o topo da pilha
+      modalLevelRef.current = pushModal();
     } else {
       document.body.style.overflow = '';
+      // Remove este modal da pilha
+      if (modalLevelRef.current !== null) {
+        popModal();
+        modalLevelRef.current = null;
+      }
       // Devolve o foco ao elemento anterior ao fechar
       if (previousFocusRef.current) {
         previousFocusRef.current.focus();
@@ -43,7 +54,12 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        // Só responde se este modal for o mais recente da pilha
+        if (isTopModal(modalLevelRef.current)) {
+          onClose();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
