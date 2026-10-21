@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Badge from '../Badge';
 import { formatarData } from '../../../utils/formatters';
-import {
-  ModalPerfilBase,
-  CamposEnderecoPerfil,
-  ENDERECO_VAZIO,
-  isAddressDifferent,
-} from './ModalPerfilBase';
+import { ModalPerfilBase } from './ModalPerfilBase';
+import { CamposEnderecoPerfil } from '../CamposEnderecoPerfil';
+import { ENDERECO_VAZIO, isAddressDifferent } from '../../../utils/endereco';
 
 const criarEstadoInicial = (usuario) => ({
   nome: usuario?.nome || '',

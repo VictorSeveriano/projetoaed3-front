@@ -325,21 +325,14 @@ input,select,textarea { font-family:inherit; outline:none; }
 /* Wrapper visual do mapa */
 .rotas-visual-wrapper { background:var(--bg-700); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; min-height:580px; position:relative; }
 
-/* MapView Styles */
-.map-wrapper { position:relative; width:100%; height:100%; min-height:580px; }
+/* Mapa da página de rotas */
 .map-container { width:100%; height:100%; min-height:580px; }
-.map-overlay { position:absolute; inset:0; background:rgba(15,15,26,0.7); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:10; border-radius:var(--radius-lg); }
-.map-overlay__content { display:flex; align-items:center; gap:10px; color:var(--text-primary); font-size:14px; font-weight:600; }
-.map-overlay__spinner { animation:spin 1s linear infinite; }
 
 /* Placeholder quando sem chave configurada */
 .map-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:48px 32px; text-align:center; height:100%; min-height:580px; }
 .map-placeholder--config { background:var(--bg-800); }
-.map-placeholder__icon { color:var(--color-primary); opacity:0.6; }
 .map-placeholder__title { font-size:17px; font-weight:700; color:var(--text-primary); }
 .map-placeholder__desc { font-size:13px; color:var(--text-secondary); max-width:420px; line-height:1.7; }
-.map-placeholder__desc code { background:var(--bg-600); padding:2px 8px; border-radius:var(--radius-sm); color:var(--color-accent); font-size:12px; font-family:monospace; }
-.map-placeholder__hint { font-size:12px; color:var(--text-muted); max-width:380px; }
 
 /* === RESPONSIVO === */
 @media (max-width:900px) {
@@ -366,7 +359,6 @@ input,select,textarea { font-family:inherit; outline:none; }
   /* Rotas: no mobile, painel aparece primeiro (acima do mapa) */
   .rotas-layout { grid-template-columns:1fr; }
   .rotas-visual-wrapper { min-height:380px; order:-1; }
-  .map-wrapper { min-height:380px; }
   .map-container { min-height:380px; }
   .map-placeholder { min-height:380px; }
   .rota-result__metrics { grid-template-columns:1fr; }
@@ -378,7 +370,6 @@ input,select,textarea { font-family:inherit; outline:none; }
   .carros-grid { grid-template-columns:1fr; }
   .page-header { flex-direction:column; align-items:flex-start; }
   .rotas-visual-wrapper { min-height:300px; }
-  .map-wrapper { min-height:300px; }
   .map-container { min-height:300px; }
   .map-placeholder { min-height:300px; }
 }

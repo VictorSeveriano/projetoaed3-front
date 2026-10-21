@@ -10,7 +10,7 @@ import ModalErro from '../../components/ui/ModalErro';
 import ModalInformacao from '../../components/ui/ModalInformacao';
 import { formatarData } from '../../utils/formatters';
 import { usePerfilEdicao } from '../../hooks/usePerfilEdicao';
-import { CamposEnderecoPerfil } from '../../components/ui/ModaisPerfil/ModalPerfilBase';
+import { CamposEnderecoPerfil } from '../../components/ui/CamposEnderecoPerfil';
 
 const PERFIL_LABELS = {
   ADMINISTRADOR: 'Administrador',
