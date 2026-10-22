@@ -49,6 +49,10 @@ const UsuariosPage = () => {
   const [filtroPesquisa, setFiltroPesquisa] = useState('');
   const [filtroPerfil, setFiltroPerfil] = useState('');
 
+  const [usuarioParaExcluir, setUsuarioParaExcluir] = useState(null);
+  const [confirmacaoExclusaoOpen, setConfirmacaoExclusaoOpen] = useState(false);
+  const [excluindoUsuario, setExcluindoUsuario] = useState(false);
+
   const carregar = async () => {
     setLoading(true);
     try {
@@ -73,6 +77,34 @@ const UsuariosPage = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     carregar();
+  };
+
+  const abrirConfirmacaoExclusao = (usuario) => {
+    setUsuarioParaExcluir(usuario);
+    setConfirmacaoExclusaoOpen(true);
+  };
+
+  const handleExcluirUsuario = async () => {
+    if (!usuarioParaExcluir) return;
+
+    setExcluindoUsuario(true);
+    try {
+      await usuariosService.excluir(usuarioParaExcluir.id);
+      setConfirmacaoExclusaoOpen(false);
+      setUsuarioParaExcluir(null);
+      await carregar();
+    } catch (err) {
+      console.error(err);
+      setErroModal({
+        aberto: true,
+        titulo: 'Não foi possível excluir o usuário',
+        mensagem: err.response?.data?.message || 'O usuário possui dependências ativas e não pode ser removido no momento.',
+      });
+      setConfirmacaoExclusaoOpen(false);
+      setUsuarioParaExcluir(null);
+    } finally {
+      setExcluindoUsuario(false);
+    }
   };
 
   const handleSaveUsuario = async (id, dados) => {
@@ -252,6 +284,7 @@ const UsuariosPage = () => {
                 <th>Usuário</th>
                 <th>Perfil</th>
                 <th>Cadastro</th>
+                <th style={{ width: '200px' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -281,6 +314,31 @@ const UsuariosPage = () => {
                     />
                   </td>
                   <td className="data-table__cell">{formatarData(u.criadoEm)}</td>
+                  <td className="data-table__cell">
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn--sm"
+                        onClick={() => {
+                          if (u.perfil === 'MOTORISTA') {
+                            abrirMotorista(u.id);
+                          } else {
+                            setUsuarioSelecionado(u);
+                            setModalUsuarioOpen(true);
+                          }
+                        }}
+                      >
+                        Ver detalhes
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn--sm"
+                        onClick={() => abrirConfirmacaoExclusao(u)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -355,6 +413,22 @@ const UsuariosPage = () => {
         confirmText="Sair"
         cancelText="Cancelar"
         variant="warning"
+      />
+
+      <ConfirmationModal
+        isOpen={confirmacaoExclusaoOpen}
+        onClose={() => setConfirmacaoExclusaoOpen(false)}
+        onConfirm={handleExcluirUsuario}
+        title="Excluir usuário?"
+        message={
+          usuarioParaExcluir
+            ? `Tem certeza que deseja excluir ${usuarioParaExcluir.nome}? A conta será marcada como inativa e o histórico será preservado.`
+            : 'Tem certeza que deseja excluir este usuário?'
+        }
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+        loading={excluindoUsuario}
       />
     </div>
   );
