@@ -14,7 +14,8 @@ import { useNotificacoes } from '../../hooks/useNotificacoes';
 const ACAO_LABELS = {
   PENDENTE:  { label: 'Pendente',  color: 'warning' },
   ACEITA:    { label: 'Aceita',    color: 'success' },
-  RECUSADA:  { label: 'Recusada', color: 'danger'  },
+  RECUSADA:  { label: 'Recusada',  color: 'danger'  },
+  CANCELADA: { label: 'Cancelada', color: 'danger'  },
 };
 
 /**

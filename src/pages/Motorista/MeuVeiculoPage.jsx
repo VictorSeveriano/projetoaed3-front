@@ -40,6 +40,7 @@ const MeuVeiculoPage = () => {
 
   const carregar = () => {
     setLoading(true);
+    setError('');
     Promise.all([
       motoristasService.buscarVeiculo(usuario.id),
       motoristasService.buscarPorUsuarioId(usuario.id),

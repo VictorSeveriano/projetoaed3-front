@@ -30,6 +30,8 @@ export const STATUS_LABELS = {
   CANCELADA:    { label: 'Cancelada',    color: 'danger'  },
   DISPONIVEL:   { label: 'Disponivel',   color: 'success' },
   EM_CORRIDA:   { label: 'Em Corrida',   color: 'warning' },
+  ONLINE:       { label: 'Online',       color: 'success' },
+  OFFLINE:      { label: 'Offline',      color: 'muted'   },
 };
 
 export const formatarCPF = (v) => {
