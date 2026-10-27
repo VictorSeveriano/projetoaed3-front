@@ -8,7 +8,7 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import auditoriaService from '../../services/auditoria.service';
 import usuariosService from '../../services/usuarios.service';
-import { ShieldAlert, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShieldAlert, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 
@@ -19,7 +19,14 @@ const AuditoriaPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
-  const [filtros, setFiltros] = useState({ usuarioId: '' });
+  const [filtros, setFiltros] = useState({
+    usuarioId: '',
+    perfil: '',
+    resultado: '',
+    search: '',
+    dataInicio: '',
+    dataFim: '',
+  });
   
   const [usuarios, setUsuarios] = useState([]);
   const [registroSelecionado, setRegistroSelecionado] = useState(null);
@@ -92,21 +99,78 @@ const AuditoriaPage = () => {
 
       {/* Ferramentas e Filtros */}
       <div className="tools-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <form onSubmit={aplicarFiltros} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', width: '100%', alignItems: 'center' }}>
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '250px' }}>
+        <form onSubmit={aplicarFiltros} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', width: '100%', alignItems: 'center', justifyContent: 'flex-start' }}>
+          <div className="input-group" style={{ marginBottom: 0, minWidth: '280px', flex: '1 1 320px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+              <input
+                type="text"
+                name="search"
+                value={filtros.search}
+                onChange={handleFilterChange}
+                className="input-field"
+                placeholder="Pesquisar por nome do usuário"
+                style={{ paddingLeft: '40px', marginBottom: 0 }}
+              />
+            </div>
+          </div>
+
+          <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
             <div style={{ position: 'relative' }}>
               <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <select name="usuarioId" value={filtros.usuarioId} onChange={handleFilterChange} className="input-field" style={{ paddingLeft: '40px', marginBottom: 0 }}>
-                <option value="">Todos os Usuários</option>
-                {usuarios.map(u => (
-                  <option key={u.id} value={u.id}>{u.nome} ({u.perfil})</option>
-                ))}
+              <select name="perfil" value={filtros.perfil} onChange={handleFilterChange} className="input-field" style={{ paddingLeft: '40px', marginBottom: 0 }}>
+                <option value="">Todos os perfis</option>
+                <option value="ADMINISTRADOR">Administrador</option>
+                <option value="MOTORISTA">Motorista</option>
+                <option value="USUARIO">Passageiro</option>
               </select>
             </div>
           </div>
 
+          <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
+            <select name="resultado" value={filtros.resultado} onChange={handleFilterChange} className="input-field" style={{ marginBottom: 0 }}>
+              <option value="">Todos os resultados</option>
+              <option value="SUCESSO">Sucesso</option>
+              <option value="FALHA">Falha</option>
+            </select>
+          </div>
+
+          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
+            <input
+              type="date"
+              name="dataInicio"
+              value={filtros.dataInicio}
+              onChange={handleFilterChange}
+              className="input-field"
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
+            <input
+              type="date"
+              name="dataFim"
+              value={filtros.dataFim}
+              onChange={handleFilterChange}
+              className="input-field"
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+
           <Button type="submit" variant="primary">Filtrar</Button>
-          <Button type="button" variant="ghost" onClick={() => { setFiltros({ usuarioId: '' }); setPage(1); carregar(1, { usuarioId: '' }); }}>Limpar</Button>
+          <Button type="button" variant="ghost" onClick={() => {
+            const filtrosVazios = {
+              usuarioId: '',
+              perfil: '',
+              resultado: '',
+              search: '',
+              dataInicio: '',
+              dataFim: '',
+            };
+            setFiltros(filtrosVazios);
+            setPage(1);
+            carregar(1, filtrosVazios);
+          }}>Limpar</Button>
         </form>
       </div>
 

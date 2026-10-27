@@ -3,7 +3,9 @@ import api from './api';
 const veiculosService = {
   async listarTodos(filtros = {}) {
     const params = new URLSearchParams();
+    if (filtros.search) params.append('search', filtros.search);
     if (filtros.status) params.append('status', filtros.status);
+    if (filtros.classe) params.append('classe', filtros.classe);
     if (filtros.motoristaId) params.append('motoristaId', filtros.motoristaId);
     if (filtros.porte) params.append('porte', filtros.porte);
     

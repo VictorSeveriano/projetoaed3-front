@@ -8,7 +8,7 @@ import ModalErro from '../../components/ui/ModalErro';
 import veiculosService from '../../services/veiculos.service';
 import motoristasService from '../../services/motoristas.service';
 import { STATUS_LABELS } from '../../utils/formatters';
-import { Car, CarFront, IdCard, CheckCircle2 } from 'lucide-react';
+import { Car, CarFront, IdCard, CheckCircle2, Search, Filter } from 'lucide-react';
 import { ModalPerfilVeiculo, ModalPerfilMotorista } from '../../components/ui/ModaisPerfil';
 
 /** Opções de porte — únicas permitidas pelo sistema */
@@ -17,6 +17,21 @@ const PORTES = [
   { value: 'Pequeno', label: 'Pequeno' },
   { value: 'Medio',   label: 'Médio'   },
   { value: 'Grande',  label: 'Grande'  },
+];
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Todos os status' },
+  { value: 'DISPONIVEL', label: 'Disponível' },
+  { value: 'INDISPONIVEL', label: 'Indisponível' },
+  { value: 'EM_CORRIDA', label: 'Em corrida' },
+  { value: 'PENDENTE', label: 'Pendente' },
+];
+
+const CLASSE_OPTIONS = [
+  { value: '', label: 'Todas as classes' },
+  { value: 'BASICO', label: 'Básico' },
+  { value: 'NORMAL', label: 'Normal' },
+  { value: 'PREMIUM', label: 'Premium' },
 ];
 
 const PORTE_LABELS = { Pequeno: 'Pequeno', Medio: 'Médio', Grande: 'Grande' };
@@ -61,6 +76,9 @@ const VeiculosPage = () => {
   const [veiculos, setVeiculos] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [porte, setPorte]       = useState('');
+  const [status, setStatus]     = useState('');
+  const [classe, setClasse]     = useState('');
+  const [search, setSearch]     = useState('');
   const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
 
   // Modal veículo
@@ -71,21 +89,34 @@ const VeiculosPage = () => {
   const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
   const [modalMotoOpen, setModalMotoOpen]               = useState(false);
 
-  const carregar = async (porteFiltro = porte) => {
+  const carregar = async (porteFiltro = porte, statusFiltro = status, classeFiltro = classe, searchFiltro = search) => {
     setLoading(true);
     try {
       const filtros = {};
       if (porteFiltro) filtros.porte = porteFiltro;
+      if (statusFiltro) filtros.status = statusFiltro;
+      if (classeFiltro) filtros.classe = classeFiltro;
+      if (searchFiltro.trim()) filtros.search = searchFiltro.trim();
       const res = await veiculosService.listarTodos(filtros);
       setVeiculos(res || []);
     } catch { setVeiculos([]); } finally { setLoading(false); }
   };
 
-  useEffect(() => { carregar(porte); }, [porte]);
+  useEffect(() => {
+    const timer = setTimeout(() => carregar(), 250);
+    return () => clearTimeout(timer);
+  }, [porte, status, classe, search]);
 
   const handleVisualizar = (carro) => {
     setVeiculoSelecionado(carro);
     setModalVeiculoOpen(true);
+  };
+
+  const limparFiltros = () => {
+    setPorte('');
+    setStatus('');
+    setClasse('');
+    setSearch('');
   };
 
   const handleSalvarVeiculo = async (id, dados) => {
@@ -116,17 +147,61 @@ const VeiculosPage = () => {
     <div className="page animate-fade-in">
       <Header title="Veículos" subtitle="Frota disponível para alocação em corridas" />
 
-      {/* Filtro por porte */}
-      <div className="filters-bar">
-        <select
-          id="filtro-porte"
-          className="input-field input-field--select filters-bar__select"
-          value={porte}
-          onChange={(e) => setPorte(e.target.value)}
-        >
-          {PORTES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-        </select>
-        <Button variant="ghost" onClick={() => setPorte('')} size="sm">
+      <div className="filters-bar" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+        <div className="input-group" style={{ marginBottom: 0, minWidth: '260px', flex: '1 1 260px' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Buscar por nome, marca, modelo ou placa"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ paddingLeft: '40px', marginBottom: 0 }}
+            />
+          </div>
+        </div>
+
+        <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
+          <div style={{ position: 'relative' }}>
+            <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+            <select
+              id="filtro-status"
+              className="input-field input-field--select"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              style={{ paddingLeft: '40px', marginBottom: 0 }}
+            >
+              {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
+          <select
+            id="filtro-classe"
+            className="input-field input-field--select"
+            value={classe}
+            onChange={(e) => setClasse(e.target.value)}
+            style={{ marginBottom: 0 }}
+          >
+            {CLASSE_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+
+        <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
+          <select
+            id="filtro-porte"
+            className="input-field input-field--select"
+            value={porte}
+            onChange={(e) => setPorte(e.target.value)}
+            style={{ marginBottom: 0 }}
+          >
+            {PORTES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        </div>
+
+        <Button variant="ghost" onClick={limparFiltros} size="sm">
           Limpar
         </Button>
       </div>

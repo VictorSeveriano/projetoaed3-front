@@ -23,6 +23,11 @@ const usuariosService = {
     return data.data;
   },
 
+  async excluir(id) {
+    const { data } = await api.delete(`/usuarios/${id}`);
+    return data.data;
+  },
+
   async criar(dados) {
     const { data } = await api.post('/usuarios', dados);
     return data.data;
