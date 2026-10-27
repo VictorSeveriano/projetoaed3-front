@@ -36,6 +36,7 @@ const MotoristasAnalisePage = () => {
       } else {
         await motoristasService.rejeitar(acao.motorista.id);
       }
+      window.dispatchEvent(new Event('notificacoes-atualizadas'));
       await carregar();
     } catch (err) {
       console.error(err);

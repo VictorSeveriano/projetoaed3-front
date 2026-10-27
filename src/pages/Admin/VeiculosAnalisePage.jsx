@@ -38,6 +38,7 @@ const VeiculosAnalisePage = () => {
       } else {
         await veiculosService.rejeitar(acao.veiculo.id);
       }
+      window.dispatchEvent(new Event('notificacoes-atualizadas'));
       await carregar();
     } catch (err) {
       console.error(err);

@@ -4,6 +4,7 @@ import Header from '../../components/layout/Header';
 import Loading from '../../components/ui/Loading';
 import CorridasTabs from '../../components/ui/CorridasTabs';
 import corridasService from '../../services/corridas.service';
+import notificacoesService from '../../services/notificacoes.service';
 
 /**
  * CorridasPage — Página de corridas compartilhada entre Admin, Usuário e Motorista.
@@ -28,6 +29,11 @@ const CorridasPage = () => {
     try {
       const corridasRes = await corridasService.listarPorPerfil('');
       setCorridas(corridasRes || []);
+      if (usuario.perfil === 'USUARIO') {
+        notificacoesService.lerTodas()
+          .then(() => window.dispatchEvent(new Event('notificacoes-atualizadas')))
+          .catch(() => {});
+      }
       const mapa = {};
       (corridasRes || []).forEach((c) => { 
         if (c.veiculo) {

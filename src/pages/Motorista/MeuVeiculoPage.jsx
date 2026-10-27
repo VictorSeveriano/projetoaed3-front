@@ -41,11 +41,9 @@ const MeuVeiculoPage = () => {
   const carregar = () => {
     setLoading(true);
     setError('');
-    Promise.all([
-      motoristasService.buscarVeiculo(usuario.id),
-      motoristasService.buscarPorUsuarioId(usuario.id),
-    ])
-      .then(([dados, perfil]) => {
+    motoristasService.buscarPorUsuarioId(usuario.id)
+      .then((perfil) => {
+        const dados = perfil?.veiculo || null;
         setVeiculo(dados);
         setMotoristaPerfil(perfil);
         if (dados) {

@@ -55,6 +55,7 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   const navigate = useNavigate();
 
   const [naoLidas, setNaoLidas] = useState(0);
+  const [notificacoesLista, setNotificacoesLista] = useState([]);
 
   // Seleciona itens pelo campo perfil — nunca por nome/id
   const navItems = useMemo(() => {
@@ -67,11 +68,18 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   }, [usuario?.perfil]);
 
   useEffect(() => {
-    if (usuario?.perfil === 'ADMINISTRADOR' || usuario?.perfil === 'MOTORISTA') {
+    if (usuario?.id) {
       const carregarNotificacoes = () => {
         notificacoesService.listar()
-          .then(dados => setNaoLidas(dados?.naoLidas || 0))
-          .catch(() => setNaoLidas(0));
+          .then((dados) => {
+            const lista = dados?.notificacoes || [];
+            setNotificacoesLista(lista);
+            setNaoLidas(dados?.naoLidas ?? lista.filter((n) => !n.lida).length);
+          })
+          .catch(() => {
+            setNotificacoesLista([]);
+            setNaoLidas(0);
+          });
       };
       
       carregarNotificacoes();
@@ -80,6 +88,37 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
       return () => window.removeEventListener('notificacoes-atualizadas', carregarNotificacoes);
     }
   }, [usuario]);
+
+  const contadoresPorRota = useMemo(() => {
+    const naoLidasLista = notificacoesLista.filter((n) => !n.lida);
+    const contarPorTipo = (...tipos) =>
+      naoLidasLista.filter((n) => tipos.includes(n.tipo)).length;
+
+    if (usuario?.perfil === 'ADMINISTRADOR') {
+      return {
+        '/notificacoes':       naoLidas,
+        '/motoristas/analise': contarPorTipo('SOLICITACAO_MOTORISTA'),
+        '/veiculos/analise':   contarPorTipo('SOLICITACAO_VEICULO'),
+        '/corridas':           contarPorTipo('NOVA_CORRIDA', 'ATUALIZACAO_CORRIDA'),
+      };
+    }
+
+    if (usuario?.perfil === 'MOTORISTA') {
+      return {
+        '/notificacoes-motorista': naoLidas,
+        '/minhas-corridas':        contarPorTipo('ATUALIZACAO_CORRIDA'),
+        '/perfil':                 contarPorTipo('CADASTRO_APROVADO'),
+      };
+    }
+
+    if (usuario?.perfil === 'USUARIO') {
+      return {
+        '/minhas-corridas': contarPorTipo('ATUALIZACAO_CORRIDA') || naoLidas,
+      };
+    }
+
+    return {};
+  }, [notificacoesLista, naoLidas, usuario?.perfil]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -125,38 +164,56 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
         </div>
 
         <nav className="sidebar__nav" aria-label="Menu principal">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end
-              onClick={onClose}
-              data-tooltip={item.label}
-              className={({ isActive }) =>
-                `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
-              }
-            >
-              <span className="sidebar__link-icon">{item.icon}</span>
-              <span className="sidebar__link-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                {item.label}
-                {((item.to === '/notificacoes' && usuario?.perfil === 'ADMINISTRADOR') || 
-                  (item.to === '/notificacoes-motorista' && usuario?.perfil === 'MOTORISTA')) 
-                  && naoLidas > 0 && (
-                  <span style={{
-                    backgroundColor: 'var(--color-danger)', 
-                    color: 'white', 
-                    borderRadius: '12px', 
-                    padding: '2px 8px', 
-                    fontSize: '12px', 
-                    fontWeight: 'bold',
-                    marginLeft: '8px'
-                  }}>
-                    {naoLidas}
-                  </span>
-                )}
-              </span>
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            const qtdBadge = contadoresPorRota[item.to] || 0;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end
+                onClick={onClose}
+                data-tooltip={item.label}
+                className={({ isActive }) =>
+                  `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
+                }
+              >
+                <span className="sidebar__link-icon" style={{ position: 'relative', display: 'inline-flex' }}>
+                  {item.icon}
+                  {qtdBadge > 0 && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        top: '-3px',
+                        right: '-4px',
+                        width: '9px',
+                        height: '9px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--color-danger)',
+                        border: '2px solid var(--bg-900, #0f172a)',
+                      }}
+                    />
+                  )}
+                </span>
+                <span className="sidebar__link-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  {item.label}
+                  {qtdBadge > 0 && (
+                    <span style={{
+                      backgroundColor: 'var(--color-danger)', 
+                      color: 'white', 
+                      borderRadius: '12px', 
+                      padding: '2px 8px', 
+                      fontSize: '12px', 
+                      fontWeight: 'bold',
+                      marginLeft: '8px'
+                    }}>
+                      {qtdBadge}
+                    </span>
+                  )}
+                </span>
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="sidebar__footer">
