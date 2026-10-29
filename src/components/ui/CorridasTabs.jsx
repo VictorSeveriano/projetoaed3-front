@@ -2,7 +2,9 @@ import React, { useState, useMemo } from 'react';
 import Badge from './Badge';
 import Button from './Button';
 import EmptyState from './EmptyState';
+import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
+import { validarMotivo, MOTIVO_MAX } from './ModalConfirmacaoEmbarque';
 import corridasService from '../../services/corridas.service';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../utils/formatters';
 import { CalendarOff, MapPin, Route } from 'lucide-react';
@@ -35,6 +37,28 @@ const ABAS = [
  * @param {boolean}   [podeFinalizar]- Se o perfil pode finalizar corridas (default false)
  * @param {function}  onAcao         - Callback após ação (cancelar/finalizar) para recarregar
  */
+/**
+ * Regra pura que determina se o botão Cancelar deve ser exibido para a corrida e perfil atuais.
+ */
+export function podeExibirBotaoCancelar(
+  corrida,
+  { podeCancelar = false, podeConfirmarPagamento = false, podeFinalizar = false, perfil = '' } = {}
+) {
+  if (!corrida || !podeCancelar) return false;
+  if (corrida.status === 'FINALIZADA' || corrida.status === 'CANCELADA' || corrida.status === 'EM_ANDAMENTO') {
+    return false;
+  }
+  const ehMotorista = perfil === 'MOTORISTA' || (podeConfirmarPagamento && !podeFinalizar);
+  if (ehMotorista) {
+    return corrida.status === 'CONFIRMADA' && corrida.embarqueMotoristaConfirmado !== true;
+  }
+  const ehAdmin = perfil === 'ADMINISTRADOR' || podeFinalizar;
+  if (ehAdmin) {
+    return corrida.status === 'SOLICITADA' || corrida.status === 'CONFIRMADA';
+  }
+  return (corrida.status === 'SOLICITADA' || corrida.status === 'CONFIRMADA') && corrida.embarqueMotoristaConfirmado !== true;
+}
+
 const CorridasTabs = ({
   corridas = [],
   carrosMap = {},
@@ -43,10 +67,14 @@ const CorridasTabs = ({
   podeCancelar = false,
   podeFinalizar = false,
   podeConfirmarPagamento = false,
+  perfil = '',
   onAcao,
 }) => {
+  const ehMotorista = perfil === 'MOTORISTA' || (podeConfirmarPagamento && !podeFinalizar);
+  const ehPassageiro = perfil === 'USUARIO' || (podeCancelar && !podeConfirmarPagamento && !podeFinalizar);
   const [abaAtiva, setAbaAtiva]           = useState('TODAS');
   const [corridaToCancel, setCorridaToCancel] = useState(null);
+  const [motivoCancelamento, setMotivoCancelamento] = useState('');
   const [corridaToFinalizar, setCorridaToFinalizar] = useState(null);
   const [corridaToConfirmarPag, setCorridaToConfirmarPag] = useState(null);
   const [cancelando, setCancelando]       = useState(false);
@@ -68,12 +96,31 @@ const CorridasTabs = ({
     return map;
   }, [corridas]);
 
+  const corridaCancelamentoObj = useMemo(() => {
+    if (!corridaToCancel) return null;
+    if (typeof corridaToCancel === 'object') return corridaToCancel;
+    return corridas.find((c) => c.id === corridaToCancel) || { id: corridaToCancel };
+  }, [corridaToCancel, corridas]);
+
   const handleCancelar = async () => {
-    if (!corridaToCancel) return;
+    if (!corridaCancelamentoObj || cancelando) return;
+    const motivoTrim = (motivoCancelamento || '').trim();
+    if (ehMotorista || motivoTrim.length > 0) {
+      const erroValidacao = validarMotivo(motivoCancelamento);
+      if (erroValidacao) {
+        setActionError(erroValidacao);
+        return;
+      }
+    }
     setCancelando(true); setActionError('');
     try {
-      await corridasService.cancelar(corridaToCancel);
+      await corridasService.cancelar(
+        corridaCancelamentoObj.id,
+        motivoTrim ? { motivo: motivoTrim } : {}
+      );
       setCorridaToCancel(null);
+      setMotivoCancelamento('');
+      window.dispatchEvent(new Event('notificacoes-atualizadas'));
       if (onAcao) onAcao();
     } catch (err) {
       setActionError(err.response?.data?.message || 'Erro ao cancelar corrida.');
@@ -184,7 +231,12 @@ const CorridasTabs = ({
               <tbody>
                 {corridasFiltradas.map((c) => {
                   const statusInfo = STATUS_LABELS[c.status] || { label: c.status, color: 'muted' };
-                  const podeAcaoCancelar = podeCancelar && (c.status === 'SOLICITADA' || c.status === 'CONFIRMADA');
+                  const podeAcaoCancelar = podeExibirBotaoCancelar(c, {
+                    podeCancelar,
+                    podeConfirmarPagamento,
+                    podeFinalizar,
+                    perfil,
+                  });
                   const podeAcaoFinalizar = podeFinalizar && (c.status === 'CONFIRMADA' || c.status === 'EM_ANDAMENTO');
                   const horarioChegou = c.dataHorario && new Date(c.dataHorario).getTime() <= Date.now();
                   const podeConfirmarEmbarqueMotorista = podeConfirmarPagamento && c.status === 'CONFIRMADA' && horarioChegou && c.embarqueMotoristaConfirmado !== true;
@@ -250,14 +302,24 @@ const CorridasTabs = ({
                                 Confirmar Embarque
                               </Button>
                             )}
+                            {podeConfirmarPagamento && (c.status === 'EM_ANDAMENTO' || c.status === 'CONFIRMADA') && (
+                              <Button
+                                id={`btn-confirmar-pag-${c.id}`}
+                                variant="success"
+                                size="sm"
+                                onClick={() => { setActionError(''); setCorridaToConfirmarPag(c.id); }}
+                              >
+                                Confirmar Pagamento
+                              </Button>
+                            )}
                             {podeAcaoCancelar && (
                               <Button
                                 id={`btn-cancelar-${c.id}`}
                                 variant="danger"
                                 size="sm"
-                                onClick={() => { setActionError(''); setCorridaToCancel(c.id); }}
+                                onClick={() => { setActionError(''); setMotivoCancelamento(''); setCorridaToCancel(c); }}
                               >
-                                Cancelar
+                                {ehPassageiro ? 'Cancelar corrida' : 'Cancelar'}
                               </Button>
                             )}
                             {podeAcaoFinalizar && (
@@ -268,16 +330,6 @@ const CorridasTabs = ({
                                 onClick={() => { setActionError(''); setCorridaToFinalizar(c.id); }}
                               >
                                 Finalizar
-                              </Button>
-                            )}
-                            {podeConfirmarPagamento && (c.status === 'EM_ANDAMENTO' || c.status === 'CONFIRMADA') && (
-                              <Button
-                                id={`btn-confirmar-pag-${c.id}`}
-                                variant="success"
-                                size="sm"
-                                onClick={() => { setActionError(''); setCorridaToConfirmarPag(c.id); }}
-                              >
-                                Confirmar Pagamento
                               </Button>
                             )}
                           </div>
@@ -292,18 +344,88 @@ const CorridasTabs = ({
         )}
       </div>
 
-      {/* Modal de cancelamento */}
-      <ConfirmationModal
-        isOpen={!!corridaToCancel}
-        onClose={() => { setCorridaToCancel(null); setActionError(''); }}
-        onConfirm={handleCancelar}
+      {/* Modal de cancelamento com identificação da corrida e motivo */}
+      <Modal
+        isOpen={!!corridaCancelamentoObj}
+        onClose={() => { if (!cancelando) { setCorridaToCancel(null); setMotivoCancelamento(''); setActionError(''); } }}
         title="Cancelar corrida?"
-        message={actionError || 'Tem certeza que deseja cancelar esta corrida? Essa ação não pode ser desfeita.'}
-        confirmText="Cancelar corrida"
-        cancelText="Voltar"
-        variant="danger"
-        loading={cancelando}
-      />
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', width: '100%' }}>
+            <Button
+              variant="ghost"
+              disabled={cancelando}
+              onClick={() => { setCorridaToCancel(null); setMotivoCancelamento(''); setActionError(''); }}
+            >
+              Voltar
+            </Button>
+            <Button
+              variant="danger"
+              loading={cancelando}
+              disabled={ehMotorista && !motivoCancelamento.trim()}
+              onClick={handleCancelar}
+            >
+              Cancelar corrida
+            </Button>
+          </div>
+        }
+      >
+        {corridaCancelamentoObj && (
+          <div>
+            {corridaCancelamentoObj.origemNome && (
+              <div style={{ background: 'var(--bg-secondary, rgba(255,255,255,0.04))', borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 14 }}>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                  Corrida #{String(corridaCancelamentoObj.id).substring(0, 6)}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <MapPin size={14} aria-hidden="true" /> {corridaCancelamentoObj.origemNome}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
+                  <MapPin size={14} aria-hidden="true" /> {corridaCancelamentoObj.destinoNome}
+                </div>
+                <div style={{ marginTop: 6, color: 'var(--text-secondary)' }}>
+                  {formatarDataHorario(corridaCancelamentoObj.dataHorario)} • {formatarMoeda(corridaCancelamentoObj.valor)}
+                </div>
+              </div>
+            )}
+
+            <label htmlFor="motivo-cancelamento-corrida" style={{ display: 'block', marginBottom: 6, fontSize: 14 }}>
+              {ehMotorista ? 'Motivo do cancelamento *' : 'Motivo do cancelamento (opcional)'}
+            </label>
+            <textarea
+              id="motivo-cancelamento-corrida"
+              value={motivoCancelamento}
+              maxLength={MOTIVO_MAX}
+              rows={3}
+              disabled={cancelando}
+              placeholder={ehMotorista ? 'Informe o motivo do cancelamento (mínimo 5 caracteres)...' : 'Informe o motivo caso deseje...'}
+              onChange={(e) => { setMotivoCancelamento(e.target.value); setActionError(''); }}
+              style={{
+                width: '100%',
+                resize: 'vertical',
+                padding: 10,
+                borderRadius: 8,
+                background: 'transparent',
+                color: 'inherit',
+                border: '1px solid var(--border-color, rgba(255,255,255,0.2))',
+              }}
+            />
+            <small style={{ color: 'var(--text-secondary)' }}>
+              {MOTIVO_MAX - motivoCancelamento.length} caracteres restantes
+            </small>
+
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>
+              Tem certeza que deseja cancelar esta corrida? Essa ação não pode ser desfeita.
+            </p>
+
+            {actionError && (
+              <p role="alert" className="form-error" style={{ marginTop: 10 }}>
+                {actionError}
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Modal de finalização */}
       <ConfirmationModal

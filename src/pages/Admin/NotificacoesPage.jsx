@@ -30,6 +30,7 @@ const NotificacoesPage = () => {
     }
     if (n.tipo === 'SOLICITACAO_MOTORISTA') navigate('/motoristas/analise');
     if (n.tipo === 'SOLICITACAO_VEICULO') navigate('/veiculos/analise');
+    if (n.tipo === 'ATUALIZACAO_CORRIDA') navigate('/minhas-corridas');
   };
 
   return (

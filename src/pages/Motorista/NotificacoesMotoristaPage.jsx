@@ -10,6 +10,7 @@ import corridasService from '../../services/corridas.service';
 import { Bell, Check, CheckCircle, XCircle } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
 import { useNotificacoes } from '../../hooks/useNotificacoes';
+import { useNavigate } from 'react-router-dom';
 
 const ACAO_LABELS = {
   PENDENTE:  { label: 'Pendente',  color: 'warning' },
@@ -67,6 +68,8 @@ const NotificacoesMotoristaPage = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   const handleNotificacaoClick = async (n) => {
     if (!n.lida) {
       const ok = await handleMarcarLida(n.id);
@@ -74,6 +77,7 @@ const NotificacoesMotoristaPage = () => {
         await carregar();
       }
     }
+    if (n.tipo === 'ATUALIZACAO_CORRIDA') navigate('/minhas-corridas');
   };
 
   return (

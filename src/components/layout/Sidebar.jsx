@@ -30,9 +30,10 @@ const NAV_ITEMS_ADMIN = [
 ];
 
 const NAV_ITEMS_USUARIO = [
-  { to: '/solicitar-corrida', icon: <Map size={20} />,         label: 'Solicitar corrida' },
-  { to: '/minhas-corridas',   icon: <CalendarDays size={20} />, label: 'Minhas corridas'  },
-  { to: '/perfil',            icon: <User size={20} />,         label: 'Meu perfil'       },
+  { to: '/solicitar-corrida', icon: <Map size={20} />,          label: 'Solicitar corrida' },
+  { to: '/minhas-corridas',   icon: <CalendarDays size={20} />, label: 'Minhas corridas'   },
+  { to: '/notificacoes',      icon: <Bell size={20} />,         label: 'Notificações'      },
+  { to: '/perfil',            icon: <User size={20} />,         label: 'Meu perfil'        },
 ];
 
 const NAV_ITEMS_MOTORISTA = [
@@ -113,7 +114,8 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
 
     if (usuario?.perfil === 'USUARIO') {
       return {
-        '/minhas-corridas': contarPorTipo('ATUALIZACAO_CORRIDA') || naoLidas,
+        '/notificacoes':    naoLidas,
+        '/minhas-corridas': contarPorTipo('ATUALIZACAO_CORRIDA'),
       };
     }
 

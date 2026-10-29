@@ -38,8 +38,8 @@ const corridasService = {
     return data.data;
   },
 
-  async cancelar(id) {
-    const { data } = await api.patch(`/corridas/${id}/cancelar`);
+  async cancelar(id, dados = {}) {
+    const { data } = await api.patch(`/corridas/${id}/cancelar`, dados);
     return data.data;
   },
 

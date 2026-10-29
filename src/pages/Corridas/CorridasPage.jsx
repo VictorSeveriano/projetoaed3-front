@@ -29,11 +29,6 @@ const CorridasPage = () => {
     try {
       const corridasRes = await corridasService.listarPorPerfil('');
       setCorridas(corridasRes || []);
-      if (usuario.perfil === 'USUARIO') {
-        notificacoesService.lerTodas()
-          .then(() => window.dispatchEvent(new Event('notificacoes-atualizadas')))
-          .catch(() => {});
-      }
       const mapa = {};
       (corridasRes || []).forEach((c) => { 
         if (c.veiculo) {
@@ -72,9 +67,10 @@ const CorridasPage = () => {
         carrosMap={carrosMap}
         loading={loading}
         error={error}
-        podeCancelar={isAdmin || isUsuario}
+        podeCancelar={isAdmin || isUsuario || isMotorista}
         podeFinalizar={isAdmin}
         podeConfirmarPagamento={isMotorista}
+        perfil={usuario?.perfil}
         onAcao={carregar}
       />
     </div>

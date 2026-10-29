@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 /**
- * Testes unitários das regras puras de elegibilidade da fila de modais e validação
- * de motivo de cancelamento no frontend.
+ * Testes unitários das regras de elegibilidade da fila de modais, validação de motivo
+ * e exibição condicional do botão Cancelar para motorista e passageiro no frontend.
  */
 
 const MOTIVO_MIN = 5;
@@ -38,6 +38,25 @@ function precisaConfirmacao(corrida, perfil, agora) {
   return false;
 }
 
+function podeExibirBotaoCancelar(
+  corrida,
+  { podeCancelar = false, podeConfirmarPagamento = false, podeFinalizar = false, perfil = '' } = {}
+) {
+  if (!corrida || !podeCancelar) return false;
+  if (corrida.status === 'FINALIZADA' || corrida.status === 'CANCELADA' || corrida.status === 'EM_ANDAMENTO') {
+    return false;
+  }
+  const ehMotorista = perfil === 'MOTORISTA' || (podeConfirmarPagamento && !podeFinalizar);
+  if (ehMotorista) {
+    return corrida.status === 'CONFIRMADA' && corrida.embarqueMotoristaConfirmado !== true;
+  }
+  const ehAdmin = perfil === 'ADMINISTRADOR' || podeFinalizar;
+  if (ehAdmin) {
+    return corrida.status === 'SOLICITADA' || corrida.status === 'CONFIRMADA';
+  }
+  return (corrida.status === 'SOLICITADA' || corrida.status === 'CONFIRMADA') && corrida.embarqueMotoristaConfirmado !== true;
+}
+
 test('validarMotivo rejeita vazio, apenas espaços, curto demais ou acima do limite', () => {
   assert.notEqual(validarMotivo(''), '');
   assert.notEqual(validarMotivo('     '), '');
@@ -56,7 +75,6 @@ test('precisaConfirmacao só habilita modal a partir do horário agendado e resp
   assert.equal(precisaConfirmacao(vencida, 'MOTORISTA', agora), true);
   assert.equal(precisaConfirmacao(vencida, 'USUARIO', agora), true);
 
-  // Motorista informou "Estou a caminho" com 15 min restantes -> não reabre imediatamente
   const aCaminhoLonge = {
     ...vencida,
     situacaoMotorista: 'A_CAMINHO',
@@ -64,7 +82,6 @@ test('precisaConfirmacao só habilita modal a partir do horário agendado e resp
   };
   assert.equal(precisaConfirmacao(aCaminhoLonge, 'MOTORISTA', agora), false);
 
-  // Quando faltam menos de 5 min do prazo estendido -> reabre para decisão final
   const aCaminhoPerto = {
     ...vencida,
     situacaoMotorista: 'A_CAMINHO',
@@ -73,3 +90,22 @@ test('precisaConfirmacao só habilita modal a partir do horário agendado e resp
   assert.equal(precisaConfirmacao(aCaminhoPerto, 'MOTORISTA', agora), true);
 });
 
+test('podeExibirBotaoCancelar exibe botão Cancelar para motorista apenas em corridas CONFIRMADA sem embarque', () => {
+  const propsMotorista = { podeCancelar: true, podeConfirmarPagamento: true, perfil: 'MOTORISTA' };
+
+  assert.equal(podeExibirBotaoCancelar({ status: 'CONFIRMADA', embarqueMotoristaConfirmado: null }, propsMotorista), true);
+  assert.equal(podeExibirBotaoCancelar({ status: 'SOLICITADA' }, propsMotorista), false);
+  assert.equal(podeExibirBotaoCancelar({ status: 'EM_ANDAMENTO', embarqueMotoristaConfirmado: true }, propsMotorista), false);
+  assert.equal(podeExibirBotaoCancelar({ status: 'FINALIZADA' }, propsMotorista), false);
+  assert.equal(podeExibirBotaoCancelar({ status: 'CANCELADA' }, propsMotorista), false);
+});
+
+test('podeExibirBotaoCancelar exibe botão Cancelar para passageiro em SOLICITADA e CONFIRMADA e oculta em FINALIZADA/CANCELADA/EM_ANDAMENTO', () => {
+  const propsPassageiro = { podeCancelar: true, perfil: 'USUARIO' };
+
+  assert.equal(podeExibirBotaoCancelar({ status: 'SOLICITADA' }, propsPassageiro), true);
+  assert.equal(podeExibirBotaoCancelar({ status: 'CONFIRMADA', embarqueMotoristaConfirmado: null }, propsPassageiro), true);
+  assert.equal(podeExibirBotaoCancelar({ status: 'EM_ANDAMENTO', embarqueMotoristaConfirmado: true }, propsPassageiro), false);
+  assert.equal(podeExibirBotaoCancelar({ status: 'FINALIZADA' }, propsPassageiro), false);
+  assert.equal(podeExibirBotaoCancelar({ status: 'CANCELADA' }, propsPassageiro), false);
+});
