@@ -53,6 +53,26 @@ const corridasService = {
     return data.data;
   },
 
+  /**
+   * Decisão do motorista sobre o embarque.
+   * @param {string} id
+   * @param {{ acao: 'CONFIRMAR_EMBARQUE'|'ESTOU_A_CAMINHO'|'NAO_VOU_EMBARCAR', motivo?: string }} payload
+   */
+  async registrarEmbarqueMotorista(id, payload) {
+    const { data } = await api.patch(`/corridas/${id}/embarque/motorista`, payload);
+    return data.data;
+  },
+
+  /**
+   * Confirmação do passageiro sobre o embarque.
+   * @param {string} id
+   * @param {{ acao: 'CONFIRMAR_EMBARQUE'|'NAO_EMBARQUEI', cancelarViagem?: boolean, motivo?: string }} payload
+   */
+  async registrarEmbarquePassageiro(id, payload) {
+    const { data } = await api.patch(`/corridas/${id}/embarque/passageiro`, payload);
+    return data.data;
+  },
+
   async finalizar(id) {
     const { data } = await api.patch(`/corridas/${id}/finalizar`);
     return data.data;

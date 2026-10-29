@@ -186,6 +186,9 @@ const CorridasTabs = ({
                   const statusInfo = STATUS_LABELS[c.status] || { label: c.status, color: 'muted' };
                   const podeAcaoCancelar = podeCancelar && (c.status === 'SOLICITADA' || c.status === 'CONFIRMADA');
                   const podeAcaoFinalizar = podeFinalizar && (c.status === 'CONFIRMADA' || c.status === 'EM_ANDAMENTO');
+                  const horarioChegou = c.dataHorario && new Date(c.dataHorario).getTime() <= Date.now();
+                  const podeConfirmarEmbarqueMotorista = podeConfirmarPagamento && c.status === 'CONFIRMADA' && horarioChegou && c.embarqueMotoristaConfirmado !== true;
+                  const podeConfirmarEmbarquePassageiro = podeCancelar && !podeFinalizar && (c.status === 'CONFIRMADA' || c.status === 'EM_ANDAMENTO') && horarioChegou && c.embarquePassageiroConfirmado == null;
                   return (
                     <tr key={c.id} className="data-table__row">
                       <td className="data-table__cell">#{c.id.substring(0, 6)}</td>
@@ -221,10 +224,32 @@ const CorridasTabs = ({
                       <td className="data-table__cell">{nomeVeiculo(c.veiculoId)}</td>
                       <td className="data-table__cell">
                         <Badge label={statusInfo.label} color={statusInfo.color} />
+                        {c.status === 'CONFIRMADA' && c.situacaoMotorista === 'A_CAMINHO' && (
+                          <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--color-warning)' }}>Motorista a caminho</div>
+                        )}
+                        {c.status === 'EM_ANDAMENTO' && c.embarqueMotoristaConfirmado && (
+                          <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--text-secondary)' }}>Embarque confirmado</div>
+                        )}
+                        {c.status === 'CANCELADA' && (c.motivoCancelamento || c.canceladoPor) && (
+                          <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--text-secondary)', maxWidth: 240 }}>
+                            {c.canceladoPor === 'MOTORISTA' ? 'Cancelada pelo motorista' : c.canceladoPor === 'PASSAGEIRO' ? 'Cancelada pelo passageiro' : c.canceladoPor === 'SISTEMA' ? 'Cancelada pelo sistema' : 'Cancelada'}
+                            {c.motivoCancelamento ? `: ${c.motivoCancelamento}` : ''}
+                          </div>
+                        )}
                       </td>
                       {(podeCancelar || podeFinalizar || podeConfirmarPagamento) && (
                         <td className="data-table__cell">
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {(podeConfirmarEmbarqueMotorista || podeConfirmarEmbarquePassageiro) && (
+                              <Button
+                                id={`btn-embarque-${c.id}`}
+                                variant="primary"
+                                size="sm"
+                                onClick={() => window.dispatchEvent(new CustomEvent('abrir-modal-embarque', { detail: c }))}
+                              >
+                                Confirmar Embarque
+                              </Button>
+                            )}
                             {podeAcaoCancelar && (
                               <Button
                                 id={`btn-cancelar-${c.id}`}

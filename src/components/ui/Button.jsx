@@ -2,6 +2,7 @@ import React from 'react';
 
 const VARIANTS = {
   primary: 'btn-primary',
+  success: 'btn-success',
   secondary: 'btn-secondary',
   danger: 'btn-danger',
   ghost: 'btn-ghost',

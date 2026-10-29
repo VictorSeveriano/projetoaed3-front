@@ -47,7 +47,11 @@ const CorridasPage = () => {
     } finally { setLoading(false); }
   }, [usuario]);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => {
+    carregar();
+    window.addEventListener('corridas-atualizadas', carregar);
+    return () => window.removeEventListener('corridas-atualizadas', carregar);
+  }, [carregar]);
 
   const isAdmin    = usuario?.perfil === 'ADMINISTRADOR';
   const isMotorista = usuario?.perfil === 'MOTORISTA';

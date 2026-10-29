@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
+import GerenciadorConfirmacaoEmbarque from '../ui/GerenciadorConfirmacaoEmbarque';
 
 const Layout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -28,6 +29,7 @@ const Layout = ({ children }) => {
           {children}
         </div>
       </main>
+      <GerenciadorConfirmacaoEmbarque />
     </div>
   );
 };
