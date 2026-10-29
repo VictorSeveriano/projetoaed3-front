@@ -39,7 +39,8 @@ import { Route, Check, TriangleAlert, MapPin, Clock } from 'lucide-react';
  */
 const CorridaModal = ({
   isOpen, onClose, rota, origemNome, destinoNome,
-  origemGeocodificada, destinoGeocodificada, onSuccess,
+  origemGeocodificada, destinoGeocodificada,
+  origemEndereco, destinoEndereco, onSuccess,
 }) => {
   const [dataHorario, setDataHorario]   = useState('');
   const [classe, setClasse]             = useState('NORMAL');
@@ -189,6 +190,8 @@ const CorridaModal = ({
         destinoNome,
         origemGeocodificada,
         destinoGeocodificada,
+        origemEndereco,
+        destinoEndereco,
         rota,
         dataHorario,
         classe,

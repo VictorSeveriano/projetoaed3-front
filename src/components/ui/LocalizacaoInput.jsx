@@ -2,10 +2,11 @@ import React from 'react';
 import { MapPin, Search, Check, Loader, X } from 'lucide-react';
 
 export const LocalizacaoInput = ({ 
-  campo, id, label, placeholder, listRef, extraAcoes, handleKeyDown, setError 
+  campo, id, label, placeholder, listRef, extraAcoes, handleKeyDown, setError, carregandoExterno = false 
 }) => {
   const listId = id + '-sugestoes';
   const origemOuDestino = label.toLowerCase();
+  const estaBuscando = campo.buscando || carregandoExterno;
   
   return (
     <section className="rotas-section" aria-label={label}>
@@ -35,7 +36,7 @@ export const LocalizacaoInput = ({
             />
             {/* Icone de status no campo */}
             <span className="autocomplete-field-icon" aria-hidden="true">
-              {campo.buscando
+              {estaBuscando
                 ? <Loader size={14} className="spin-icon" />
                 : campo.selecionada
                   ? <Check size={14} style={{ color: 'var(--color-success)' }} />
@@ -101,7 +102,12 @@ export const LocalizacaoInput = ({
         )}
 
         {/* Badge de confirmacao */}
-        {campo.selecionada && (
+        {carregandoExterno && (
+          <p className="autocomplete-status" role="status" aria-live="polite">
+            Obtendo endereço da sua localização atual...
+          </p>
+        )}
+        {!carregandoExterno && campo.selecionada && (
           <p className="rotas-geo-info" aria-live="polite">
             <Check size={14} aria-hidden="true" />
             Localizacao confirmada

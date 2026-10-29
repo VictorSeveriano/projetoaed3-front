@@ -7,6 +7,9 @@ import {
   extrairCoordenadasGeocodificadas,
   converterDataHorarioComercialParaISO,
   obterMinDatetimeComercial,
+  ehEnderecoGenericoGps,
+  obterEnderecoOrigemPorGps,
+  traduzirErroGeolocalizacao,
   montarPayloadCriacaoCorrida,
 } from '../src/utils/corridaPayload.js';
 import { formatarDataHorario } from '../src/utils/formatters.js';
@@ -141,5 +144,187 @@ test('Converte dataHorario no fuso comercial America/Sao_Paulo (-03:00) com cons
   assert.equal(minStr, '2026-10-01T13:00');
   const exibicao = formatarDataHorario('2026-10-01T16:00:00.000Z');
   assert.match(exibicao, /01\/10\/2026.*13:00/);
+});
+
+test('GPS: obtém coordenadas reais, converte via geocodificação reversa (com e sem número) e preserva coordenadas originais', async () => {
+  const geolocationMock = {
+    getCurrentPosition(success) {
+      success({ coords: { latitude: -20.297618, longitude: -40.295776 } });
+    },
+  };
+
+  // Caso 1: Com número do imóvel
+  const enderecoComNumero = await obterEnderecoOrigemPorGps({
+    geolocation: geolocationMock,
+    geocodificarReverso: async (lat, lng) => {
+      assert.equal(lat, -20.297618);
+      assert.equal(lng, -40.295776);
+      return {
+        descricao: 'Avenida Nossa Senhora da Penha, 1234, Santa Luíza, Vitória - ES',
+        logradouro: 'Avenida Nossa Senhora da Penha',
+        numero: '1234',
+        bairro: 'Santa Luíza',
+        cidade: 'Vitória',
+        estado: 'Espírito Santo',
+        uf: 'ES',
+        cep: '29045-402',
+        latitude: -20.298, // centroide aproximado retornado pela API externa
+        longitude: -40.296,
+      };
+    },
+  });
+
+  assert.equal(
+    enderecoComNumero.descricao,
+    'Avenida Nossa Senhora da Penha, 1234, Santa Luíza, Vitória - ES'
+  );
+  assert.equal(enderecoComNumero.numero, '1234');
+  // Coordenadas reais do GPS preservadas
+  assert.equal(enderecoComNumero.latitude, -20.297618);
+  assert.equal(enderecoComNumero.longitude, -40.295776);
+
+  // Caso 2: Sem número do imóvel (não inventa número)
+  const enderecoSemNumero = await obterEnderecoOrigemPorGps({
+    geolocation: geolocationMock,
+    geocodificarReverso: async () => ({
+      descricao: 'Avenida Nossa Senhora da Penha, Santa Luíza, Vitória - ES',
+      logradouro: 'Avenida Nossa Senhora da Penha',
+      numero: '',
+      bairro: 'Santa Luíza',
+      cidade: 'Vitória',
+      estado: 'Espírito Santo',
+      uf: 'ES',
+      cep: '29045-402',
+    }),
+  });
+
+  assert.equal(
+    enderecoSemNumero.descricao,
+    'Avenida Nossa Senhora da Penha, Santa Luíza, Vitória - ES'
+  );
+  assert.equal(enderecoSemNumero.numero, '');
+  assert.equal(enderecoSemNumero.latitude, -20.297618);
+  assert.equal(enderecoSemNumero.longitude, -40.295776);
+
+  // Payload de criação da corrida persiste endereço legível, endereço estruturado e coordenadas reais
+  const payload = montarPayloadCriacaoCorrida({
+    origemNome: enderecoComNumero.descricao,
+    destinoNome: 'Rodovia ES-010, KM 6, Manguinhos, Serra - ES',
+    origemGeocodificada: { lat: enderecoComNumero.latitude, lng: enderecoComNumero.longitude },
+    destinoGeocodificada: { lat: -20.195432, lng: -40.217891 },
+    origemEndereco: enderecoComNumero,
+    rota: {
+      caminho: [enderecoComNumero.descricao, 'Rodovia ES-010, KM 6, Manguinhos, Serra - ES'],
+      polyline: 'poly123',
+      distanciaKm: 17.92,
+      duracaoMin: 39,
+    },
+    dataHorario: '2026-10-29T11:14',
+    classe: 'BASICO',
+    formaPagamento: 'DINHEIRO',
+  });
+
+  assert.equal(payload.origemNome, 'Avenida Nossa Senhora da Penha, 1234, Santa Luíza, Vitória - ES');
+  assert.equal(payload.origemLat, -20.297618);
+  assert.equal(payload.origemLng, -40.295776);
+  assert.equal(payload.origemEndereco.logradouro, 'Avenida Nossa Senhora da Penha');
+  assert.equal(payload.origemEndereco.numero, '1234');
+  assert.equal(payload.origemEndereco.cidade, 'Vitória');
+});
+
+test('GPS: trata permissão negada, GPS indisponível, timeout, falha de geocodificação reversa e bloqueia rótulo genérico', async () => {
+  // Permissão negada (code 1)
+  await assert.rejects(
+    () =>
+      obterEnderecoOrigemPorGps({
+        geolocation: {
+          getCurrentPosition(_ok, fail) {
+            fail({ code: 1 });
+          },
+        },
+        geocodificarReverso: async () => ({}),
+      }),
+    /Permissão de localização negada/i
+  );
+
+  // GPS indisponível (code 2)
+  await assert.rejects(
+    () =>
+      obterEnderecoOrigemPorGps({
+        geolocation: {
+          getCurrentPosition(_ok, fail) {
+            fail({ code: 2 });
+          },
+        },
+        geocodificarReverso: async () => ({}),
+      }),
+    /indisponível ou desativada/i
+  );
+
+  // Timeout (code 3)
+  await assert.rejects(
+    () =>
+      obterEnderecoOrigemPorGps({
+        geolocation: {
+          getCurrentPosition(_ok, fail) {
+            fail({ code: 3 });
+          },
+        },
+        geocodificarReverso: async () => ({}),
+      }),
+    /Tempo limite esgotado/i
+  );
+
+  // Falha no serviço de geocodificação reversa seguida de nova tentativa bem-sucedida
+  let tentativas = 0;
+  const geoOk = {
+    getCurrentPosition(success) {
+      success({ coords: { latitude: -20.3155, longitude: -40.3128 } });
+    },
+  };
+  const fnReversoComFalhaInicial = async () => {
+    tentativas += 1;
+    if (tentativas === 1) {
+      throw new Error('Serviço de geocodificação reversa indisponível no momento.');
+    }
+    return {
+      descricao: 'Avenida Jerônimo Monteiro, 1000, Centro, Vitória - ES',
+      logradouro: 'Avenida Jerônimo Monteiro',
+      numero: '1000',
+      bairro: 'Centro',
+      cidade: 'Vitória',
+      estado: 'Espírito Santo',
+      uf: 'ES',
+    };
+  };
+
+  await assert.rejects(
+    () => obterEnderecoOrigemPorGps({ geolocation: geoOk, geocodificarReverso: fnReversoComFalhaInicial }),
+    /indisponível/i
+  );
+  const aposRetry = await obterEnderecoOrigemPorGps({
+    geolocation: geoOk,
+    geocodificarReverso: fnReversoComFalhaInicial,
+  });
+  assert.equal(aposRetry.descricao, 'Avenida Jerônimo Monteiro, 1000, Centro, Vitória - ES');
+
+  // Bloqueia rótulo genérico "Localizacao Atual (GPS)" / "Localização atual (GPS)"
+  assert.equal(ehEnderecoGenericoGps('Localizacao Atual (GPS)'), true);
+  assert.equal(ehEnderecoGenericoGps('Localização atual (GPS)'), true);
+  assert.throws(
+    () =>
+      montarPayloadCriacaoCorrida({
+        origemNome: 'Localizacao Atual (GPS)',
+        destinoNome: 'Vitória - ES',
+        origemGeocodificada: { lat: -20.3, lng: -40.3 },
+        destinoGeocodificada: { lat: -20.2, lng: -40.2 },
+        rota: { caminho: ['A', 'B'], distanciaKm: 5, duracaoMin: 10 },
+        dataHorario: '2026-10-29T12:00',
+        classe: 'NORMAL',
+        formaPagamento: 'PIX',
+      }),
+    /convertido em um endereço legível/i
+  );
+  assert.equal( typeof traduzirErroGeolocalizacao({ code: 1 }), 'string');
 });
 

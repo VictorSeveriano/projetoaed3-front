@@ -3,6 +3,7 @@ import Header from '../../components/layout/Header';
 import Button from '../../components/ui/Button';
 import CorridaModal from '../../components/ui/CorridaModal';
 import rotasService from '../../services/rotas.service';
+import localizacaoService from '../../services/localizacao.service';
 import useLocationSearch from '../../hooks/useLocationSearch';
 import {
   possuiCoordenadasValidas,
@@ -170,25 +171,20 @@ const RotasPage = () => {
   }, [origem, destino]);
 
   // --- GPS ---
-  const usarGps = () => {
-    if (!navigator.geolocation) { setError('GPS nao disponivel neste navegador.'); return; }
-    setLoadingGps(true); setError('');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const sugestaoGps = {
-          descricao: 'Localizacao Atual (GPS)',
-          logradouro: '', numero: '', complemento: '',
-          bairro: '', cidade: '', estado: '', cep: '',
-          latitude,
-          longitude,
-        };
-        origem.selecionar(sugestaoGps);
-        setLoadingGps(false);
-      },
-      () => { setError('Nao foi possivel obter a localizacao GPS.'); setLoadingGps(false); },
-      { timeout: 8000 },
-    );
+  const usarGps = async () => {
+    setLoadingGps(true);
+    setError('');
+    try {
+      const enderecoGps = await localizacaoService.obterEnderecoPorGps();
+      origem.selecionar(enderecoGps);
+      setRotas([]);
+      setRotaSelecionada(null);
+    } catch (err) {
+      origem.limpar();
+      setError(err.message || 'Não foi possível obter a localização GPS.');
+    } finally {
+      setLoadingGps(false);
+    }
   };
 
   // --- Navega pelo teclado no dropdown ---
@@ -295,6 +291,7 @@ const RotasPage = () => {
             listRef={origemListRef}
             handleKeyDown={handleKeyDown}
             setError={setError}
+            carregandoExterno={loadingGps}
             extraAcoes={
               <Button id="btn-gps" variant="ghost" size="sm" onClick={usarGps} loading={loadingGps} title="Usar minha localizacao atual">
                 <Navigation size={16} aria-hidden="true" />
@@ -422,6 +419,8 @@ const RotasPage = () => {
             ? { lat: destino.selecionada.latitude ?? null, lng: destino.selecionada.longitude ?? null }
             : null
         }
+        origemEndereco={origem.selecionada || null}
+        destinoEndereco={destino.selecionada || null}
         onSuccess={() => {
           setRotas([]);
           setRotaSelecionada(null);

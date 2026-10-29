@@ -185,10 +185,134 @@ export function obterMinDatetimeComercial(
 }
 
 /**
+ * Verifica se o texto é o rótulo genérico de GPS sem endereço legível.
+ */
+export function ehEnderecoGenericoGps(texto) {
+  if (typeof texto !== 'string') return false;
+  return /^localiza[cç][aã]o\s+atual\s*\(gps\)$/i.test(texto.trim());
+}
+
+/**
+ * Mapeia códigos de erro da Geolocation API para mensagens claras ao usuário.
+ * @param {object} err
+ * @returns {string}
+ */
+export function traduzirErroGeolocalizacao(err) {
+  const code = err?.code;
+  if (code === 1) {
+    return 'Permissão de localização negada. Permita o acesso ao GPS no navegador ou digite o endereço manualmente.';
+  }
+  if (code === 2) {
+    return 'Localização GPS indisponível ou desativada no dispositivo. Verifique o GPS ou digite o endereço manualmente.';
+  }
+  if (code === 3) {
+    return 'Tempo limite esgotado ao obter a localização pelo GPS. Tente novamente ou digite o endereço manualmente.';
+  }
+  return 'Não foi possível obter a localização GPS. Tente novamente ou digite o endereço manualmente.';
+}
+
+/**
+ * Obtém as coordenadas reais do dispositivo via Geolocation API e converte em
+ * um endereço legível por geocodificação reversa, preservando as coordenadas originais.
+ */
+export async function obterEnderecoOrigemPorGps({
+  geolocation = typeof navigator !== 'undefined' ? navigator.geolocation : null,
+  geocodificarReverso,
+  timeout = 10000,
+} = {}) {
+  if (!geolocation || typeof geolocation.getCurrentPosition !== 'function') {
+    throw new Error('GPS não disponível neste navegador ou dispositivo. Digite o endereço manualmente.');
+  }
+  if (typeof geocodificarReverso !== 'function') {
+    throw new Error('Serviço de geocodificação reversa não configurado.');
+  }
+
+  const coords = await new Promise((resolve, reject) => {
+    geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos?.coords?.latitude);
+        const lng = Number(pos?.coords?.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          reject(new Error('Coordenadas inválidas retornadas pelo GPS. Tente novamente ou digite o endereço manualmente.'));
+          return;
+        }
+        resolve({ latitude: lat, longitude: lng });
+      },
+      (geoErr) => {
+        reject(new Error(traduzirErroGeolocalizacao(geoErr)));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout,
+        maximumAge: 0,
+      }
+    );
+  });
+
+  let endereco;
+  try {
+    endereco = await geocodificarReverso(coords.latitude, coords.longitude);
+  } catch (err) {
+    const msg =
+      err?.response?.data?.message ||
+      err?.message ||
+      'Não foi possível converter sua localização em um endereço legível. Tente novamente ou digite o endereço manualmente.';
+    throw new Error(msg);
+  }
+
+  const descricao = typeof endereco?.descricao === 'string' ? endereco.descricao.trim() : '';
+  if (!descricao || ehEnderecoGenericoGps(descricao)) {
+    throw new Error(
+      'Não foi possível identificar um endereço legível para a sua localização atual. Tente novamente ou digite o endereço manualmente.'
+    );
+  }
+
+  return {
+    descricao,
+    logradouro: typeof endereco.logradouro === 'string' ? endereco.logradouro.trim() : '',
+    numero: endereco.numero != null ? String(endereco.numero).trim() : '',
+    complemento: typeof endereco.complemento === 'string' ? endereco.complemento.trim() : '',
+    bairro: typeof endereco.bairro === 'string' ? endereco.bairro.trim() : '',
+    cidade: typeof endereco.cidade === 'string' ? endereco.cidade.trim() : '',
+    estado: typeof endereco.estado === 'string' ? endereco.estado.trim() : '',
+    uf: typeof endereco.uf === 'string' ? endereco.uf.trim() : '',
+    cep: typeof endereco.cep === 'string' ? endereco.cep.trim() : '',
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+  };
+}
+
+function normalizarEnderecoEstruturado(end, coords) {
+  if (!end || typeof end !== 'object' || Array.isArray(end)) return undefined;
+  const temCampo =
+    Boolean(end.logradouro) ||
+    Boolean(end.bairro) ||
+    Boolean(end.cidade) ||
+    Boolean(end.estado) ||
+    Boolean(end.uf) ||
+    Boolean(end.cep);
+  if (!temCampo) return undefined;
+
+  return {
+    logradouro: typeof end.logradouro === 'string' ? end.logradouro.trim() : '',
+    numero: end.numero != null ? String(end.numero).trim() : '',
+    complemento: typeof end.complemento === 'string' ? end.complemento.trim() : '',
+    bairro: typeof end.bairro === 'string' ? end.bairro.trim() : '',
+    cidade: typeof end.cidade === 'string' ? end.cidade.trim() : '',
+    estado: typeof end.estado === 'string' ? end.estado.trim() : '',
+    uf: typeof end.uf === 'string' ? end.uf.trim() : '',
+    cep: typeof end.cep === 'string' ? end.cep.trim() : '',
+    latitude: coords?.lat ?? normalizarLatitudeOpcional(end.latitude, 'endereco.latitude'),
+    longitude: coords?.lng ?? normalizarLongitudeOpcional(end.longitude, 'endereco.longitude'),
+  };
+}
+
+/**
  * Monta o payload de criação de corrida garantindo:
  * - Preservação de coordenadas iguais a `0` e negativas;
  * - Ausência de coordenadas representada como `null`;
  * - Rejeição de coordenadas fora dos limites geográficos;
+ * - Rejeição de rótulo genérico de GPS sem endereço legível;
  * - Conversão consistente de `dataHorario` no fuso `America/Sao_Paulo`;
  * - Não envio de `usuarioId` (determinado pelo token no backend).
  */
@@ -197,6 +321,8 @@ export function montarPayloadCriacaoCorrida({
   destinoNome,
   origemGeocodificada,
   destinoGeocodificada,
+  origemEndereco,
+  destinoEndereco,
   rota,
   dataHorario,
   classe,
@@ -206,13 +332,29 @@ export function montarPayloadCriacaoCorrida({
     throw new Error('Selecione uma rota válida primeiro.');
   }
 
+  const origemLimpa = typeof origemNome === 'string' ? origemNome.trim() : '';
+  const destinoLimpo = typeof destinoNome === 'string' ? destinoNome.trim() : '';
+
+  if (!origemLimpa) {
+    throw new Error('Informe um endereço de origem válido.');
+  }
+  if (ehEnderecoGenericoGps(origemLimpa)) {
+    throw new Error('O endereço de origem obtido pelo GPS deve ser convertido em um endereço legível antes de solicitar a corrida.');
+  }
+  if (!destinoLimpo) {
+    throw new Error('Informe um endereço de destino válido.');
+  }
+  if (ehEnderecoGenericoGps(destinoLimpo)) {
+    throw new Error('O endereço de destino obtido pelo GPS deve ser convertido em um endereço legível antes de solicitar a corrida.');
+  }
+
   const coordsOrigem = extrairCoordenadasGeocodificadas(origemGeocodificada, 'origem');
   const coordsDestino = extrairCoordenadasGeocodificadas(destinoGeocodificada, 'destino');
   const dataHorarioIso = converterDataHorarioComercialParaISO(dataHorario);
 
-  return {
-    origemNome,
-    destinoNome,
+  const payload = {
+    origemNome: origemLimpa,
+    destinoNome: destinoLimpo,
     origemLat: coordsOrigem.lat ?? null,
     origemLng: coordsOrigem.lng ?? null,
     destinoLat: coordsDestino.lat ?? null,
@@ -225,5 +367,16 @@ export function montarPayloadCriacaoCorrida({
     classe,
     formaPagamento,
   };
+
+  const origemEndNorm = normalizarEnderecoEstruturado(origemEndereco, coordsOrigem);
+  if (origemEndNorm) {
+    payload.origemEndereco = origemEndNorm;
+  }
+  const destinoEndNorm = normalizarEnderecoEstruturado(destinoEndereco, coordsDestino);
+  if (destinoEndNorm) {
+    payload.destinoEndereco = destinoEndNorm;
+  }
+
+  return payload;
 }
 
