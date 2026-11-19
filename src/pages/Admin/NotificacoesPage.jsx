@@ -61,8 +61,8 @@ const NotificacoesPage = () => {
           {notificacoes.map((n) => (
             <div 
               key={n.id} 
-              className={`card ${!n.lida ? 'notificacao-nao-lida' : ''}`}
-              style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderLeft: !n.lida ? '4px solid var(--primary-color)' : 'none' }}
+              className="card"
+              style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderLeft: !n.lida ? '4px solid var(--color-primary)' : 'none' }}
               onClick={() => handleNotificacaoClick(n)}
             >
               <div>

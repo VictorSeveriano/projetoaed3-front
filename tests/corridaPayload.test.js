@@ -328,3 +328,43 @@ test('GPS: trata permissão negada, GPS indisponível, timeout, falha de geocodi
   assert.equal( typeof traduzirErroGeolocalizacao({ code: 1 }), 'string');
 });
 
+test('montarPayloadCriacaoCorrida valida distanciaKm, duracaoMin e rejeita coordenada isolada em endereço estruturado', () => {
+  const baseArgs = {
+    origemNome: 'Rua A, 10 - Centro, Vitória - ES',
+    destinoNome: 'Rua B, 20 - Praia do Canto, Vitória - ES',
+    origemGeocodificada: null,
+    destinoGeocodificada: null,
+    dataHorario: '2026-10-29T12:00',
+    classe: 'NORMAL',
+    formaPagamento: 'PIX',
+  };
+
+  for (const durInvalida of [null, 0, -5, 'abc', NaN, Infinity, -Infinity, 12.5]) {
+    assert.throws(() =>
+      montarPayloadCriacaoCorrida({
+        ...baseArgs,
+        rota: { caminho: ['A', 'B'], distanciaKm: 5, duracaoMin: durInvalida },
+      })
+    );
+  }
+
+  for (const distInvalida of [null, undefined, 0, -2, NaN, Infinity, 'abc']) {
+    assert.throws(() =>
+      montarPayloadCriacaoCorrida({
+        ...baseArgs,
+        rota: { caminho: ['A', 'B'], distanciaKm: distInvalida, duracaoMin: 10 },
+      })
+    );
+  }
+
+  assert.throws(
+    () =>
+      montarPayloadCriacaoCorrida({
+        ...baseArgs,
+        origemEndereco: { logradouro: 'Rua A', latitude: -20.3155 },
+        rota: { caminho: ['A', 'B'], distanciaKm: 5, duracaoMin: 10 },
+      }),
+    /devem ser informadas juntas/i
+  );
+});
+

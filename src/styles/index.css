@@ -9,6 +9,7 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
+  --color-info: #38bdf8;
   --color-muted: #64748b;
   --bg-900: #0f0f1a;
   --bg-800: #13131f;
@@ -266,8 +267,6 @@ input,select,textarea { font-family:inherit; outline:none; }
 .carro-card__name { font-size:16px; font-weight:700; color:var(--text-primary); }
 .carro-card__year { font-size:13px; color:var(--text-secondary); }
 .carro-card__details { display:flex; gap:12px; font-size:12px; color:var(--text-muted); margin-top:4px; }
-.carro-card__price { font-size:20px; font-weight:800; color:var(--color-primary-light); margin-top:8px; }
-.carro-card__price span { font-size:13px; color:var(--text-muted); font-weight:400; }
 .carro-card__footer { padding:14px 18px; border-top:1px solid var(--border-color); }
 
 /* === RESERVAS === */
@@ -276,63 +275,11 @@ input,select,textarea { font-family:inherit; outline:none; }
 .data-table th { padding:14px 16px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); text-align:left; border-bottom:1px solid var(--border-color); background:var(--bg-600); white-space:nowrap; }
 .data-table__row:hover { background:var(--bg-glass); }
 .data-table__cell { padding:14px 16px; font-size:14px; color:var(--text-secondary); border-bottom:1px solid var(--border-color); vertical-align:middle; }
-.rota-chip { background:rgba(6,182,212,0.15); color:var(--color-accent); padding:2px 10px; border-radius:var(--radius-full); font-size:12px; font-weight:600; white-space:nowrap; }
 
 .reserva-form { display:flex; flex-direction:column; gap:18px; }
 .reserva-form__row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .reserva-form__actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
-.rota-preview { background:rgba(99,102,241,0.08); border:1px solid var(--border-active); border-radius:var(--radius-md); padding:16px; }
-.rota-preview__title { font-size:13px; font-weight:600; color:var(--color-primary-light); margin-bottom:8px; }
-.rota-preview__path { font-size:14px; color:var(--text-primary); margin-bottom:6px; }
-.rota-preview__distance { font-size:13px; color:var(--text-secondary); }
 .form-error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-md); padding:12px 16px; font-size:13px; color:var(--color-danger); }
-
-/* === CLASSES AUXILIARES (GrafoPage e outros) === */
-.rotas-panel__header { display:flex; align-items:center; gap:10px; }
-.rotas-panel__icon { color:var(--color-primary); flex-shrink:0; }
-.rotas-panel__title { font-size:17px; font-weight:700; color:var(--text-primary); }
-.rotas-panel__desc { font-size:13px; color:var(--text-secondary); line-height:1.6; }
-.rotas-panel__form { display:flex; flex-direction:column; gap:14px; }
-.rotas-error-state { display:flex; flex-direction:column; align-items:center; gap:16px; padding:64px 32px; text-align:center; color:var(--color-danger); }
-
-/* Resultado da Rota (GrafoPage) */
-.rota-result { background:rgba(99,102,241,0.08); border:1px solid var(--border-active); border-radius:var(--radius-md); padding:18px; display:flex; flex-direction:column; gap:12px; }
-/* === RESERVA FORM (no modal) === */
-.rota-result__title { font-size:14px; font-weight:700; color:var(--color-primary-light); display:flex; align-items:center; gap:6px; }
-.rota-result__info { display:flex; flex-direction:column; gap:4px; font-size:13px; }
-.rota-label { color:var(--text-muted); margin-right:4px; }
-.rota-result__path { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:12px; background:var(--bg-800); border-radius:var(--radius-md); }
-.rota-node { background:rgba(99,102,241,0.2); color:var(--color-primary-light); padding:4px 12px; border-radius:var(--radius-full); font-weight:600; font-size:12px; white-space:nowrap; }
-.rota-arrow { color:var(--text-muted); display:flex; align-items:center; }
-.rota-result__metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.rota-metric { display:flex; align-items:flex-start; gap:10px; background:var(--bg-800); border-radius:var(--radius-md); padding:12px; }
-.rota-metric__icon { color:var(--color-primary-light); flex-shrink:0; margin-top:2px; }
-.rota-metric__label { display:block; font-size:11px; color:var(--text-muted); font-weight:500; margin-bottom:2px; }
-.rota-metric__value { display:block; font-size:16px; font-weight:800; color:var(--text-primary); }
-.rota-result__fonte { font-size:11px; color:var(--text-muted); font-style:italic; }
-
-/* Info / Lista de Locais */
-.rotas-info { background:var(--bg-800); border-radius:var(--radius-md); padding:16px; }
-.rotas-info__title { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
-.rotas-info__stats { display:flex; gap:24px; margin-bottom:14px; }
-.grafo-stat { display:flex; flex-direction:column; }
-.grafo-stat__value { display:block; font-size:24px; font-weight:800; color:var(--text-primary); }
-.grafo-stat__label { display:block; font-size:12px; color:var(--text-muted); }
-.rotas-locais-list { list-style:none; display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; }
-.rotas-local-item { display:flex; flex-direction:column; padding:8px 10px; background:var(--bg-700); border-radius:var(--radius-sm); border:1px solid var(--border-color); transition:var(--transition-fast); }
-.rotas-local-item:hover { border-color:var(--border-active); background:rgba(99,102,241,0.05); }
-.rotas-local-item__nome { font-size:12px; font-weight:600; color:var(--text-primary); }
-.rotas-local-item__cidade { font-size:11px; color:var(--text-muted); margin-top:2px; }
-
-/* Wrapper visual do mapa */
-.rotas-visual-wrapper { background:var(--bg-700); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; min-height:580px; position:relative; }
-
-/* Mapa da página de rotas */
-.map-container { width:100%; height:100%; min-height:580px; }
-
-/* Placeholder quando sem chave configurada */
-.map-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:48px 32px; text-align:center; height:100%; min-height:580px; }
-.map-placeholder--config { background:var(--bg-800); }
 .map-placeholder__title { font-size:17px; font-weight:700; color:var(--text-primary); }
 .map-placeholder__desc { font-size:13px; color:var(--text-secondary); max-width:420px; line-height:1.7; }
 
@@ -360,10 +307,6 @@ input,select,textarea { font-family:inherit; outline:none; }
   .app-content { padding:20px 16px; }
   /* Rotas: no mobile, painel aparece primeiro (acima do mapa) */
   .rotas-layout { grid-template-columns:1fr; }
-  .rotas-visual-wrapper { min-height:380px; order:-1; }
-  .map-container { min-height:380px; }
-  .map-placeholder { min-height:380px; }
-  .rota-result__metrics { grid-template-columns:1fr; }
   .dashboard-grid { grid-template-columns:1fr; }
   .reserva-form__row { grid-template-columns:1fr; }
 }
@@ -371,9 +314,6 @@ input,select,textarea { font-family:inherit; outline:none; }
   .stats-grid { grid-template-columns:1fr 1fr; }
   .carros-grid { grid-template-columns:1fr; }
   .page-header { flex-direction:column; align-items:flex-start; }
-  .rotas-visual-wrapper { min-height:300px; }
-  .map-container { min-height:300px; }
-  .map-placeholder { min-height:300px; }
 }
 
 /* =========================================
@@ -431,19 +371,7 @@ input,select,textarea { font-family:inherit; outline:none; }
   gap: calc(var(--spacing-md) + 2px); /* Aumentado levemente o espacamento interno */
 }
 
-.rotas-cep-row {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap; /* Evitar overflow horizontal no celular */
-}
 
-.rotas-divider {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  font-weight: 600;
-}
 
 .rotas-geo-info {
   font-size: 0.875rem;
@@ -592,6 +520,20 @@ input,select,textarea { font-family:inherit; outline:none; }
   backdrop-filter: blur(4px);
 }
 
+@media (max-width: 900px) {
+  .map-container,
+  .map-placeholder {
+    min-height: 380px;
+  }
+}
+
+@media (max-width: 600px) {
+  .map-container,
+  .map-placeholder {
+    min-height: 300px;
+  }
+}
+
 /* CorridaModal Styles */
 .corrida-resumo {
   background: var(--bg-dark);
@@ -665,16 +607,6 @@ input,select,textarea { font-family:inherit; outline:none; }
   font-weight: 600;
 }
 
-.rota-chip {
-  display: inline-block;
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary-light);
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: help;
-}
 
 .success-banner {
   background: rgba(16, 185, 129, 0.1);

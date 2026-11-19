@@ -31,7 +31,7 @@ const ChartCard = ({ title, loading, error, empty, children, className = '' }) =
       <Card.Body className="chart-card__body">
         {loading ? (
           <div className="chart-card__state">
-            <Loading text="Carregando dados..." />
+            <Loading message="Carregando dados..." />
           </div>
         ) : error ? (
           <div className="chart-card__state chart-card__error">

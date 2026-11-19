@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/layout/Header';
-import Loading from '../../components/ui/Loading';
 import CorridasTabs from '../../components/ui/CorridasTabs';
 import corridasService from '../../services/corridas.service';
-import notificacoesService from '../../services/notificacoes.service';
 
 /**
  * CorridasPage — Página de corridas compartilhada entre Admin, Usuário e Motorista.

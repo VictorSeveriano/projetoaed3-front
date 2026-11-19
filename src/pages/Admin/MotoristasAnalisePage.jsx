@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import ModalErro from '../../components/ui/ModalErro';
 import motoristasService from '../../services/motoristas.service';
 import { UserCheck } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
@@ -13,6 +14,7 @@ const MotoristasAnalisePage = () => {
   const [pendentes, setPendentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [acao, setAcao] = useState(null); // { tipo: 'aprovar' | 'rejeitar', motorista: obj }
+  const [erroModal, setErroModal] = useState({ aberto: false, titulo: 'Erro', mensagem: '' });
 
   const carregar = async () => {
     setLoading(true);
@@ -21,6 +23,11 @@ const MotoristasAnalisePage = () => {
       setPendentes(res || []);
     } catch (err) {
       console.error(err);
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao carregar solicitações de motoristas.',
+      });
     } finally {
       setLoading(false);
     }
@@ -40,6 +47,11 @@ const MotoristasAnalisePage = () => {
       await carregar();
     } catch (err) {
       console.error(err);
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro',
+        mensagem: err.response?.data?.message || 'Erro ao processar ação.',
+      });
     } finally {
       setAcao(null);
     }
@@ -104,6 +116,13 @@ const MotoristasAnalisePage = () => {
         confirmText={acao?.tipo === 'aprovar' ? 'Sim, Aprovar' : 'Sim, Rejeitar'}
         cancelText="Cancelar"
         variant={acao?.tipo === 'aprovar' ? 'primary' : 'danger'}
+      />
+
+      <ModalErro
+        isOpen={erroModal.aberto}
+        onClose={() => setErroModal((prev) => ({ ...prev, aberto: false }))}
+        titulo={erroModal.titulo}
+        mensagem={erroModal.mensagem}
       />
     </>
   );

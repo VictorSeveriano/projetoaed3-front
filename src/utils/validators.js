@@ -32,6 +32,11 @@ export const validarCEP = (cep) => {
   return limpo.length === 8;
 };
 
+export const validarEmail = (email) => {
+  if (typeof email !== 'string') return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+};
+
 export const validarSenha = (senha, nomeUsuario = '') => {
   if (!senha || senha.length < 8) return 'A senha deve possuir no mínimo 8 caracteres.';
   if (!/\d/.test(senha)) return 'A senha deve possuir pelo menos um número.';

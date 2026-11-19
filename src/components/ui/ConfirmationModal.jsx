@@ -6,7 +6,6 @@ import { TriangleAlert, Trash2, Info } from 'lucide-react';
 const ConfirmationModal = ({
   isOpen,
   onClose,
-  onCancel,
   onConfirm,
   title,
   message,
@@ -16,7 +15,6 @@ const ConfirmationModal = ({
   icon,
   loading = false,
 }) => {
-  const handleClose = onClose || onCancel;
   let IconComponent = Info;
   let iconColor = 'var(--text-secondary)';
   let confirmBtnVariant = 'primary';
@@ -35,7 +33,7 @@ const ConfirmationModal = ({
 
   const footer = (
     <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', width: '100%' }}>
-      <Button variant="ghost" onClick={handleClose} disabled={loading}>{cancelText}</Button>
+      <Button variant="ghost" onClick={onClose} disabled={loading}>{cancelText}</Button>
       <Button variant={confirmBtnVariant} onClick={onConfirm} loading={loading}>{confirmText}</Button>
     </div>
   );
@@ -43,7 +41,7 @@ const ConfirmationModal = ({
   return (
     <Modal 
       isOpen={isOpen} 
-      onClose={!loading ? handleClose : () => {}} 
+      onClose={!loading ? onClose : () => {}} 
       title={title} 
       size="sm" 
       footer={footer}

@@ -109,3 +109,24 @@ test('podeExibirBotaoCancelar exibe botão Cancelar para passageiro em SOLICITAD
   assert.equal(podeExibirBotaoCancelar({ status: 'FINALIZADA' }, propsPassageiro), false);
   assert.equal(podeExibirBotaoCancelar({ status: 'CANCELADA' }, propsPassageiro), false);
 });
+
+function podeConfirmarEmbarquePassageiro(corrida, { ehPassageiro = false, agora = Date.now() } = {}) {
+  const horarioChegou = Boolean(corrida.dataHorario && new Date(corrida.dataHorario).getTime() <= agora);
+  return (
+    ehPassageiro &&
+    (corrida.status === 'CONFIRMADA' || corrida.status === 'EM_ANDAMENTO') &&
+    horarioChegou &&
+    corrida.embarquePassageiroConfirmado == null
+  );
+}
+
+test('somente o passageiro visualiza confirmação de embarque de passageiro (motorista nunca recebe a ação)', () => {
+  const agora = Date.now();
+  const corrida = {
+    status: 'CONFIRMADA',
+    dataHorario: new Date(agora - 60000).toISOString(),
+    embarquePassageiroConfirmado: null,
+  };
+  assert.equal(podeConfirmarEmbarquePassageiro(corrida, { ehPassageiro: true, agora }), true);
+  assert.equal(podeConfirmarEmbarquePassageiro(corrida, { ehPassageiro: false, agora }), false);
+});

@@ -282,7 +282,7 @@ export async function obterEnderecoOrigemPorGps({
   };
 }
 
-function normalizarEnderecoEstruturado(end, coords) {
+export function normalizarEnderecoEstruturado(end, coords) {
   if (!end || typeof end !== 'object' || Array.isArray(end)) return undefined;
   const temCampo =
     Boolean(end.logradouro) ||
@@ -293,6 +293,13 @@ function normalizarEnderecoEstruturado(end, coords) {
     Boolean(end.cep);
   if (!temCampo) return undefined;
 
+  const latitude = coords?.lat ?? normalizarLatitudeOpcional(end.latitude, 'endereco.latitude');
+  const longitude = coords?.lng ?? normalizarLongitudeOpcional(end.longitude, 'endereco.longitude');
+
+  if ((latitude === null) !== (longitude === null)) {
+    throw new Error('Latitude e longitude do endereço devem ser informadas juntas.');
+  }
+
   return {
     logradouro: typeof end.logradouro === 'string' ? end.logradouro.trim() : '',
     numero: end.numero != null ? String(end.numero).trim() : '',
@@ -302,8 +309,8 @@ function normalizarEnderecoEstruturado(end, coords) {
     estado: typeof end.estado === 'string' ? end.estado.trim() : '',
     uf: typeof end.uf === 'string' ? end.uf.trim() : '',
     cep: typeof end.cep === 'string' ? end.cep.trim() : '',
-    latitude: coords?.lat ?? normalizarLatitudeOpcional(end.latitude, 'endereco.latitude'),
-    longitude: coords?.lng ?? normalizarLongitudeOpcional(end.longitude, 'endereco.longitude'),
+    latitude,
+    longitude,
   };
 }
 
@@ -348,6 +355,20 @@ export function montarPayloadCriacaoCorrida({
     throw new Error('O endereço de destino obtido pelo GPS deve ser convertido em um endereço legível antes de solicitar a corrida.');
   }
 
+  const distanciaKm = lerNumeroFinito(rota.distanciaKm);
+  if (distanciaKm === undefined || distanciaKm <= 0) {
+    throw new Error('Distância da rota inválida: deve ser um número finito positivo.');
+  }
+
+  let duracaoMin;
+  if (rota.duracaoMin !== undefined) {
+    const duracaoNum = lerNumeroFinito(rota.duracaoMin);
+    if (duracaoNum === undefined || duracaoNum <= 0 || !Number.isInteger(duracaoNum)) {
+      throw new Error('Duração da rota inválida: deve ser um número inteiro finito e positivo.');
+    }
+    duracaoMin = duracaoNum;
+  }
+
   const coordsOrigem = extrairCoordenadasGeocodificadas(origemGeocodificada, 'origem');
   const coordsDestino = extrairCoordenadasGeocodificadas(destinoGeocodificada, 'destino');
   const dataHorarioIso = converterDataHorarioComercialParaISO(dataHorario);
@@ -361,8 +382,8 @@ export function montarPayloadCriacaoCorrida({
     destinoLng: coordsDestino.lng ?? null,
     rotaCaminho: rota.caminho,
     polyline: rota.polyline ?? null,
-    distanciaKm: rota.distanciaKm,
-    duracaoMin: rota.duracaoMin,
+    distanciaKm,
+    ...(duracaoMin !== undefined ? { duracaoMin } : {}),
     dataHorario: dataHorarioIso,
     classe,
     formaPagamento,

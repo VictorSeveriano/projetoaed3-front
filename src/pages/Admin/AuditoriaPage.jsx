@@ -7,7 +7,6 @@ import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import auditoriaService from '../../services/auditoria.service';
-import usuariosService from '../../services/usuarios.service';
 import { ShieldAlert, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
@@ -28,22 +27,8 @@ const AuditoriaPage = () => {
     dataFim: '',
   });
   
-  const [usuarios, setUsuarios] = useState([]);
   const [registroSelecionado, setRegistroSelecionado] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-
-  if (usuario?.perfil !== 'ADMINISTRADOR') {
-    return <Navigate to="/" replace />;
-  }
-
-  const carregarUsuarios = async () => {
-    try {
-      const res = await usuariosService.listarTodos();
-      if (res) setUsuarios(res);
-    } catch (err) {
-      console.error('Erro ao carregar usuários:', err);
-    }
-  };
 
   const carregar = async (paginaAtual = page, filtrosAtuais = filtros) => {
     setLoading(true);
@@ -61,13 +46,15 @@ const AuditoriaPage = () => {
   };
 
   useEffect(() => {
-    carregarUsuarios();
-  }, []);
-
-  useEffect(() => {
-    carregar(page, filtros);
+    if (usuario?.perfil === 'ADMINISTRADOR') {
+      carregar(page, filtros);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, usuario?.perfil]);
+
+  if (usuario?.perfil !== 'ADMINISTRADOR') {
+    return <Navigate to="/" replace />;
+  }
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;

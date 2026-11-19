@@ -15,6 +15,7 @@ import {
   validarCNH,
   validarCelular,
   validarCEP,
+  validarEmail,
   validarSenha,
 } from '../src/utils/validators.js';
 
@@ -55,5 +56,12 @@ test('validadores de CPF, CNH, celular, CEP e senha rejeitam entradas invalidas 
   assert.equal(validarSenha('12345678!a'), 'Evite sequências ou repetições, como 123456789.');
   assert.equal(validarSenha('Victor99!', 'Victor Severiano'), 'A senha não pode conter seu nome ou sobrenome.');
   assert.equal(validarSenha('Segura#2026', 'Victor Severiano'), null);
+
+  assert.equal(validarEmail('usuario@dominio.com'), true);
+  assert.equal(validarEmail('  usuario@dominio.com.br  '), true);
+  assert.equal(validarEmail('abc@dominio'), false);
+  assert.equal(validarEmail('abc@.com'), false);
+  assert.equal(validarEmail('a b@dominio.com'), false);
+  assert.equal(validarEmail(''), false);
 });
 

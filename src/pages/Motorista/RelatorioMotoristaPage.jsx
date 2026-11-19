@@ -188,16 +188,6 @@ const RelatorioMotoristaPage = () => {
           </div>
         </>
       )}
-
-      {!loading && !error && relatorio && relatorio.totalCorridas === 0 && (
-        <div className="card">
-          <div className="card__body">
-            <p className="relatorio-vazio" role="status">
-              Não há corridas concluídas em {periodoLabel}. Selecione outro período ou aguarde corridas finalizadas.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

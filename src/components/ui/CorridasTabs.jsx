@@ -240,7 +240,7 @@ const CorridasTabs = ({
                   const podeAcaoFinalizar = podeFinalizar && (c.status === 'CONFIRMADA' || c.status === 'EM_ANDAMENTO');
                   const horarioChegou = c.dataHorario && new Date(c.dataHorario).getTime() <= Date.now();
                   const podeConfirmarEmbarqueMotorista = podeConfirmarPagamento && c.status === 'CONFIRMADA' && horarioChegou && c.embarqueMotoristaConfirmado !== true;
-                  const podeConfirmarEmbarquePassageiro = podeCancelar && !podeFinalizar && (c.status === 'CONFIRMADA' || c.status === 'EM_ANDAMENTO') && horarioChegou && c.embarquePassageiroConfirmado == null;
+                  const podeConfirmarEmbarquePassageiro = ehPassageiro && (c.status === 'CONFIRMADA' || c.status === 'EM_ANDAMENTO') && horarioChegou && c.embarquePassageiroConfirmado == null;
                   return (
                     <tr key={c.id} className="data-table__row">
                       <td className="data-table__cell">#{c.id.substring(0, 6)}</td>

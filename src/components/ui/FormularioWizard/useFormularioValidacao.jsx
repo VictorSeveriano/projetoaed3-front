@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { formatarCPF, formatarCelular, formatarCEP } from '../../../utils/formatters';
-import { validarCPF, validarCelular, validarCEP, validarSenha, validarCNH } from '../../../utils/validators';
+import { validarCPF, validarCelular, validarCEP, validarEmail, validarSenha, validarCNH } from '../../../utils/validators';
 import { TriangleAlert } from 'lucide-react';
 
 export const useFormularioValidacao = ({ form, setForm, onClearError }) => {
@@ -25,7 +25,7 @@ export const useFormularioValidacao = ({ form, setForm, onClearError }) => {
       if (limpo.length !== 11) return 'CNH deve possuir 11 números.';
       if (!validarCNH(limpo)) return 'CNH inválida.';
     } else if (name === 'email') {
-      if (!value.includes('@') || !value.includes('.')) return 'E-mail inválido.';
+      if (!validarEmail(value)) return 'E-mail inválido.';
     } else if (name === 'senha') {
       const senhaErro = validarSenha(value, form.nome);
       if (senhaErro) return senhaErro;

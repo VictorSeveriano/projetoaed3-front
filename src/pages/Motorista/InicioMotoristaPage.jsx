@@ -3,7 +3,7 @@ import Header from '../../components/layout/Header';
 import StatCard from '../../components/ui/StatCard';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
-import motoistasService from '../../services/motoristas.service';
+import motoristasService from '../../services/motoristas.service';
 import { formatarMoeda } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { validarCNH } from '../../utils/validators';
@@ -19,7 +19,6 @@ import { Target, CheckCircle, Route, DollarSign } from 'lucide-react';
  */
 const InicioMotoristaPage = () => {
   const { usuario } = useAuth();
-  const hoje = new Date();
   
   const [motoristaPerfil, setMotoristaPerfil] = useState(undefined); // undefined = loading
   const [cnhForm, setCnhForm] = useState('');
@@ -32,7 +31,7 @@ const InicioMotoristaPage = () => {
   const carregarPerfil = async () => {
     if (!usuario?.id) return;
     try {
-      const data = await motoistasService.buscarPorUsuarioId(usuario.id);
+      const data = await motoristasService.buscarPorUsuarioId(usuario.id);
       setMotoristaPerfil(data); // pode ser null se não solicitou
     } catch (err) {
       console.error(err);
@@ -46,8 +45,9 @@ const InicioMotoristaPage = () => {
 
   useEffect(() => {
     if (motoristaPerfil?.statusCadastro === 'APROVADO') {
+      const hoje = new Date();
       setLoadingResumo(true);
-      motoistasService
+      motoristasService
         .getRelatorio(usuario.id, hoje.getMonth() + 1, hoje.getFullYear())
         .then((dados) => setResumo(dados))
         .catch((err) => setError(err.response?.data?.message || 'Erro ao carregar resumo.'))
@@ -64,7 +64,7 @@ const InicioMotoristaPage = () => {
     setSubmitting(true);
     setError('');
     try {
-      await motoistasService.solicitar({ cnh: cnhForm });
+      await motoristasService.solicitar({ cnh: cnhForm });
       await carregarPerfil();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao enviar solicitação.');
@@ -117,7 +117,7 @@ const InicioMotoristaPage = () => {
       <div className="page animate-fade-in">
         <Header title={`Olá, ${usuario?.nome?.split(' ')[0]}`} />
         <EmptyState
-          icon={<CheckCircle size={48} strokeWidth={1.5} color={isPendente ? 'var(--warning-color)' : 'var(--danger-color)'} />}
+          icon={<CheckCircle size={48} strokeWidth={1.5} color={isPendente ? 'var(--color-warning)' : 'var(--color-danger)'} />}
           title={isPendente ? 'Cadastro em análise' : 'Cadastro Rejeitado'}
           description={isPendente 
             ? 'Sua CNH ainda aguarda aprovação de um administrador. O cadastro do veículo ficará disponível após a aprovação do perfil. Você só poderá receber e aceitar corridas quando o perfil e o veículo estiverem aprovados.'
