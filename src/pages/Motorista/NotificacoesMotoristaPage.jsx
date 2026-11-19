@@ -72,10 +72,7 @@ const NotificacoesMotoristaPage = () => {
 
   const handleNotificacaoClick = async (n) => {
     if (!n.lida) {
-      const ok = await handleMarcarLida(n.id);
-      if (ok) {
-        await carregar();
-      }
+      await handleMarcarLida(n.id);
     }
     if (n.tipo === 'ATUALIZACAO_CORRIDA') navigate('/minhas-corridas');
   };

@@ -4,8 +4,10 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
+import Modal from '../../components/ui/Modal';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
+import { emitirNotificacoesAtualizadas } from '../../utils/appEvents';
 import veiculosService from '../../services/veiculos.service';
 import { Car } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
@@ -38,7 +40,7 @@ const VeiculosAnalisePage = () => {
       } else {
         await veiculosService.rejeitar(acao.veiculo.id);
       }
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
+      emitirNotificacoesAtualizadas();
       await carregar();
     } catch (err) {
       console.error(err);
@@ -115,32 +117,33 @@ const VeiculosAnalisePage = () => {
         variant="danger"
       />
 
-      {acao && acao.tipo === 'aprovar' && (
-        <div className="modal-overlay" onClick={() => setAcao(null)}>
-          <div className="modal modal--md" onClick={e => e.stopPropagation()}>
-            <div className="modal__header">
-              <h2 className="modal__title">Aprovar Veículo</h2>
-              <button className="modal__close" onClick={() => setAcao(null)}>✕</button>
-            </div>
-            <div className="modal__body">
-              <p style={{ marginBottom: '16px' }}>
-                Você está aprovando o veículo <strong>{acao.veiculo.marca} {acao.veiculo.modelo}</strong> ({acao.veiculo.placa}).
-              </p>
-              <p>
-                Porte: <strong>{acao.veiculo.porte}</strong> <br />
-                Classe de serviço: <strong>{acao.veiculo.classe || 'Indefinida'}</strong>
-              </p>
-              <p style={{ marginTop: '16px', fontSize: '14px', color: '#666' }}>
-                A classe de serviço é determinada automaticamente pelo porte do veículo.
-              </p>
-            </div>
-            <div className="modal__footer">
-              <Button variant="outline" onClick={() => setAcao(null)}>Cancelar</Button>
-              <Button variant="success" onClick={handleConfirmarAcao}>Aprovar Veículo</Button>
-            </div>
+      <Modal
+        isOpen={!!acao && acao.tipo === 'aprovar'}
+        onClose={() => setAcao(null)}
+        title="Aprovar Veículo"
+        size="md"
+        footer={
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', width: '100%' }}>
+            <Button variant="outline" onClick={() => setAcao(null)}>Cancelar</Button>
+            <Button variant="success" onClick={handleConfirmarAcao}>Aprovar Veículo</Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {acao?.veiculo && (
+          <>
+            <p style={{ marginBottom: '16px' }}>
+              Você está aprovando o veículo <strong>{acao.veiculo.marca} {acao.veiculo.modelo}</strong> ({acao.veiculo.placa}).
+            </p>
+            <p>
+              Porte: <strong>{acao.veiculo.porte}</strong> <br />
+              Classe de serviço: <strong>{acao.veiculo.classe || 'Indefinida'}</strong>
+            </p>
+            <p style={{ marginTop: '16px', fontSize: '14px', color: '#666' }}>
+              A classe de serviço é determinada automaticamente pelo porte do veículo.
+            </p>
+          </>
+        )}
+      </Modal>
 
       <ModalErro
         isOpen={erroModal.aberto}

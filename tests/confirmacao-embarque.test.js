@@ -1,61 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-/**
- * Testes unitários das regras de elegibilidade da fila de modais, validação de motivo
- * e exibição condicional do botão Cancelar para motorista e passageiro no frontend.
- */
-
-const MOTIVO_MIN = 5;
-const MOTIVO_MAX = 500;
-const REABRIR_A_CAMINHO_ANTES_MS = 5 * 60 * 1000;
-
-function validarMotivo(motivo) {
-  const limpo = (motivo || '').trim();
-  if (!limpo) return 'Informe o motivo.';
-  if (limpo.length < MOTIVO_MIN) return `O motivo deve ter ao menos ${MOTIVO_MIN} caracteres.`;
-  if (limpo.length > MOTIVO_MAX) return `O motivo deve ter no máximo ${MOTIVO_MAX} caracteres.`;
-  return '';
-}
-
-function precisaConfirmacao(corrida, perfil, agora) {
-  const horario = new Date(corrida.dataHorario).getTime();
-  if (Number.isNaN(horario) || horario > agora) return false;
-
-  if (perfil === 'MOTORISTA') {
-    if (corrida.status !== 'CONFIRMADA' || corrida.embarqueMotoristaConfirmado === true) return false;
-    if (corrida.situacaoMotorista === 'A_CAMINHO') {
-      const prazo = corrida.prazoConfirmacaoEm ? new Date(corrida.prazoConfirmacaoEm).getTime() : 0;
-      return prazo > 0 && prazo - agora <= REABRIR_A_CAMINHO_ANTES_MS;
-    }
-    return true;
-  }
-
-  if (perfil === 'USUARIO') {
-    if (!['CONFIRMADA', 'EM_ANDAMENTO'].includes(corrida.status)) return false;
-    return corrida.embarquePassageiroConfirmado == null;
-  }
-  return false;
-}
-
-function podeExibirBotaoCancelar(
-  corrida,
-  { podeCancelar = false, podeConfirmarPagamento = false, podeFinalizar = false, perfil = '' } = {}
-) {
-  if (!corrida || !podeCancelar) return false;
-  if (corrida.status === 'FINALIZADA' || corrida.status === 'CANCELADA' || corrida.status === 'EM_ANDAMENTO') {
-    return false;
-  }
-  const ehMotorista = perfil === 'MOTORISTA' || (podeConfirmarPagamento && !podeFinalizar);
-  if (ehMotorista) {
-    return corrida.status === 'CONFIRMADA' && corrida.embarqueMotoristaConfirmado !== true;
-  }
-  const ehAdmin = perfil === 'ADMINISTRADOR' || podeFinalizar;
-  if (ehAdmin) {
-    return corrida.status === 'SOLICITADA' || corrida.status === 'CONFIRMADA';
-  }
-  return (corrida.status === 'SOLICITADA' || corrida.status === 'CONFIRMADA') && corrida.embarqueMotoristaConfirmado !== true;
-}
+import {
+  ADIAR_AO_FECHAR_MS,
+  validarMotivo,
+  precisaConfirmacao,
+  obterProximaCorridaParaConfirmacao,
+  montarPayloadCancelamentoEmbarque,
+  extrairMensagemErroApi,
+} from '../src/utils/confirmacaoEmbarque.js';
+import {
+  podeExibirBotaoCancelar,
+  obterAcoesDisponiveisCorrida,
+  filtrarCorridasPorAba,
+  contarCorridasPorAba,
+  descreverCancelamento,
+} from '../src/components/ui/corridas/corridaPermissoes.js';
 
 test('validarMotivo rejeita vazio, apenas espaços, curto demais ou acima do limite', () => {
   assert.notEqual(validarMotivo(''), '');
@@ -90,6 +50,62 @@ test('precisaConfirmacao só habilita modal a partir do horário agendado e resp
   assert.equal(precisaConfirmacao(aCaminhoPerto, 'MOTORISTA', agora), true);
 });
 
+test('obterProximaCorridaParaConfirmacao ordena por dataHorario, adia ao fechar e reabre após prazo de adiamento', () => {
+  const agora = Date.now();
+  const cMaisRecente = {
+    id: 'c-2',
+    status: 'CONFIRMADA',
+    dataHorario: new Date(agora - 30000).toISOString(),
+  };
+  const cMaisAntiga = {
+    id: 'c-1',
+    status: 'CONFIRMADA',
+    dataHorario: new Date(agora - 120000).toISOString(),
+  };
+  const adiadas = new Map();
+
+  const primeira = obterProximaCorridaParaConfirmacao([cMaisRecente, cMaisAntiga], 'MOTORISTA', agora, adiadas);
+  assert.equal(primeira.id, 'c-1');
+
+  // Adia c-1 ao fechar o modal -> próxima da fila passa a ser c-2
+  adiadas.set('c-1', agora + ADIAR_AO_FECHAR_MS);
+  const segunda = obterProximaCorridaParaConfirmacao([cMaisRecente, cMaisAntiga], 'MOTORISTA', agora + 1000, adiadas);
+  assert.equal(segunda.id, 'c-2');
+
+  // Após vencer ADIAR_AO_FECHAR_MS, c-1 volta a ser priorizada para reabertura
+  const reaberta = obterProximaCorridaParaConfirmacao(
+    [cMaisRecente, cMaisAntiga],
+    'MOTORISTA',
+    agora + ADIAR_AO_FECHAR_MS + 1,
+    adiadas
+  );
+  assert.equal(reaberta.id, 'c-1');
+});
+
+test('montarPayloadCancelamentoEmbarque e extrairMensagemErroApi espelham decisões por perfil e erros da API', () => {
+  const invalido = montarPayloadCancelamentoEmbarque(true, 'abc');
+  assert.notEqual(invalido.erro, '');
+  assert.equal(invalido.payload, null);
+
+  const motoristaOk = montarPayloadCancelamentoEmbarque(true, '  Pneu furado  ');
+  assert.deepEqual(motoristaOk, {
+    erro: '',
+    payload: { acao: 'NAO_VOU_EMBARCAR', motivo: 'Pneu furado' },
+  });
+
+  const passageiroOk = montarPayloadCancelamentoEmbarque(false, '  Atraso excessivo  ');
+  assert.deepEqual(passageiroOk, {
+    erro: '',
+    payload: { acao: 'NAO_EMBARQUEI', cancelarViagem: true, motivo: 'Atraso excessivo' },
+  });
+
+  assert.equal(
+    extrairMensagemErroApi({ response: { data: { message: 'Conflito de estado' } } }, 'Fallback'),
+    'Conflito de estado'
+  );
+  assert.equal(extrairMensagemErroApi(new Error('network'), 'Fallback'), 'Fallback');
+});
+
 test('podeExibirBotaoCancelar exibe botão Cancelar para motorista apenas em corridas CONFIRMADA sem embarque', () => {
   const propsMotorista = { podeCancelar: true, podeConfirmarPagamento: true, perfil: 'MOTORISTA' };
 
@@ -110,23 +126,76 @@ test('podeExibirBotaoCancelar exibe botão Cancelar para passageiro em SOLICITAD
   assert.equal(podeExibirBotaoCancelar({ status: 'CANCELADA' }, propsPassageiro), false);
 });
 
-function podeConfirmarEmbarquePassageiro(corrida, { ehPassageiro = false, agora = Date.now() } = {}) {
-  const horarioChegou = Boolean(corrida.dataHorario && new Date(corrida.dataHorario).getTime() <= agora);
-  return (
-    ehPassageiro &&
-    (corrida.status === 'CONFIRMADA' || corrida.status === 'EM_ANDAMENTO') &&
-    horarioChegou &&
-    corrida.embarquePassageiroConfirmado == null
-  );
-}
-
-test('somente o passageiro visualiza confirmação de embarque de passageiro (motorista nunca recebe a ação)', () => {
+test('obterAcoesDisponiveisCorrida separa corretamente ações de motorista, passageiro e administrador', () => {
   const agora = Date.now();
-  const corrida = {
+  const corridaConfirmada = {
     status: 'CONFIRMADA',
     dataHorario: new Date(agora - 60000).toISOString(),
+    embarqueMotoristaConfirmado: null,
     embarquePassageiroConfirmado: null,
   };
-  assert.equal(podeConfirmarEmbarquePassageiro(corrida, { ehPassageiro: true, agora }), true);
-  assert.equal(podeConfirmarEmbarquePassageiro(corrida, { ehPassageiro: false, agora }), false);
+
+  const acoesPassageiro = obterAcoesDisponiveisCorrida(
+    corridaConfirmada,
+    { podeCancelar: true, perfil: 'USUARIO' },
+    agora
+  );
+  assert.equal(acoesPassageiro.ehPassageiro, true);
+  assert.equal(acoesPassageiro.podeConfirmarEmbarquePassageiro, true);
+  assert.equal(acoesPassageiro.podeConfirmarEmbarqueMotorista, false);
+  assert.equal(acoesPassageiro.podeAcaoCancelar, true);
+  assert.equal(acoesPassageiro.podeAcaoFinalizar, false);
+  assert.equal(acoesPassageiro.podeAcaoConfirmarPagamento, false);
+
+  const acoesMotorista = obterAcoesDisponiveisCorrida(
+    corridaConfirmada,
+    { podeCancelar: true, podeConfirmarPagamento: true, perfil: 'MOTORISTA' },
+    agora
+  );
+  assert.equal(acoesMotorista.ehMotorista, true);
+  assert.equal(acoesMotorista.podeConfirmarEmbarqueMotorista, true);
+  assert.equal(acoesMotorista.podeConfirmarEmbarquePassageiro, false);
+  assert.equal(acoesMotorista.podeAcaoConfirmarPagamento, true);
+  assert.equal(acoesMotorista.podeAcaoFinalizar, false);
+
+  const acoesAdminConfirmada = obterAcoesDisponiveisCorrida(
+    corridaConfirmada,
+    { podeCancelar: true, podeFinalizar: true, perfil: 'ADMINISTRADOR' },
+    agora
+  );
+  assert.equal(acoesAdminConfirmada.podeAcaoFinalizar, true);
+  assert.equal(acoesAdminConfirmada.podeAcaoCancelar, true);
+  assert.equal(acoesAdminConfirmada.podeConfirmarEmbarque, false);
+
+  const acoesAdminEmAndamento = obterAcoesDisponiveisCorrida(
+    { ...corridaConfirmada, status: 'EM_ANDAMENTO' },
+    { podeCancelar: true, podeFinalizar: true, perfil: 'ADMINISTRADOR' },
+    agora
+  );
+  assert.equal(acoesAdminEmAndamento.podeAcaoFinalizar, true);
+  assert.equal(acoesAdminEmAndamento.podeAcaoCancelar, false);
+  assert.equal(acoesAdminEmAndamento.podeConfirmarEmbarque, false);
+});
+
+test('filtrarCorridasPorAba, contarCorridasPorAba e descreverCancelamento preservam contadores e rótulos', () => {
+  const lista = [
+    { id: '1', status: 'SOLICITADA' },
+    { id: '2', status: 'CONFIRMADA' },
+    { id: '3', status: 'EM_ANDAMENTO' },
+    { id: '4', status: 'FINALIZADA' },
+    { id: '5', status: 'CANCELADA', canceladoPor: 'SISTEMA', motivoCancelamento: 'Expirada' },
+  ];
+
+  assert.deepEqual(contarCorridasPorAba(lista), {
+    TODAS: 5,
+    SOLICITADA: 1,
+    CONFIRMADA: 1,
+    EM_ANDAMENTO: 1,
+    FINALIZADA: 1,
+    CANCELADA: 1,
+  });
+  assert.equal(filtrarCorridasPorAba(lista, 'TODAS').length, 5);
+  assert.deepEqual(filtrarCorridasPorAba(lista, 'CONFIRMADA').map((c) => c.id), ['2']);
+  assert.equal(descreverCancelamento(lista[4]), 'Cancelada pelo sistema: Expirada');
+  assert.equal(descreverCancelamento(lista[0]), '');
 });

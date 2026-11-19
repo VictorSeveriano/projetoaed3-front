@@ -7,6 +7,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import motoristasService from '../../services/motoristas.service';
+import { emitirNotificacoesAtualizadas } from '../../utils/appEvents';
 import { UserCheck } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
@@ -43,7 +44,7 @@ const MotoristasAnalisePage = () => {
       } else {
         await motoristasService.rejeitar(acao.motorista.id);
       }
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
+      emitirNotificacoesAtualizadas();
       await carregar();
     } catch (err) {
       console.error(err);

@@ -1,26 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Modal from './Modal';
 import Button from './Button';
-import corridasService from '../../services/corridas.service';
+import { MOTIVO_MIN, MOTIVO_MAX, validarMotivo } from '../../utils/confirmacaoEmbarque';
+import { useConfirmacaoEmbarque } from '../../hooks/useConfirmacaoEmbarque';
 import { formatarDataHorario, formatarMoeda } from '../../utils/formatters';
 import { MapPin } from 'lucide-react';
 
-export const MOTIVO_MIN = 5;
-export const MOTIVO_MAX = 500;
-
-/** Valida o motivo (trim, mínimo e máximo) — espelha a validação do backend. */
-export function validarMotivo(motivo) {
-  const limpo = (motivo || '').trim();
-  if (!limpo) return 'Informe o motivo.';
-  if (limpo.length < MOTIVO_MIN) return `O motivo deve ter ao menos ${MOTIVO_MIN} caracteres.`;
-  if (limpo.length > MOTIVO_MAX) return `O motivo deve ter no máximo ${MOTIVO_MAX} caracteres.`;
-  return '';
-}
+export { MOTIVO_MIN, MOTIVO_MAX, validarMotivo };
 
 const colunaStyle = { display: 'flex', flexDirection: 'column', gap: '10px' };
 
 /**
- * ModalConfirmacaoEmbarque — confirmação de embarque para motorista e passageiro.
+ * ModalConfirmacaoEmbarque — Interface de confirmação de embarque para motorista e passageiro.
+ * A lógica de envio, validação e transições de decisão reside no hook useConfirmacaoEmbarque.
  *
  * @param {object}   corrida
  * @param {'MOTORISTA'|'USUARIO'} perfil
@@ -28,47 +20,23 @@ const colunaStyle = { display: 'flex', flexDirection: 'column', gap: '10px' };
  * @param {function} onConcluido  - Chamado após registrar uma decisão com sucesso
  */
 const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => {
-  const ehMotorista = perfil === 'MOTORISTA';
-  const [etapa, setEtapa] = useState('inicial'); // inicial | naoEmbarcou | motivo
-  const [motivo, setMotivo] = useState('');
-  const [erro, setErro] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setEtapa('inicial'); setMotivo(''); setErro(''); setLoading(false);
-  }, [corrida?.id]);
+  const {
+    ehMotorista,
+    etapa,
+    motivo,
+    erro,
+    loading,
+    aCaminho,
+    motoristaACaminho,
+    irParaEtapa,
+    atualizarMotivo,
+    confirmarEmbarque,
+    informarACaminho,
+    registrarAguardando,
+    confirmarCancelamento,
+  } = useConfirmacaoEmbarque({ corrida, perfil, onConcluido });
 
   if (!corrida) return null;
-
-  const executar = async (fn) => {
-    if (loading) return; // evita envio duplicado
-    setLoading(true); setErro('');
-    try {
-      await fn();
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
-      onConcluido && onConcluido(corrida);
-    } catch (err) {
-      setErro(err.response?.data?.message || 'Não foi possível registrar. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const enviar = (payload) => executar(() =>
-    ehMotorista
-      ? corridasService.registrarEmbarqueMotorista(corrida.id, payload)
-      : corridasService.registrarEmbarquePassageiro(corrida.id, payload));
-
-  const confirmarCancelamento = () => {
-    const msg = validarMotivo(motivo);
-    if (msg) { setErro(msg); return; }
-    enviar(ehMotorista
-      ? { acao: 'NAO_VOU_EMBARCAR', motivo: motivo.trim() }
-      : { acao: 'NAO_EMBARQUEI', cancelarViagem: true, motivo: motivo.trim() });
-  };
-
-  const aCaminho = ehMotorista && corrida.situacaoMotorista === 'A_CAMINHO';
-  const motoristaACaminho = !ehMotorista && corrida.situacaoMotorista === 'A_CAMINHO';
 
   const resumo = (
     <div style={{ background: 'var(--bg-secondary, rgba(255,255,255,0.04))', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14 }}>
@@ -93,10 +61,10 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
           </p>
         )}
         <div style={colunaStyle}>
-          <Button variant="success" loading={loading} onClick={() => enviar({ acao: 'CONFIRMAR_EMBARQUE' })}>
+          <Button variant="success" loading={loading} onClick={confirmarEmbarque}>
             {ehMotorista ? 'Sim, o passageiro embarcou' : 'Sim, embarquei'}
           </Button>
-          <Button variant="secondary" disabled={loading} onClick={() => { setErro(''); setEtapa('naoEmbarcou'); }}>
+          <Button variant="secondary" disabled={loading} onClick={() => irParaEtapa('naoEmbarcou')}>
             {ehMotorista ? 'Não embarcou' : 'Ainda não embarquei'}
           </Button>
         </div>
@@ -111,25 +79,25 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
           {ehMotorista ? (
             <>
               {!aCaminho && (
-                <Button variant="secondary" loading={loading} onClick={() => enviar({ acao: 'ESTOU_A_CAMINHO' })}>
+                <Button variant="secondary" loading={loading} onClick={informarACaminho}>
                   Estou a caminho
                 </Button>
               )}
-              <Button variant="danger" disabled={loading} onClick={() => { setErro(''); setEtapa('motivo'); }}>
+              <Button variant="danger" disabled={loading} onClick={() => irParaEtapa('motivo')}>
                 Não vou embarcar o passageiro
               </Button>
             </>
           ) : (
             <>
-              <Button variant="secondary" loading={loading} onClick={() => enviar({ acao: 'NAO_EMBARQUEI' })}>
+              <Button variant="secondary" loading={loading} onClick={registrarAguardando}>
                 Aguardar o motorista
               </Button>
-              <Button variant="danger" disabled={loading} onClick={() => { setErro(''); setEtapa('motivo'); }}>
+              <Button variant="danger" disabled={loading} onClick={() => irParaEtapa('motivo')}>
                 Cancelar a viagem
               </Button>
             </>
           )}
-          <Button variant="ghost" disabled={loading} onClick={() => { setErro(''); setEtapa('inicial'); }}>Voltar</Button>
+          <Button variant="ghost" disabled={loading} onClick={() => irParaEtapa('inicial')}>Voltar</Button>
         </div>
       </>
     );
@@ -148,7 +116,7 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
           maxLength={MOTIVO_MAX}
           rows={4}
           disabled={loading}
-          onChange={(e) => { setMotivo(e.target.value); setErro(''); }}
+          onChange={(e) => atualizarMotivo(e.target.value)}
           aria-invalid={!!erro}
           style={{ width: '100%', resize: 'vertical', padding: 10, borderRadius: 8, background: 'transparent', color: 'inherit', border: '1px solid var(--border-color, rgba(255,255,255,0.2))' }}
         />
@@ -160,7 +128,7 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
           <Button variant="danger" loading={loading} disabled={!motivo.trim()} onClick={confirmarCancelamento}>
             Confirmar cancelamento da viagem
           </Button>
-          <Button variant="ghost" disabled={loading} onClick={() => { setErro(''); setEtapa('naoEmbarcou'); }}>Voltar</Button>
+          <Button variant="ghost" disabled={loading} onClick={() => irParaEtapa('naoEmbarcou')}>Voltar</Button>
         </div>
       </>
     );
@@ -175,4 +143,3 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
 };
 
 export default ModalConfirmacaoEmbarque;
-

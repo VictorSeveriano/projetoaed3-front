@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/layout/Header';
 import CorridasTabs from '../../components/ui/CorridasTabs';
 import corridasService from '../../services/corridas.service';
+import { APP_EVENTS, escutarEvento } from '../../utils/appEvents';
 
 /**
  * CorridasPage — Página de corridas compartilhada entre Admin, Usuário e Motorista.
@@ -42,8 +43,7 @@ const CorridasPage = () => {
 
   useEffect(() => {
     carregar();
-    window.addEventListener('corridas-atualizadas', carregar);
-    return () => window.removeEventListener('corridas-atualizadas', carregar);
+    return escutarEvento(APP_EVENTS.CORRIDAS_ATUALIZADAS, carregar);
   }, [carregar]);
 
   const isAdmin    = usuario?.perfil === 'ADMINISTRADOR';

@@ -2,37 +2,25 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext';
 import corridasService from '../../services/corridas.service';
 import ModalConfirmacaoEmbarque from './ModalConfirmacaoEmbarque';
+import {
+  ADIAR_AO_FECHAR_MS,
+  precisaConfirmacao,
+  obterProximaCorridaParaConfirmacao,
+} from '../../utils/confirmacaoEmbarque';
+import {
+  APP_EVENTS,
+  emitirCorridasAtualizadas,
+  escutarEvento,
+} from '../../utils/appEvents';
+
+export { precisaConfirmacao };
 
 const INTERVALO_BUSCA_MS = 30 * 1000;
 const INTERVALO_RELOGIO_MS = 15 * 1000;
-const ADIAR_AO_FECHAR_MS = 2 * 60 * 1000;
-const REABRIR_A_CAMINHO_ANTES_MS = 5 * 60 * 1000;
-
-/** Decide se a corrida precisa de confirmação de embarque do perfil informado, no instante `agora`. */
-export function precisaConfirmacao(corrida, perfil, agora) {
-  const horario = new Date(corrida.dataHorario).getTime();
-  if (Number.isNaN(horario) || horario > agora) return false;
-
-  if (perfil === 'MOTORISTA') {
-    if (corrida.status !== 'CONFIRMADA' || corrida.embarqueMotoristaConfirmado === true) return false;
-    if (corrida.situacaoMotorista === 'A_CAMINHO') {
-      // Não solicita repetidamente enquanto está a caminho; reabre perto do fim do prazo estendido
-      const prazo = corrida.prazoConfirmacaoEm ? new Date(corrida.prazoConfirmacaoEm).getTime() : 0;
-      return prazo > 0 && prazo - agora <= REABRIR_A_CAMINHO_ANTES_MS;
-    }
-    return true;
-  }
-
-  if (perfil === 'USUARIO') {
-    if (!['CONFIRMADA', 'EM_ANDAMENTO'].includes(corrida.status)) return false;
-    return corrida.embarquePassageiroConfirmado == null;
-  }
-  return false;
-}
 
 /**
- * GerenciadorConfirmacaoEmbarque — monta a fila de corridas elegíveis e exibe
- * UM modal por vez (ordenado pelo horário agendado).
+ * GerenciadorConfirmacaoEmbarque — Mantém exclusivamente o controle da fila de
+ * corridas elegíveis, atualização periódica, adiamento e reabertura do modal.
  */
 const GerenciadorConfirmacaoEmbarque = () => {
   const { usuario } = useAuth();
@@ -42,8 +30,8 @@ const GerenciadorConfirmacaoEmbarque = () => {
   const [corridas, setCorridas] = useState([]);
   const [corridaManual, setCorridaManual] = useState(null);
   const [agora, setAgora] = useState(() => Date.now());
-  const adiadas = useRef(new Map()); // id -> timestamp até o qual não reabrir
-  const [, forcar] = useState(0);
+  const adiadas = useRef(new Map());
+  const [versaoAdiadas, setVersaoAdiadas] = useState(0);
 
   const carregar = useCallback(async () => {
     try {
@@ -65,36 +53,30 @@ const GerenciadorConfirmacaoEmbarque = () => {
         setCorridaManual(e.detail);
       }
     };
-    window.addEventListener('notificacoes-atualizadas', carregar);
-    window.addEventListener('abrir-modal-embarque', abrirManual);
+    const pararNotif = escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, carregar);
+    const pararAbrir = escutarEvento(APP_EVENTS.ABRIR_MODAL_EMBARQUE, abrirManual);
     return () => {
       clearInterval(busca);
       clearInterval(relogio);
-      window.removeEventListener('notificacoes-atualizadas', carregar);
-      window.removeEventListener('abrir-modal-embarque', abrirManual);
+      pararNotif();
+      pararAbrir();
     };
   }, [habilitado, usuario?.id, carregar]);
 
   const atual = useMemo(() => {
     if (!habilitado) return null;
     if (corridaManual) {
-      const atualizada = corridas.find((c) => c.id === corridaManual.id) || corridaManual;
-      return atualizada;
+      return corridas.find((c) => c.id === corridaManual.id) || corridaManual;
     }
-    const fila = corridas
-      .filter((c) => precisaConfirmacao(c, perfil, agora))
-      .filter((c) => (adiadas.current.get(c.id) || 0) <= agora)
-      .sort((a, b) => new Date(a.dataHorario) - new Date(b.dataHorario));
-    return fila[0] || null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [corridas, corridaManual, perfil, agora, habilitado, adiadas.current.size]);
+    return obterProximaCorridaParaConfirmacao(corridas, perfil, agora, adiadas.current);
+  }, [corridas, corridaManual, perfil, agora, habilitado, versaoAdiadas]);
 
   if (!atual) return null;
 
   const fechar = () => {
     adiadas.current.set(atual.id, Date.now() + ADIAR_AO_FECHAR_MS);
     setCorridaManual(null);
-    forcar((n) => n + 1);
+    setVersaoAdiadas((n) => n + 1);
     setAgora(Date.now());
   };
 
@@ -106,11 +88,10 @@ const GerenciadorConfirmacaoEmbarque = () => {
       onConcluido={() => {
         setCorridaManual(null);
         carregar();
-        window.dispatchEvent(new Event('corridas-atualizadas'));
+        emitirCorridasAtualizadas();
       }}
     />
   );
 };
 
 export default GerenciadorConfirmacaoEmbarque;
-

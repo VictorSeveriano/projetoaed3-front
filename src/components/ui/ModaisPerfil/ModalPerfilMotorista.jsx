@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import Badge from '../Badge';
 import { formatarData } from '../../../utils/formatters';
 import { ModalPerfilBase } from './ModalPerfilBase';
 import { CamposEnderecoPerfil } from '../CamposEnderecoPerfil';
 import { ENDERECO_VAZIO, isAddressDifferent } from '../../../utils/endereco';
+import { useModalEdicao } from '../../../hooks/useModalEdicao';
 import CampoPerfil from '../CampoPerfil';
 
 const criarEstadoInicial = (motorista) => {
@@ -20,19 +21,24 @@ const criarEstadoInicial = (motorista) => {
 };
 
 export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = true, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(() => criarEstadoInicial(motorista));
-
-  useEffect(() => {
-    if (motorista) {
-      setFormData(criarEstadoInicial(motorista));
-    }
-    setIsEditing(false);
-  }, [motorista]);
+  const estadoInicial = useCallback((item) => criarEstadoInicial(item), []);
+  const {
+    isEditing,
+    formData,
+    setFormData,
+    iniciarEdicao,
+    cancelarEdicao,
+    salvarEdicao,
+  } = useModalEdicao({
+    item: motorista,
+    criarEstadoInicial: estadoInicial,
+    onSave,
+  });
 
   if (!motorista) return null;
 
   const u = motorista.usuario || {};
+  const corSomenteLeitura = isEditing ? 'var(--text-muted)' : undefined;
   const hasChanges =
     (motorista.cnh || '') !== formData.cnh ||
     (u.cpf || '') !== formData.cpf ||
@@ -42,19 +48,6 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = tru
     (u.celular || '') !== formData.celular ||
     isAddressDifferent(u.endereco, formData.endereco);
 
-  const handleSave = async () => {
-    if (onSave) {
-      await onSave(motorista.id, formData);
-    }
-    setIsEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    setFormData(criarEstadoInicial(motorista));
-    setIsEditing(false);
-  };
-
-  // Campos editáveis apenas por admin usam isEditing && isAdmin como condição
   const editableFields = (
     <>
       <CampoPerfil
@@ -114,33 +107,26 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = tru
     <>
       {!isAdmin && (
         <>
-          <div className="perfil-campo">
-            <span className="perfil-campo__label">CPF</span>
-            <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.cpf || '—'}</span>
-          </div>
-          <div className="perfil-campo">
-            <span className="perfil-campo__label">Nome</span>
-            <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{u.nome || '—'}</span>
-          </div>
+          <CampoPerfil label="CPF" valor={u.cpf || '—'} somenteLeitura readonlyColor={corSomenteLeitura} />
+          <CampoPerfil label="Nome" valor={u.nome || '—'} somenteLeitura readonlyColor={corSomenteLeitura} />
         </>
       )}
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Cadastro</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{formatarData(motorista.criadoEm)}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Status</span>
-        <div>
+      <CampoPerfil label="Cadastro" valor={formatarData(motorista.criadoEm)} somenteLeitura readonlyColor={corSomenteLeitura} />
+      <CampoPerfil
+        label="Status"
+        somenteLeitura
+        valor={
           <Badge label={motorista.statusCadastro} color={
             motorista.statusCadastro === 'APROVADO' ? 'success' :
               motorista.statusCadastro === 'PENDENTE' ? 'warning' : 'danger'
           } />
-        </div>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Veículo</span>
-        <span className="perfil-campo__valor">
-          {motorista.veiculo ? (
+        }
+      />
+      <CampoPerfil
+        label="Veículo"
+        somenteLeitura
+        valor={
+          motorista.veiculo ? (
             <button
               className="btn-link"
               onClick={motorista.onOpenVeiculo}
@@ -148,9 +134,11 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = tru
             >
               {motorista.veiculo.marca} {motorista.veiculo.modelo} ({motorista.veiculo.placa})
             </button>
-          ) : <span style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>Nenhum veículo associado</span>}
-        </span>
-      </div>
+          ) : (
+            <span style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>Nenhum veículo associado</span>
+          )
+        }
+      />
     </>
   );
 
@@ -161,9 +149,9 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = tru
       title="Perfil do Motorista"
       canEdit
       isEditing={isEditing}
-      onStartEdit={() => setIsEditing(true)}
-      onCancelEdit={handleCancelEdit}
-      onSave={handleSave}
+      onStartEdit={iniciarEdicao}
+      onCancelEdit={cancelarEdicao}
+      onSave={salvarEdicao}
       hasChanges={hasChanges}
       editableFields={editableFields}
       readonlyFields={readonlyFields}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import notificacoesService from '../services/notificacoes.service';
 import { useAuth } from '../context/AuthContext';
+import { emitirNotificacoesAtualizadas } from '../utils/appEvents';
 
 /**
  * useNotificacoes — Hook compartilhado de listagem, marcação de leitura e tratamento
@@ -44,18 +45,19 @@ export function useNotificacoes() {
   const handleLerTodas = useCallback(async () => {
     try {
       await notificacoesService.lerTodas();
-      await carregar();
-      window.dispatchEvent(new Event('notificacoes-atualizadas'));
+      setNotificacoes((prev) => prev.map((n) => (n.lida ? n : { ...n, lida: true })));
+      emitirNotificacoesAtualizadas();
     } catch (err) {
       exibirErro(err, 'Não foi possível marcar todas as notificações como lidas.');
     }
-  }, [carregar, exibirErro]);
+  }, [exibirErro]);
 
   const handleMarcarLida = useCallback(
     async (id, { silencioso = false } = {}) => {
       try {
         await notificacoesService.ler(id);
-        window.dispatchEvent(new Event('notificacoes-atualizadas'));
+        setNotificacoes((prev) => prev.map((n) => (n.id === id ? { ...n, lida: true } : n)));
+        emitirNotificacoesAtualizadas();
         return true;
       } catch (err) {
         if (!silencioso) {
@@ -78,4 +80,3 @@ export function useNotificacoes() {
     handleMarcarLida,
   };
 }
-

@@ -16,7 +16,6 @@ const NotificacoesPage = () => {
     loading,
     erroModal,
     fecharErro,
-    carregar,
     handleLerTodas,
     handleMarcarLida,
   } = useNotificacoes();
@@ -26,7 +25,6 @@ const NotificacoesPage = () => {
     if (!n.lida) {
       const ok = await handleMarcarLida(n.id);
       if (!ok) return;
-      await carregar();
     }
     if (n.tipo === 'SOLICITACAO_MOTORISTA') navigate('/motoristas/analise');
     if (n.tipo === 'SOLICITACAO_VEICULO') navigate('/veiculos/analise');

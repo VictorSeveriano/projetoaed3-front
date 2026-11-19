@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import notificacoesService from '../../services/notificacoes.service';
+import { APP_EVENTS, escutarEvento } from '../../utils/appEvents';
 
 import {
   LayoutDashboard, Car, CalendarDays, Network, LogOut,
@@ -84,11 +85,10 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
       };
       
       carregarNotificacoes();
-      
-      window.addEventListener('notificacoes-atualizadas', carregarNotificacoes);
-      return () => window.removeEventListener('notificacoes-atualizadas', carregarNotificacoes);
+
+      return escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, carregarNotificacoes);
     }
-  }, [usuario]);
+  }, [usuario?.id]);
 
   const contadoresPorRota = useMemo(() => {
     const naoLidasLista = notificacoesLista.filter((n) => !n.lida);

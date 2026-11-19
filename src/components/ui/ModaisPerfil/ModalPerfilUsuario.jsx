@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import Badge from '../Badge';
 import { formatarData } from '../../../utils/formatters';
 import { ModalPerfilBase } from './ModalPerfilBase';
 import { CamposEnderecoPerfil } from '../CamposEnderecoPerfil';
 import { ENDERECO_VAZIO, isAddressDifferent } from '../../../utils/endereco';
+import { useModalEdicao } from '../../../hooks/useModalEdicao';
 import CampoPerfil from '../CampoPerfil';
 
 const criarEstadoInicial = (usuario) => ({
@@ -16,18 +17,23 @@ const criarEstadoInicial = (usuario) => ({
 });
 
 export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(() => criarEstadoInicial(usuario));
-
-  useEffect(() => {
-    if (usuario) {
-      setFormData(criarEstadoInicial(usuario));
-    }
-    setIsEditing(false);
-  }, [usuario]);
+  const estadoInicial = useCallback((item) => criarEstadoInicial(item), []);
+  const {
+    isEditing,
+    formData,
+    setFormData,
+    iniciarEdicao,
+    cancelarEdicao,
+    salvarEdicao,
+  } = useModalEdicao({
+    item: usuario,
+    criarEstadoInicial: estadoInicial,
+    onSave,
+  });
 
   if (!usuario) return null;
 
+  const corSomenteLeitura = isEditing ? 'var(--text-muted)' : undefined;
   const hasChanges =
     (usuario.nome || '') !== formData.nome ||
     (usuario.usuario || '') !== formData.usuario ||
@@ -35,18 +41,6 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, o
     (usuario.email || '') !== formData.email ||
     (usuario.celular || '') !== formData.celular ||
     isAddressDifferent(usuario.endereco, formData.endereco);
-
-  const handleSave = async () => {
-    if (onSave) {
-      await onSave(usuario.id, formData);
-    }
-    setIsEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    setFormData(criarEstadoInicial(usuario));
-    setIsEditing(false);
-  };
 
   const editableFields = (
     <>
@@ -94,25 +88,21 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, o
   const readonlyFields = (
     <>
       {!isAdmin && (
-        <div className="perfil-campo">
-          <span className="perfil-campo__label">CPF</span>
-          <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{usuario.cpf || '—'}</span>
-        </div>
+        <CampoPerfil label="CPF" valor={usuario.cpf || '—'} somenteLeitura readonlyColor={corSomenteLeitura} />
       )}
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Perfil</span>
-        <span className="perfil-campo__valor">
+      <CampoPerfil
+        label="Perfil"
+        somenteLeitura
+        valor={
           <Badge label={usuario.perfil} color={usuario.perfil === 'ADMINISTRADOR' ? 'danger' : usuario.perfil === 'MOTORISTA' ? 'warning' : 'info'} />
-        </span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Cadastro</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{formatarData(usuario.criadoEm)}</span>
-      </div>
+        }
+      />
+      <CampoPerfil label="Cadastro" valor={formatarData(usuario.criadoEm)} somenteLeitura readonlyColor={corSomenteLeitura} />
       {usuario.perfil === 'MOTORISTA' && (
-        <div className="perfil-campo">
-          <span className="perfil-campo__label">Motorista Vinculado</span>
-          <span className="perfil-campo__valor">
+        <CampoPerfil
+          label="Motorista Vinculado"
+          somenteLeitura
+          valor={
             <button
               className="btn-link"
               onClick={usuario.onOpenMotorista}
@@ -120,8 +110,8 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, o
             >
               Ver Perfil de Motorista
             </button>
-          </span>
-        </div>
+          }
+        />
       )}
     </>
   );
@@ -133,9 +123,9 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, o
       title="Perfil do Usuário"
       canEdit
       isEditing={isEditing}
-      onStartEdit={() => setIsEditing(true)}
-      onCancelEdit={handleCancelEdit}
-      onSave={handleSave}
+      onStartEdit={iniciarEdicao}
+      onCancelEdit={cancelarEdicao}
+      onSave={salvarEdicao}
       hasChanges={hasChanges}
       editableFields={editableFields}
       readonlyFields={readonlyFields}
