@@ -104,9 +104,9 @@ export const ModalPerfilUsuario = ({ isOpen, onClose, usuario, isAdmin = true, o
           somenteLeitura
           valor={
             <button
+              type="button"
               className="btn-link"
               onClick={usuario.onOpenMotorista}
-              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
             >
               Ver Perfil de Motorista
             </button>

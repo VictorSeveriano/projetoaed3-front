@@ -12,6 +12,8 @@ import veiculosService from '../../services/veiculos.service';
 import { Car } from 'lucide-react';
 import { formatarData } from '../../utils/formatters';
 
+const PORTE_LABELS = { Pequeno: 'Pequeno', Medio: 'Médio', Grande: 'Grande' };
+
 const VeiculosAnalisePage = () => {
   const [pendentes, setPendentes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,46 +65,85 @@ const VeiculosAnalisePage = () => {
           <Loading message="Buscando veículos pendentes..." />
         ) : pendentes.length === 0 ? (
           <EmptyState
-            icon={<Car size={48} strokeWidth={1.5} />}
+            icon={<Car size={32} strokeWidth={1.5} />}
             title="Nenhum veículo pendente"
             description="Não há veículos aguardando análise no momento."
           />
         ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Modelo/Marca</th>
-                  <th>Placa</th>
-                  <th>Porte / Tipo</th>
-                  <th>Motorista</th>
-                  <th>Data Cadastro</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendentes.map(v => (
-                  <tr key={v.id} className="data-table__row">
-                    <td className="data-table__cell">{v.marca} {v.modelo}</td>
-                    <td className="data-table__cell">{v.placa}</td>
-                    <td className="data-table__cell">{v.porte || '—'} / <Badge label={v.classe || 'N/D'} color="info" /></td>
-                    <td className="data-table__cell">{v.motorista?.nome || '—'}</td>
-                    <td className="data-table__cell">{formatarData(v.criadoEm)}</td>
-                    <td className="data-table__cell">
-                      <Badge label="Pendente" color="warning" />
-                    </td>
-                    <td className="data-table__cell">
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button size="sm" variant="success" onClick={() => setAcao({ tipo: 'aprovar', veiculo: v })}>Aprovar</Button>
-                        <Button size="sm" variant="danger" onClick={() => setAcao({ tipo: 'rejeitar', veiculo: v })}>Rejeitar</Button>
-                      </div>
-                    </td>
+          <>
+            <div className="table-wrapper table-desktop-only">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Modelo / Marca</th>
+                    <th scope="col">Placa</th>
+                    <th scope="col">Porte / Classe</th>
+                    <th scope="col">Motorista</th>
+                    <th scope="col">Data Cadastro</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {pendentes.map((v) => (
+                    <tr key={v.id} className="data-table__row">
+                      <td className="data-table__cell">{v.marca} {v.modelo}</td>
+                      <td className="data-table__cell tabular-nums">{v.placa}</td>
+                      <td className="data-table__cell">
+                        {PORTE_LABELS[v.porte] || v.porte || '—'}{' '}
+                        <Badge label={v.classe || 'N/D'} color="info" />
+                      </td>
+                      <td className="data-table__cell">{v.motorista?.nome || '—'}</td>
+                      <td className="data-table__cell tabular-nums">{formatarData(v.criadoEm)}</td>
+                      <td className="data-table__cell">
+                        <Badge label="Pendente" color="warning" dot />
+                      </td>
+                      <td className="data-table__cell">
+                        <div className="btn-group">
+                          <Button type="button" size="sm" variant="success" onClick={() => setAcao({ tipo: 'aprovar', veiculo: v })}>Aprovar</Button>
+                          <Button type="button" size="sm" variant="danger" onClick={() => setAcao({ tipo: 'rejeitar', veiculo: v })}>Rejeitar</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mobile-cards-list cards-mobile-only">
+              {pendentes.map((v) => (
+                <article key={v.id} className="mobile-data-card">
+                  <div className="mobile-data-card__header">
+                    <div>
+                      <h3 className="mobile-data-card__title">{v.marca} {v.modelo}</h3>
+                      <p className="mobile-data-card__subtitle tabular-nums">{v.placa}</p>
+                    </div>
+                    <Badge label="Pendente" color="warning" dot />
+                  </div>
+                  <div className="mobile-data-card__grid">
+                    <div className="mobile-data-card__field">
+                      <span className="mobile-data-card__label">Motorista</span>
+                      <span className="mobile-data-card__value">{v.motorista?.nome || '—'}</span>
+                    </div>
+                    <div className="mobile-data-card__field">
+                      <span className="mobile-data-card__label">Porte / Classe</span>
+                      <span className="mobile-data-card__value">
+                        {PORTE_LABELS[v.porte] || v.porte || '—'} • {v.classe || 'N/D'}
+                      </span>
+                    </div>
+                    <div className="mobile-data-card__field">
+                      <span className="mobile-data-card__label">Cadastro</span>
+                      <span className="mobile-data-card__value tabular-nums">{formatarData(v.criadoEm)}</span>
+                    </div>
+                  </div>
+                  <div className="mobile-data-card__actions">
+                    <Button type="button" size="sm" variant="success" onClick={() => setAcao({ tipo: 'aprovar', veiculo: v })}>Aprovar</Button>
+                    <Button type="button" size="sm" variant="danger" onClick={() => setAcao({ tipo: 'rejeitar', veiculo: v })}>Rejeitar</Button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -123,31 +164,31 @@ const VeiculosAnalisePage = () => {
         title="Aprovar Veículo"
         size="md"
         footer={
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', width: '100%' }}>
-            <Button variant="outline" onClick={() => setAcao(null)}>Cancelar</Button>
-            <Button variant="success" onClick={handleConfirmarAcao}>Aprovar Veículo</Button>
+          <div className="modal-actions">
+            <Button type="button" variant="outline" onClick={() => setAcao(null)}>Cancelar</Button>
+            <Button type="button" variant="success" onClick={handleConfirmarAcao}>Aprovar Veículo</Button>
           </div>
         }
       >
         {acao?.veiculo && (
-          <>
-            <p style={{ marginBottom: '16px' }}>
+          <div className="perfil-stack">
+            <p className="text-secondary">
               Você está aprovando o veículo <strong>{acao.veiculo.marca} {acao.veiculo.modelo}</strong> ({acao.veiculo.placa}).
             </p>
-            <p>
-              Porte: <strong>{acao.veiculo.porte}</strong> <br />
-              Classe de serviço: <strong>{acao.veiculo.classe || 'Indefinida'}</strong>
-            </p>
-            <p style={{ marginTop: '16px', fontSize: '14px', color: '#666' }}>
+            <div className="modal-summary" style={{ marginBottom: 0 }}>
+              <div>Porte: <strong>{PORTE_LABELS[acao.veiculo.porte] || acao.veiculo.porte}</strong></div>
+              <div>Classe de serviço: <strong>{acao.veiculo.classe || 'Indefinida'}</strong></div>
+            </div>
+            <p className="text-muted" style={{ fontSize: 'var(--font-sm)' }}>
               A classe de serviço é determinada automaticamente pelo porte do veículo.
             </p>
-          </>
+          </div>
         )}
       </Modal>
 
       <ModalErro
         isOpen={erroModal.aberto}
-        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        onClose={() => setErroModal((prev) => ({ ...prev, aberto: false }))}
         titulo={erroModal.titulo}
         mensagem={erroModal.mensagem}
       />

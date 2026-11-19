@@ -15,7 +15,7 @@ const ModalCadastroUsuario = ({
       title={`Novo ${perfilSelecionado === 'USUARIO' ? 'Passageiro' : perfilSelecionado === 'MOTORISTA' ? 'Motorista' : 'Administrador'}`}
       size="lg"
     >
-      <div style={{ padding: '0 8px' }}>
+      <div>
         <FormularioDadosPessoais
           form={formCadastro}
           setForm={setFormCadastro}

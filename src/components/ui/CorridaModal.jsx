@@ -14,46 +14,25 @@ import {
 import { Route, Check, TriangleAlert, MapPin, Clock } from 'lucide-react';
 
 /**
- * CorridaModal — Modal de confirmacao de solicitacao de corrida.
- *
- * Exibe:
- * - Origem e destino
- * - Rota selecionada (caminho visual, distancia, duracao)
- * - Valor estimado da corrida
- * - Seleção de classe do veículo: BASICO, NORMAL, PREMIUM
- * - Seleção de forma de pagamento: DINHEIRO, CARTAO_DEBITO, CARTAO_CREDITO, PIX
- * - Campo de data/horario desejado
- *
- * O backend valida a disponibilidade da classe e retorna erro se não houver
- * veículo disponível — exibido via ModalErro reutilizável.
- *
- * Props:
- * @param {boolean}     isOpen
- * @param {function}    onClose
- * @param {object|null} rota                - Rota selecionada pelo usuario (inclui valorEstimado)
- * @param {string}      origemNome
- * @param {string}      destinoNome
- * @param {object|null} origemGeocodificada - { lat, lng, nome } da origem geocodificada
- * @param {object|null} destinoGeocodificada- { lat, lng, nome } do destino geocodificado
- * @param {function}    onSuccess           - Callback apos corrida criada
+ * CorridaModal — Modal de confirmação de solicitação de corrida.
  */
 const CorridaModal = ({
   isOpen, onClose, rota, origemNome, destinoNome,
   origemGeocodificada, destinoGeocodificada,
   origemEndereco, destinoEndereco, onSuccess,
 }) => {
-  const [dataHorario, setDataHorario]   = useState('');
-  const [classe, setClasse]             = useState('NORMAL');
+  const [dataHorario, setDataHorario] = useState('');
+  const [classe, setClasse] = useState('NORMAL');
   const [formaPagamento, setFormaPagamento] = useState('DINHEIRO');
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
-  const [successMsg, setSuccessMsg]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [erroModal, setErroModal]       = useState({ open: false, mensagem: '' });
-  
-  const [valorCalculado, setValorCalculado]   = useState(null);
+  const [erroModal, setErroModal] = useState({ open: false, mensagem: '' });
+
+  const [valorCalculado, setValorCalculado] = useState(null);
   const [calculandoValor, setCalculandoValor] = useState(false);
-  const [erroPrevia, setErroPrevia]           = useState(null); // { titulo, mensagem }
+  const [erroPrevia, setErroPrevia] = useState(null);
 
   const isDirty = dataHorario !== '';
 
@@ -76,7 +55,6 @@ const CorridaModal = ({
       return;
     }
 
-    // Validação da distância antes de disparar requisição
     const dist = Number(rota.distanciaKm);
     if (!Number.isFinite(dist) || dist <= 0) {
       setValorCalculado(null);
@@ -87,7 +65,6 @@ const CorridaModal = ({
       return;
     }
 
-    // Validação e conversão de data/hora no fuso comercial (America/Sao_Paulo)
     let dataHorarioIso;
     try {
       dataHorarioIso = converterDataHorarioComercialParaISO(dataHorario);
@@ -112,7 +89,6 @@ const CorridaModal = ({
           dataHorario: dataHorarioIso,
         });
 
-        // Valida o retorno do service antes de usar
         const valorRecebido = resposta?.valor;
         if (
           valorRecebido == null ||
@@ -160,7 +136,6 @@ const CorridaModal = ({
       }
     };
 
-    // Pequeno atraso para evitar muitas requisições se o usuário estiver digitando
     const timeout = setTimeout(calcular, 300);
     return () => {
       isActive = false;
@@ -178,7 +153,7 @@ const CorridaModal = ({
 
   const confirmarCorrida = async () => {
     if (!dataHorario) {
-      setError('Informe a data e horario desejado para a corrida.');
+      setError('Informe a data e horário desejados para a corrida.');
       return;
     }
     if (!rota) { setError('Selecione uma rota primeiro.'); return; }
@@ -202,11 +177,11 @@ const CorridaModal = ({
       return;
     }
 
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
       const corridaCriada = await corridasService.criar(payload);
 
-      // Valida que o backend retornou um valor válido
       const valorRetornado = corridaCriada?.valor;
       if (
         valorRetornado == null ||
@@ -226,7 +201,6 @@ const CorridaModal = ({
       setTimeout(() => { onClose(); setSuccessMsg(''); }, 2500);
     } catch (err) {
       const msg = err.response?.data?.message || 'Erro ao solicitar a corrida. Tente novamente.';
-      // Se for erro de disponibilidade de classe, exibir ModalErro
       if (msg.toLowerCase().includes('nao ha veiculos') || msg.toLowerCase().includes('classe')) {
         setErroModal({
           open: true,
@@ -247,10 +221,10 @@ const CorridaModal = ({
   ];
 
   const FORMAS_PAGAMENTO = [
-    { value: 'DINHEIRO',      label: 'Dinheiro' },
-    { value: 'CARTAO_DEBITO', label: 'Cartão de Débito' },
-    { value: 'CARTAO_CREDITO',label: 'Cartão de Crédito' },
-    { value: 'PIX',           label: 'PIX' },
+    { value: 'DINHEIRO',       label: 'Dinheiro' },
+    { value: 'CARTAO_DEBITO',  label: 'Cartão de Débito' },
+    { value: 'CARTAO_CREDITO', label: 'Cartão de Crédito' },
+    { value: 'PIX',            label: 'PIX' },
   ];
 
   return (
@@ -263,19 +237,19 @@ const CorridaModal = ({
         footer={
           !successMsg && (
             <div className="reserva-form__actions">
-              <Button variant="ghost" onClick={handleCloseRequest}>Cancelar</Button>
-              <Button id="btn-confirmar-corrida" onClick={confirmarCorrida} loading={loading}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Check size={16} aria-hidden="true" />
-                  Confirmar Corrida
-                </span>
+              <Button type="button" variant="outline" onClick={handleCloseRequest} disabled={loading}>
+                Cancelar
+              </Button>
+              <Button id="btn-confirmar-corrida" type="button" onClick={confirmarCorrida} loading={loading}>
+                <Check size={16} aria-hidden="true" />
+                Confirmar Corrida
               </Button>
             </div>
           )
         }
       >
         {successMsg ? (
-          <div className="success-banner">{successMsg}</div>
+          <div className="success-banner" role="status">{successMsg}</div>
         ) : (
           <div className="reserva-form">
             {/* Resumo do trajeto */}
@@ -296,7 +270,7 @@ const CorridaModal = ({
                 <div className="corrida-caminho">
                   {rota.caminho.map((loc, i) => (
                     <span key={i} className="corrida-caminho__step">
-                      {i > 0 && <span className="corrida-caminho__arrow" aria-hidden="true">-&gt;</span>}
+                      {i > 0 && <span className="corrida-caminho__arrow" aria-hidden="true">→</span>}
                       <span className="corrida-caminho__loc">{loc}</span>
                     </span>
                   ))}
@@ -316,32 +290,20 @@ const CorridaModal = ({
             )}
 
             {/* Seleção de classe do veículo */}
-            <div className="input-group" style={{ marginTop: '16px' }}>
-              <label className="input-label" id="label-classe-veiculo">
-                Porte do Veículo
-              </label>
+            <div className="input-group">
+              <span className="input-label" id="label-classe-veiculo">
+                Porte do Veículo <span className="input-required" aria-hidden="true">*</span>
+              </span>
               <div
                 role="radiogroup"
                 aria-labelledby="label-classe-veiculo"
-                style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}
+                className="option-card-grid"
               >
                 {CLASSES.map((c) => (
                   <label
                     key={c.value}
                     htmlFor={`classe-${c.value}`}
-                    style={{
-                      flex: '1 1 120px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '12px 8px',
-                      border: `2px solid ${classe === c.value ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      background: classe === c.value ? 'var(--color-primary-dim, rgba(99,102,241,0.1))' : 'var(--bg-800)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'center',
-                    }}
+                    className={`option-card ${classe === c.value ? 'option-card--selected' : ''}`.trim()}
                   >
                     <input
                       id={`classe-${c.value}`}
@@ -350,54 +312,33 @@ const CorridaModal = ({
                       value={c.value}
                       checked={classe === c.value}
                       onChange={() => setClasse(c.value)}
-                      style={{ display: 'none' }}
+                      className="sr-only"
                     />
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                      {c.label}
-                    </span>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                      {c.desc}
-                    </span>
+                    <span className="option-card__title">{c.label}</span>
+                    <span className="option-card__desc">{c.desc}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* Seleção de forma de pagamento */}
-            <div className="input-group" style={{ marginTop: '16px' }}>
-              <label className="input-label" id="label-forma-pagamento">
-                Forma de Pagamento
-                <span
-                  style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}
-                >
+            <div className="input-group">
+              <span className="input-label" id="label-forma-pagamento">
+                Forma de Pagamento <span className="input-required" aria-hidden="true">*</span>
+                <span className="input-hint">
                   (pagamento realizado presencialmente no ato da viagem)
                 </span>
-              </label>
+              </span>
               <div
                 role="radiogroup"
                 aria-labelledby="label-forma-pagamento"
-                style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}
+                className="option-card-grid"
               >
                 {FORMAS_PAGAMENTO.map((fp) => (
                   <label
                     key={fp.value}
                     htmlFor={`pagamento-${fp.value}`}
-                    style={{
-                      flex: '1 1 100px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '10px 8px',
-                      border: `2px solid ${formaPagamento === fp.value ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      background: formaPagamento === fp.value ? 'var(--color-primary-dim, rgba(99,102,241,0.1))' : 'var(--bg-800)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      textAlign: 'center',
-                      fontSize: '0.85rem',
-                      fontWeight: formaPagamento === fp.value ? 700 : 400,
-                      color: 'var(--text-primary)',
-                    }}
+                    className={`option-card ${formaPagamento === fp.value ? 'option-card--selected' : ''}`.trim()}
                   >
                     <input
                       id={`pagamento-${fp.value}`}
@@ -406,19 +347,20 @@ const CorridaModal = ({
                       value={fp.value}
                       checked={formaPagamento === fp.value}
                       onChange={() => setFormaPagamento(fp.value)}
-                      style={{ display: 'none' }}
+                      className="sr-only"
                     />
-                    {fp.label}
+                    <span className="option-card__title">{fp.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Data e horario */}
+            {/* Data e horário */}
             <Input
               id="input-data-horario"
               name="dataHorario"
-              label="Data e Horario da Corrida"
+              label="Data e Horário da Corrida"
+              required
               type="datetime-local"
               value={dataHorario}
               min={minDatetime}
@@ -426,22 +368,28 @@ const CorridaModal = ({
             />
 
             {/* Exibição Dinâmica do Valor */}
-            <div className="valor-corrida-container" style={{ marginTop: '20px', padding: '16px', background: 'var(--bg-800)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="valor-corrida-container" aria-live="polite">
               <div>
-                <span style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)' }}>Valor da corrida</span>
+                <span className="valor-corrida-container__label">Valor da corrida</span>
                 {(!dataHorario || !classe) && (
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Selecione a classe e o horário para calcular</span>
+                  <span className="valor-corrida-container__hint">
+                    Selecione o porte e o horário para calcular
+                  </span>
                 )}
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>
-                {calculandoValor ? 'Calculando...' : (valorCalculado !== null ? formatarMoeda(valorCalculado) : '--')}
+              <div className="valor-corrida-container__price">
+                {calculandoValor
+                  ? 'Calculando...'
+                  : valorCalculado !== null
+                    ? formatarMoeda(valorCalculado)
+                    : '—'}
               </div>
             </div>
 
             {error && (
-              <div className="form-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="form-error" role="alert">
                 <TriangleAlert size={16} aria-hidden="true" />
-                {error}
+                <span>{error}</span>
               </div>
             )}
           </div>
@@ -453,7 +401,7 @@ const CorridaModal = ({
         onClose={() => setShowExitConfirm(false)}
         onConfirm={() => { setShowExitConfirm(false); onClose(); }}
         title="Sair sem confirmar?"
-        message="Voce preencheu dados nesta corrida. Se sair agora, os dados serao perdidos."
+        message="Você preencheu dados nesta corrida. Se sair agora, os dados serão perdidos."
         confirmText="Sair sem confirmar"
         cancelText="Continuar preenchendo"
         variant="warning"

@@ -2,7 +2,7 @@ import React from 'react';
 import { ABAS_CORRIDA } from './corridaPermissoes';
 
 const CorridasFiltros = ({ abaAtiva, contadores, onSelecionarAba }) => (
-  <nav className="corridas-tabs" aria-label="Filtrar corridas por status">
+  <div className="corridas-tabs" role="tablist" aria-label="Filtrar corridas por status">
     {ABAS_CORRIDA.map((aba) => (
       <button
         key={aba.key}
@@ -10,10 +10,10 @@ const CorridasFiltros = ({ abaAtiva, contadores, onSelecionarAba }) => (
         type="button"
         role="tab"
         aria-selected={abaAtiva === aba.key}
-        className={`corridas-tab ${abaAtiva === aba.key ? 'corridas-tab--ativa' : ''}`}
+        className={`corridas-tab ${abaAtiva === aba.key ? 'corridas-tab--ativa' : ''}`.trim()}
         onClick={() => onSelecionarAba(aba.key)}
       >
-        {aba.label}
+        <span>{aba.label}</span>
         {contadores[aba.key] > 0 && (
           <span className="corridas-tab__count" aria-label={`${contadores[aba.key]} corridas`}>
             {contadores[aba.key]}
@@ -21,7 +21,7 @@ const CorridasFiltros = ({ abaAtiva, contadores, onSelecionarAba }) => (
         )}
       </button>
     ))}
-  </nav>
+  </div>
 );
 
 export default CorridasFiltros;

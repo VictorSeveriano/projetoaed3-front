@@ -1,6 +1,7 @@
 import React from 'react';
 import Card from './Card';
 import Loading from './Loading';
+import { AlertCircle, BarChart3 } from 'lucide-react';
 
 /**
  * Tooltip compartilhado para gráficos Recharts (DashboardPage e RelatorioMotoristaPage).
@@ -20,13 +21,16 @@ export const ChartTooltip = ({ active, payload, label, formatter }) => {
 };
 
 /**
- * ChartCard encapsula o comportamento de exibir graficos com estados visuais consistentes.
+ * ChartCard encapsula o comportamento de exibir gráficos com estados visuais consistentes.
  */
-const ChartCard = ({ title, loading, error, empty, children, className = '' }) => {
+const ChartCard = ({ title, subtitle, loading, error, empty, children, className = '' }) => {
   return (
-    <Card className={`chart-card ${className}`}>
+    <Card className={`chart-card ${className}`.trim()}>
       <Card.Header>
-        <h2 className="card-section-title">{title}</h2>
+        <div>
+          <h2 className="card-section-title">{title}</h2>
+          {subtitle && <p className="card-section-subtitle">{subtitle}</p>}
+        </div>
       </Card.Header>
       <Card.Body className="chart-card__body">
         {loading ? (
@@ -34,12 +38,14 @@ const ChartCard = ({ title, loading, error, empty, children, className = '' }) =
             <Loading message="Carregando dados..." />
           </div>
         ) : error ? (
-          <div className="chart-card__state chart-card__error">
-            <p>Ocorreu um erro ao carregar os dados.</p>
+          <div className="chart-card__state chart-card__error" role="alert">
+            <AlertCircle size={28} aria-hidden="true" />
+            <p>Não foi possível carregar os dados deste gráfico.</p>
           </div>
         ) : empty ? (
-          <div className="chart-card__state chart-card__empty">
-            <p>Sem dados disponíveis</p>
+          <div className="chart-card__state chart-card__empty" role="status">
+            <BarChart3 size={28} aria-hidden="true" />
+            <p>Sem dados disponíveis para exibição.</p>
           </div>
         ) : (
           <div className="chart-container">

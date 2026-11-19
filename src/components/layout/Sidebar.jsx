@@ -6,44 +6,44 @@ import { APP_EVENTS, escutarEvento } from '../../utils/appEvents';
 
 import {
   LayoutDashboard, Car, CalendarDays, Network, LogOut,
-  ChevronLeft, ChevronRight, Map, Home, BarChart2, User, Bell, ShieldAlert
+  ChevronLeft, ChevronRight, Map, Home, BarChart2, User, Bell, ShieldAlert, X
 } from 'lucide-react';
 
 /**
  * Itens de navegação por perfil.
  *
  * ADMINISTRADOR: mantém tudo que já existia (sem regressão).
- * USUARIO: solicitar corrida, minhas corridas, perfil.
- * MOTORISTA: início, minhas corridas, relatório, perfil, meu veículo.
+ * USUARIO: solicitar corrida, minhas corridas, notificações, perfil.
+ * MOTORISTA: início, corridas disponíveis, minhas corridas, relatório, perfil, meu veículo.
  *
  * Termos internos (Grafo, ABB, Dijkstra) não aparecem na UI.
  */
 const NAV_ITEMS_ADMIN = [
-  { to: '/dashboard',             icon: <LayoutDashboard size={20} />, label: 'Dashboard'             },
-  { to: '/corridas',              icon: <CalendarDays size={20} />,    label: 'Corridas'              },
-  { to: '/veiculos',              icon: <Car size={20} />,             label: 'Veículos'              },
-  { to: '/veiculos/analise',      icon: <Car size={20} />,             label: 'Análise de Veículos'   },
-  { to: '/rotas',                 icon: <Network size={20} />,         label: 'Solicitar Corrida'     },
-  { to: '/usuarios',              icon: <User size={20} />,            label: 'Usuários'              },
-  { to: '/motoristas/analise',    icon: <User size={20} />,            label: 'Análise de Motoristas' },
-  { to: '/notificacoes',          icon: <Bell size={20} />,            label: 'Notificações'          },
-  { to: '/auditoria',             icon: <ShieldAlert size={20} />,     label: 'Auditoria'             },
+  { to: '/dashboard',          icon: <LayoutDashboard size={19} />, label: 'Dashboard'             },
+  { to: '/corridas',           icon: <CalendarDays size={19} />,    label: 'Corridas'              },
+  { to: '/veiculos',           icon: <Car size={19} />,             label: 'Veículos'              },
+  { to: '/veiculos/analise',   icon: <Car size={19} />,             label: 'Análise de Veículos'   },
+  { to: '/rotas',              icon: <Network size={19} />,         label: 'Solicitar Corrida'     },
+  { to: '/usuarios',           icon: <User size={19} />,            label: 'Usuários'              },
+  { to: '/motoristas/analise', icon: <User size={19} />,            label: 'Análise de Motoristas' },
+  { to: '/notificacoes',       icon: <Bell size={19} />,            label: 'Notificações'          },
+  { to: '/auditoria',          icon: <ShieldAlert size={19} />,     label: 'Auditoria'             },
 ];
 
 const NAV_ITEMS_USUARIO = [
-  { to: '/solicitar-corrida', icon: <Map size={20} />,          label: 'Solicitar corrida' },
-  { to: '/minhas-corridas',   icon: <CalendarDays size={20} />, label: 'Minhas corridas'   },
-  { to: '/notificacoes',      icon: <Bell size={20} />,         label: 'Notificações'      },
-  { to: '/perfil',            icon: <User size={20} />,         label: 'Meu perfil'        },
+  { to: '/solicitar-corrida', icon: <Map size={19} />,          label: 'Solicitar corrida' },
+  { to: '/minhas-corridas',   icon: <CalendarDays size={19} />, label: 'Minhas corridas'   },
+  { to: '/notificacoes',      icon: <Bell size={19} />,         label: 'Notificações'      },
+  { to: '/perfil',            icon: <User size={19} />,         label: 'Meu perfil'        },
 ];
 
 const NAV_ITEMS_MOTORISTA = [
-  { to: '/inicio',                   icon: <Home size={20} />,         label: 'Início'                },
-  { to: '/notificacoes-motorista',   icon: <Bell size={20} />,         label: 'Corridas disponíveis'  },
-  { to: '/minhas-corridas',          icon: <CalendarDays size={20} />, label: 'Minhas corridas'       },
-  { to: '/relatorio',                icon: <BarChart2 size={20} />,    label: 'Relatório mensal'      },
-  { to: '/perfil',                   icon: <User size={20} />,         label: 'Meu perfil'            },
-  { to: '/meu-veiculo',              icon: <Car size={20} />,          label: 'Meu veículo'           },
+  { to: '/inicio',                 icon: <Home size={19} />,         label: 'Início'               },
+  { to: '/notificacoes-motorista', icon: <Bell size={19} />,         label: 'Corridas disponíveis' },
+  { to: '/minhas-corridas',        icon: <CalendarDays size={19} />, label: 'Minhas corridas'      },
+  { to: '/relatorio',              icon: <BarChart2 size={19} />,    label: 'Relatório mensal'     },
+  { to: '/perfil',                 icon: <User size={19} />,         label: 'Meu perfil'           },
+  { to: '/meu-veiculo',            icon: <Car size={19} />,          label: 'Meu veículo'          },
 ];
 
 const PERFIL_LABELS = {
@@ -83,7 +83,7 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
             setNaoLidas(0);
           });
       };
-      
+
       carregarNotificacoes();
 
       return escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, carregarNotificacoes);
@@ -138,30 +138,44 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   return (
     <>
       <div
-        className={`sidebar-overlay ${isOpen ? 'sidebar-overlay--open' : ''}`}
+        className={`sidebar-overlay ${isOpen ? 'sidebar-overlay--visible' : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
       <aside
-        className={`sidebar ${isOpen ? 'sidebar--open' : ''} ${isDesktopClosed ? 'sidebar--closed' : ''}`}
-        aria-expanded={!isDesktopClosed}
+        className={`sidebar ${isOpen ? 'sidebar--open' : ''} ${isDesktopClosed ? 'sidebar--desktop-closed' : ''}`}
+        aria-label="Navegação lateral"
       >
-        <div className="sidebar__brand">
-          <div className="sidebar__brand-content">
-            <span className="sidebar__logo"><Car size={28} aria-hidden="true" /></span>
+        <div className="sidebar__header">
+          <div className="sidebar__brand">
+            <span className="sidebar__logo-badge" aria-hidden="true">
+              <Car size={20} />
+            </span>
             <div className="sidebar__brand-text">
-              <span className="sidebar__title">ReservaCar</span>
-              <span className="sidebar__subtitle">
-                {PERFIL_LABELS[usuario?.perfil] || 'AED3'}
+              <span className="sidebar__brand-name">ReservaCar</span>
+              <span className="sidebar__brand-sub">
+                {PERFIL_LABELS[usuario?.perfil] || 'Sistema'}
               </span>
             </div>
           </div>
+
           <button
-            className="sidebar__toggle"
+            type="button"
+            className="sidebar__toggle-btn"
             onClick={onToggleDesktop}
-            aria-label={isDesktopClosed ? 'Abrir menu' : 'Fechar menu'}
+            title={isDesktopClosed ? 'Expandir menu' : 'Recolher menu'}
+            aria-label={isDesktopClosed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
           >
-            {isDesktopClosed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            {isDesktopClosed ? <ChevronRight size={17} aria-hidden="true" /> : <ChevronLeft size={17} aria-hidden="true" />}
+          </button>
+
+          <button
+            type="button"
+            className="sidebar__close-mobile"
+            onClick={onClose}
+            aria-label="Fechar menu"
+          >
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -174,71 +188,55 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
                 to={item.to}
                 end
                 onClick={onClose}
-                data-tooltip={item.label}
+                title={isDesktopClosed ? item.label : undefined}
                 className={({ isActive }) =>
                   `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
                 }
               >
-                <span className="sidebar__link-icon" style={{ position: 'relative', display: 'inline-flex' }}>
+                <span className="sidebar__link-icon" aria-hidden="true">
                   {item.icon}
-                  {qtdBadge > 0 && (
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        position: 'absolute',
-                        top: '-3px',
-                        right: '-4px',
-                        width: '9px',
-                        height: '9px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--color-danger)',
-                        border: '2px solid var(--bg-900, #0f172a)',
-                      }}
-                    />
+                  {qtdBadge > 0 && isDesktopClosed && (
+                    <span className="sidebar__dot" />
                   )}
                 </span>
-                <span className="sidebar__link-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  {item.label}
-                  {qtdBadge > 0 && (
-                    <span style={{
-                      backgroundColor: 'var(--color-danger)', 
-                      color: 'white', 
-                      borderRadius: '12px', 
-                      padding: '2px 8px', 
-                      fontSize: '12px', 
-                      fontWeight: 'bold',
-                      marginLeft: '8px'
-                    }}>
-                      {qtdBadge}
-                    </span>
-                  )}
-                </span>
+                {!isDesktopClosed && (
+                  <>
+                    <span className="sidebar__link-label">{item.label}</span>
+                    {qtdBadge > 0 && (
+                      <span
+                        className="sidebar__badge"
+                        aria-label={`${qtdBadge} ${qtdBadge === 1 ? 'pendência' : 'pendências'}`}
+                      >
+                        {qtdBadge}
+                      </span>
+                    )}
+                  </>
+                )}
               </NavLink>
             );
           })}
         </nav>
 
         <div className="sidebar__footer">
-          <div
-            className="sidebar__user"
-            data-tooltip={usuario?.nome || 'Usuário'}
-          >
-            <div className="sidebar__user-avatar" aria-hidden="true">
-              {usuario?.nome?.[0] || 'U'}
+          <div className="sidebar__user" title={usuario?.nome || 'Usuário'}>
+            <div className="sidebar__avatar" aria-hidden="true">
+              {usuario?.nome?.[0]?.toUpperCase() || 'U'}
             </div>
-            <div className="sidebar__user-info">
-              <span className="sidebar__user-name">{usuario?.nome || 'Usuário'}</span>
-              <span className="sidebar__user-role">@{usuario?.usuario || 'usuario'}</span>
-            </div>
+            {!isDesktopClosed && (
+              <div className="sidebar__user-info">
+                <span className="sidebar__user-name">{usuario?.nome || 'Usuário'}</span>
+                <span className="sidebar__user-handle">@{usuario?.usuario || 'usuario'}</span>
+              </div>
+            )}
           </div>
           <button
+            type="button"
             className="sidebar__logout"
             onClick={handleLogout}
             title="Sair"
             aria-label="Sair do sistema"
-            data-tooltip="Sair"
           >
-            <LogOut size={20} />
+            <LogOut size={18} aria-hidden="true" />
           </button>
         </div>
       </aside>

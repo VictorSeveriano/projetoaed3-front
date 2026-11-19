@@ -4,11 +4,9 @@ import Button from './Button';
 import { MOTIVO_MIN, MOTIVO_MAX, validarMotivo } from '../../utils/confirmacaoEmbarque';
 import { useConfirmacaoEmbarque } from '../../hooks/useConfirmacaoEmbarque';
 import { formatarDataHorario, formatarMoeda } from '../../utils/formatters';
-import { MapPin } from 'lucide-react';
+import { MapPin, TriangleAlert } from 'lucide-react';
 
 export { MOTIVO_MIN, MOTIVO_MAX, validarMotivo };
-
-const colunaStyle = { display: 'flex', flexDirection: 'column', gap: '10px' };
 
 /**
  * ModalConfirmacaoEmbarque — Interface de confirmação de embarque para motorista e passageiro.
@@ -39,10 +37,16 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
   if (!corrida) return null;
 
   const resumo = (
-    <div style={{ background: 'var(--bg-secondary, rgba(255,255,255,0.04))', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14 }}>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><MapPin size={14} aria-hidden="true" /> {corrida.origemNome}</div>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><MapPin size={14} aria-hidden="true" /> {corrida.destinoNome}</div>
-      <div style={{ marginTop: 6, color: 'var(--text-secondary)' }}>
+    <div className="modal-summary">
+      <div className="modal-summary__row">
+        <MapPin size={14} aria-hidden="true" />
+        <span>{corrida.origemNome}</span>
+      </div>
+      <div className="modal-summary__row">
+        <MapPin size={14} aria-hidden="true" />
+        <span>{corrida.destinoNome}</span>
+      </div>
+      <div className="modal-summary__meta">
         {formatarDataHorario(corrida.dataHorario)} • {formatarMoeda(corrida.valor)}
       </div>
     </div>
@@ -56,15 +60,15 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
       <>
         {resumo}
         {motoristaACaminho && (
-          <p role="status" style={{ color: 'var(--color-warning)', marginBottom: 12 }}>
+          <p role="status" className="form-warning" style={{ marginBottom: 14 }}>
             O motorista informou que está a caminho.
           </p>
         )}
-        <div style={colunaStyle}>
-          <Button variant="success" loading={loading} onClick={confirmarEmbarque}>
+        <div className="modal-stack">
+          <Button type="button" variant="success" loading={loading} onClick={confirmarEmbarque}>
             {ehMotorista ? 'Sim, o passageiro embarcou' : 'Sim, embarquei'}
           </Button>
-          <Button variant="secondary" disabled={loading} onClick={() => irParaEtapa('naoEmbarcou')}>
+          <Button type="button" variant="secondary" disabled={loading} onClick={() => irParaEtapa('naoEmbarcou')}>
             {ehMotorista ? 'Não embarcou' : 'Ainda não embarquei'}
           </Button>
         </div>
@@ -75,29 +79,31 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
     corpo = (
       <>
         {resumo}
-        <div style={colunaStyle}>
+        <div className="modal-stack">
           {ehMotorista ? (
             <>
               {!aCaminho && (
-                <Button variant="secondary" loading={loading} onClick={informarACaminho}>
+                <Button type="button" variant="secondary" loading={loading} onClick={informarACaminho}>
                   Estou a caminho
                 </Button>
               )}
-              <Button variant="danger" disabled={loading} onClick={() => irParaEtapa('motivo')}>
+              <Button type="button" variant="danger" disabled={loading} onClick={() => irParaEtapa('motivo')}>
                 Não vou embarcar o passageiro
               </Button>
             </>
           ) : (
             <>
-              <Button variant="secondary" loading={loading} onClick={registrarAguardando}>
+              <Button type="button" variant="secondary" loading={loading} onClick={registrarAguardando}>
                 Aguardar o motorista
               </Button>
-              <Button variant="danger" disabled={loading} onClick={() => irParaEtapa('motivo')}>
+              <Button type="button" variant="danger" disabled={loading} onClick={() => irParaEtapa('motivo')}>
                 Cancelar a viagem
               </Button>
             </>
           )}
-          <Button variant="ghost" disabled={loading} onClick={() => irParaEtapa('inicial')}>Voltar</Button>
+          <Button type="button" variant="ghost" disabled={loading} onClick={() => irParaEtapa('inicial')}>
+            Voltar
+          </Button>
         </div>
       </>
     );
@@ -107,28 +113,34 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
     corpo = (
       <>
         {resumo}
-        <label htmlFor="motivo-cancelamento-embarque" style={{ display: 'block', marginBottom: 6, fontSize: 14 }}>
-          Motivo do cancelamento *
-        </label>
-        <textarea
-          id="motivo-cancelamento-embarque"
-          value={motivo}
-          maxLength={MOTIVO_MAX}
-          rows={4}
-          disabled={loading}
-          onChange={(e) => atualizarMotivo(e.target.value)}
-          aria-invalid={!!erro}
-          style={{ width: '100%', resize: 'vertical', padding: 10, borderRadius: 8, background: 'transparent', color: 'inherit', border: '1px solid var(--border-color, rgba(255,255,255,0.2))' }}
-        />
-        <small style={{ color: 'var(--text-secondary)' }}>{restante} caracteres restantes</small>
-        <p style={{ marginTop: 12, fontSize: 14, color: 'var(--text-secondary)' }}>
+        <div className="input-group">
+          <label className="input-label" htmlFor="motivo-cancelamento-embarque">
+            Motivo do cancelamento
+            <span className="input-required" aria-hidden="true">*</span>
+          </label>
+          <textarea
+            id="motivo-cancelamento-embarque"
+            className={`input-textarea ${erro ? 'input-field--error' : ''}`.trim()}
+            value={motivo}
+            maxLength={MOTIVO_MAX}
+            rows={4}
+            disabled={loading}
+            placeholder="Descreva o motivo do cancelamento (mínimo 5 caracteres)..."
+            onChange={(e) => atualizarMotivo(e.target.value)}
+            aria-invalid={erro ? true : undefined}
+          />
+          <small className="char-counter">{restante} caracteres restantes</small>
+        </div>
+        <p className="text-secondary" style={{ marginTop: 12, fontSize: 'var(--font-sm)', lineHeight: 1.55 }}>
           Esta ação cancela a viagem e notifica {ehMotorista ? 'o passageiro' : 'o motorista'}. Não pode ser desfeita.
         </p>
-        <div style={{ ...colunaStyle, marginTop: 12 }}>
-          <Button variant="danger" loading={loading} disabled={!motivo.trim()} onClick={confirmarCancelamento}>
+        <div className="modal-stack" style={{ marginTop: 14 }}>
+          <Button type="button" variant="danger" loading={loading} disabled={!motivo.trim()} onClick={confirmarCancelamento}>
             Confirmar cancelamento da viagem
           </Button>
-          <Button variant="ghost" disabled={loading} onClick={() => irParaEtapa('naoEmbarcou')}>Voltar</Button>
+          <Button type="button" variant="ghost" disabled={loading} onClick={() => irParaEtapa('naoEmbarcou')}>
+            Voltar
+          </Button>
         </div>
       </>
     );
@@ -137,7 +149,12 @@ const ModalConfirmacaoEmbarque = ({ corrida, perfil, onClose, onConcluido }) => 
   return (
     <Modal isOpen onClose={loading ? () => {} : onClose} title={titulo} size="sm">
       {corpo}
-      {erro && <p role="alert" className="form-error" style={{ marginTop: 12 }}>{erro}</p>}
+      {erro && (
+        <p role="alert" className="form-error" style={{ marginTop: 12 }}>
+          <TriangleAlert size={16} aria-hidden="true" />
+          <span>{erro}</span>
+        </p>
+      )}
     </Modal>
   );
 };

@@ -93,7 +93,7 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
       >
         <div className="modal__header">
           <h2 id={titleId} className="modal__title">{title}</h2>
-          <button className="modal__close" onClick={onClose} aria-label="Fechar modal">✕</button>
+          <button type="button" className="modal__close" onClick={onClose} aria-label="Fechar modal">✕</button>
         </div>
         <div className="modal__body">{children}</div>
         {footer && <div className="modal__footer">{footer}</div>}

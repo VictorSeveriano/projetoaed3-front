@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
 import StatCard from '../../components/ui/StatCard';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import motoristasService from '../../services/motoristas.service';
 import { formatarMoeda } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 import { validarCNH } from '../../utils/validators';
-import { Target, CheckCircle, Route, DollarSign } from 'lucide-react';
-
+import { Target, CheckCircle, Route, DollarSign, TriangleAlert } from 'lucide-react';
 
 /**
  * InicioMotoristaPage — Página inicial do motorista.
@@ -19,14 +20,14 @@ import { Target, CheckCircle, Route, DollarSign } from 'lucide-react';
  */
 const InicioMotoristaPage = () => {
   const { usuario } = useAuth();
-  
+
   const [motoristaPerfil, setMotoristaPerfil] = useState(undefined); // undefined = loading
   const [cnhForm, setCnhForm] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  
+
   const [resumo, setResumo] = useState(null);
   const [loadingResumo, setLoadingResumo] = useState(false);
-  const [error, setError]   = useState('');
+  const [error, setError] = useState('');
 
   const carregarPerfil = async () => {
     if (!usuario?.id) return;
@@ -86,25 +87,39 @@ const InicioMotoristaPage = () => {
     return (
       <div className="page animate-fade-in">
         <Header title={`Bem-vindo, ${usuario?.nome?.split(' ')[0]}!`} subtitle="Complete seu cadastro para começar a dirigir." />
-        <div className="card" style={{ maxWidth: '400px', margin: '0 auto', padding: '24px' }}>
-          <h3 style={{ marginBottom: '16px' }}>Envie sua CNH</h3>
-          <p style={{ marginBottom: '24px', color: 'var(--text-secondary)' }}>Precisamos da sua CNH para aprovar seu cadastro como motorista.</p>
-          <form onSubmit={handleSolicitar}>
-            <div className="input-group">
-              <label className="input-label">Número da CNH</label>
-              <input
+        <div className="card form-card-centered form-card-centered--sm">
+          <div className="card__header">
+            <h2 className="card-section-title">Envie sua CNH</h2>
+          </div>
+          <div className="card__body">
+            <p className="text-secondary" style={{ marginBottom: 20 }}>
+              Precisamos do número da sua CNH para aprovar seu cadastro como motorista.
+            </p>
+            <form onSubmit={handleSolicitar} className="login-form">
+              <Input
+                id="input-cnh-solicitacao"
+                label="Número da CNH"
+                required
                 type="text"
-                className="input-field"
                 placeholder="Ex: 12345678901"
+                hint="Informe os 11 dígitos numéricos da sua habilitação."
                 value={cnhForm}
-                onChange={(e) => setCnhForm(e.target.value)}
+                onChange={(e) => {
+                  setError('');
+                  setCnhForm(e.target.value);
+                }}
               />
-            </div>
-            {error && <div className="form-error" style={{ marginBottom: '16px' }}>{error}</div>}
-            <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
-              {submitting ? 'Enviando...' : 'Enviar Solicitação'}
-            </button>
-          </form>
+              {error && (
+                <div className="form-error" role="alert">
+                  <TriangleAlert size={16} aria-hidden="true" />
+                  <span>{error}</span>
+                </div>
+              )}
+              <Button type="submit" variant="primary" size="lg" loading={submitting} className="w-full">
+                Enviar Solicitação
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -115,13 +130,15 @@ const InicioMotoristaPage = () => {
     const isPendente = motoristaPerfil.statusCadastro === 'PENDENTE';
     return (
       <div className="page animate-fade-in">
-        <Header title={`Olá, ${usuario?.nome?.split(' ')[0]}`} />
+        <Header title={`Olá, ${usuario?.nome?.split(' ')[0]}`} subtitle="Status da sua solicitação de motorista" />
         <EmptyState
-          icon={<CheckCircle size={48} strokeWidth={1.5} color={isPendente ? 'var(--color-warning)' : 'var(--color-danger)'} />}
+          icon={<CheckCircle size={32} strokeWidth={1.5} color={isPendente ? 'var(--color-warning-light)' : 'var(--color-danger-light)'} />}
           title={isPendente ? 'Cadastro em análise' : 'Cadastro Rejeitado'}
-          description={isPendente 
-            ? 'Sua CNH ainda aguarda aprovação de um administrador. O cadastro do veículo ficará disponível após a aprovação do perfil. Você só poderá receber e aceitar corridas quando o perfil e o veículo estiverem aprovados.'
-            : 'Sua solicitação foi rejeitada. Entre em contato com o suporte para mais informações.'}
+          description={
+            isPendente
+              ? 'Sua CNH ainda aguarda aprovação de um administrador. O cadastro do veículo ficará disponível após a aprovação do perfil. Você só poderá receber e aceitar corridas quando o perfil e o veículo estiverem aprovados.'
+              : 'Sua solicitação foi rejeitada. Entre em contato com o suporte para mais informações.'
+          }
         />
       </div>
     );
@@ -136,33 +153,39 @@ const InicioMotoristaPage = () => {
       />
 
       {loadingResumo && <Loading message="Carregando resumo..." />}
-      {error && <div className="form-error" role="alert">{error}</div>}
+      {error && (
+        <div className="form-error" role="alert">
+          <TriangleAlert size={16} aria-hidden="true" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {!loadingResumo && !error && resumo && (
         <div className="stats-grid">
           <StatCard
-            icon={<Target size={28} />}
+            icon={<DollarSign size={22} />}
+            label="Valor das corridas"
+            value={formatarMoeda(resumo.valorTotal)}
+            color="success"
+            featured
+          />
+          <StatCard
+            icon={<Target size={22} />}
             label="Corridas no mês"
             value={resumo.totalCorridas}
             color="primary"
           />
           <StatCard
-            icon={<CheckCircle size={28} />}
+            icon={<CheckCircle size={22} />}
             label="Concluídas"
             value={resumo.corridasConcluidas}
-            color="success"
+            color="warning"
           />
           <StatCard
-            icon={<Route size={28} />}
+            icon={<Route size={22} />}
             label="Km rodados"
             value={`${resumo.kmRodados} km`}
             color="accent"
-          />
-          <StatCard
-            icon={<DollarSign size={28} />}
-            label="Valor das corridas"
-            value={formatarMoeda(resumo.valorTotal)}
-            color="warning"
           />
         </div>
       )}

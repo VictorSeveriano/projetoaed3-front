@@ -18,11 +18,20 @@ const CorridaAcoes = ({
     podeConfirmarEmbarque,
   } = obterAcoesDisponiveisCorrida(corrida, permissoes);
 
+  const possuiAlgumaAcao =
+    podeConfirmarEmbarque ||
+    podeAcaoConfirmarPagamento ||
+    podeAcaoCancelar ||
+    podeAcaoFinalizar;
+
+  if (!possuiAlgumaAcao) return null;
+
   return (
-    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+    <div className="corrida-acoes">
       {podeConfirmarEmbarque && (
         <Button
           id={`btn-embarque-${corrida.id}`}
+          type="button"
           variant="primary"
           size="sm"
           onClick={() => emitirAbrirModalEmbarque(corrida)}
@@ -33,6 +42,7 @@ const CorridaAcoes = ({
       {podeAcaoConfirmarPagamento && (
         <Button
           id={`btn-confirmar-pag-${corrida.id}`}
+          type="button"
           variant="success"
           size="sm"
           onClick={() => onAbrirConfirmarPagamento(corrida.id)}
@@ -40,24 +50,26 @@ const CorridaAcoes = ({
           Confirmar Pagamento
         </Button>
       )}
-      {podeAcaoCancelar && (
-        <Button
-          id={`btn-cancelar-${corrida.id}`}
-          variant="danger"
-          size="sm"
-          onClick={() => onAbrirCancelar(corrida)}
-        >
-          {ehPassageiro ? 'Cancelar corrida' : 'Cancelar'}
-        </Button>
-      )}
       {podeAcaoFinalizar && (
         <Button
           id={`btn-finalizar-${corrida.id}`}
+          type="button"
           variant="secondary"
           size="sm"
           onClick={() => onAbrirFinalizar(corrida.id)}
         >
           Finalizar
+        </Button>
+      )}
+      {podeAcaoCancelar && (
+        <Button
+          id={`btn-cancelar-${corrida.id}`}
+          type="button"
+          variant="danger"
+          size="sm"
+          onClick={() => onAbrirCancelar(corrida)}
+        >
+          {ehPassageiro ? 'Cancelar corrida' : 'Cancelar'}
         </Button>
       )}
     </div>

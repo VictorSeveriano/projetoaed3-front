@@ -28,7 +28,7 @@ export const STATUS_LABELS = {
   EM_ANDAMENTO: { label: 'Em Andamento', color: 'warning' },
   FINALIZADA:   { label: 'Finalizada',   color: 'muted'   },
   CANCELADA:    { label: 'Cancelada',    color: 'danger'  },
-  DISPONIVEL:   { label: 'Disponivel',   color: 'success' },
+  DISPONIVEL:   { label: 'Disponível',   color: 'success' },
   EM_CORRIDA:   { label: 'Em Corrida',   color: 'warning' },
   ONLINE:       { label: 'Online',       color: 'success' },
   OFFLINE:      { label: 'Offline',      color: 'muted'   },

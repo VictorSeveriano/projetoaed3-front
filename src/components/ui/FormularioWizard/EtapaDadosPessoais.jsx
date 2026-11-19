@@ -1,8 +1,12 @@
 import React from 'react';
 import authService from '../../../services/auth.service';
+import Button from '../Button';
 
-export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDuplicateErrors, getInputClass, handleChange, handleBlur, renderError, getFieldError, setFieldErrors, setErroVerificacao, setVerificandoCadastro, onAvancar }) => {
-  
+export const EtapaDadosPessoais = ({
+  form, perfil, verificandoCadastro, hasDuplicateErrors,
+  getInputClass, handleChange, handleBlur, renderError,
+  getFieldError, setFieldErrors, setErroVerificacao, setVerificandoCadastro, onAvancar,
+}) => {
   const handleAvancarWrapper = async () => {
     let hasError = false;
     const newErrors = {};
@@ -10,7 +14,7 @@ export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDupli
     const requiredFields1 = ['nome', 'cpf', 'celular', 'email'];
     if (perfil === 'MOTORISTA') requiredFields1.push('cnh');
 
-    requiredFields1.forEach(field => {
+    requiredFields1.forEach((field) => {
       const value = form[field] || '';
       const errorMsg = getFieldError(field, value);
       if (errorMsg) {
@@ -51,32 +55,36 @@ export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDupli
 
   return (
     <>
-      <div style={{ marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Etapa 1 de 3</h3>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Dados pessoais</p>
+      <div className="wizard-header">
+        <h3 className="wizard-header__title">Etapa 1 de 3 — Dados pessoais</h3>
+        <p className="wizard-header__desc">Campos marcados com * são obrigatórios.</p>
       </div>
-      <fieldset disabled={verificandoCadastro} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+      <fieldset disabled={verificandoCadastro} className="form-grid">
         <div className="input-group">
-          <label className="input-label" htmlFor="form-nome">Nome Completo *</label>
-          <input 
-            id="form-nome" name="nome" type="text" 
-            className={getInputClass('nome')} 
-            placeholder="Seu nome completo" 
-            value={form.nome || ''} 
-            onChange={handleChange} 
+          <label className="input-label" htmlFor="form-nome">
+            Nome Completo <span className="input-required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="form-nome" name="nome" type="text"
+            className={getInputClass('nome')}
+            placeholder="Seu nome completo"
+            value={form.nome || ''}
+            onChange={handleChange}
             onBlur={handleBlur}
           />
           {renderError('nome')}
         </div>
-        
+
         <div className="input-group">
-          <label className="input-label" htmlFor="form-cpf">CPF *</label>
-          <input 
-            id="form-cpf" name="cpf" type="text" 
-            className={getInputClass('cpf')} 
-            placeholder="000.000.000-00" 
-            value={form.cpf || ''} 
-            onChange={handleChange} 
+          <label className="input-label" htmlFor="form-cpf">
+            CPF <span className="input-required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="form-cpf" name="cpf" type="text"
+            className={getInputClass('cpf')}
+            placeholder="000.000.000-00"
+            value={form.cpf || ''}
+            onChange={handleChange}
             onBlur={handleBlur}
           />
           {renderError('cpf')}
@@ -84,13 +92,15 @@ export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDupli
 
         {perfil === 'MOTORISTA' && (
           <div className="input-group">
-            <label className="input-label" htmlFor="form-cnh">CNH *</label>
-            <input 
-              id="form-cnh" name="cnh" type="text" 
-              className={getInputClass('cnh')} 
-              placeholder="Número da CNH" 
-              value={form.cnh || ''} 
-              onChange={handleChange} 
+            <label className="input-label" htmlFor="form-cnh">
+              CNH <span className="input-required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="form-cnh" name="cnh" type="text"
+              className={getInputClass('cnh')}
+              placeholder="11 dígitos numéricos"
+              value={form.cnh || ''}
+              onChange={handleChange}
               onBlur={handleBlur}
             />
             {renderError('cnh')}
@@ -98,37 +108,46 @@ export const EtapaDadosPessoais = ({ form, perfil, verificandoCadastro, hasDupli
         )}
 
         <div className="input-group">
-          <label className="input-label" htmlFor="form-celular">Celular *</label>
-          <input 
-            id="form-celular" name="celular" type="text" 
-            className={getInputClass('celular')} 
-            placeholder="(00) 00000-0000" 
-            value={form.celular || ''} 
-            onChange={handleChange} 
+          <label className="input-label" htmlFor="form-celular">
+            Celular <span className="input-required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="form-celular" name="celular" type="text"
+            className={getInputClass('celular')}
+            placeholder="(00) 00000-0000"
+            value={form.celular || ''}
+            onChange={handleChange}
             onBlur={handleBlur}
           />
           {renderError('celular')}
         </div>
 
         <div className="input-group">
-          <label className="input-label" htmlFor="form-email">E-mail *</label>
-          <input 
-            id="form-email" name="email" type="email" 
-            className={getInputClass('email')} 
-            placeholder="seu@email.com" 
-            value={form.email || ''} 
-            onChange={handleChange} 
+          <label className="input-label" htmlFor="form-email">
+            E-mail <span className="input-required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="form-email" name="email" type="email"
+            className={getInputClass('email')}
+            placeholder="seu@email.com"
+            value={form.email || ''}
+            onChange={handleChange}
             onBlur={handleBlur}
           />
           {renderError('email')}
         </div>
-
       </fieldset>
-      
-      <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-primary" onClick={handleAvancarWrapper} disabled={verificandoCadastro || hasDuplicateErrors} style={{ minWidth: '120px' }}>
-            {verificandoCadastro ? 'Verificando dados...' : 'Avançar →'}
-          </button>
+
+      <div className="form-actions">
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleAvancarWrapper}
+          disabled={verificandoCadastro || hasDuplicateErrors}
+          loading={verificandoCadastro}
+        >
+          Avançar →
+        </Button>
       </div>
     </>
   );

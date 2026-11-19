@@ -7,59 +7,60 @@ export const CamposEnderecoPerfil = ({ isEditing, enderecoAtual, formEndereco, o
   };
 
   return (
-    <div className="perfil-campo">
+    <div className="perfil-campo perfil-campo--full">
       <span className="perfil-campo__label">Endereço</span>
-      <span className="perfil-campo__valor" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="perfil-campo__valor">
         {isEditing ? (
           <>
-            <input
-              type="text"
-              className="input-field"
-              style={{ padding: '4px', height: 'auto', width: '100%' }}
-              placeholder="Rua"
-              value={formEndereco?.rua || ''}
-              onChange={(e) => atualizarCampo('rua', e.target.value)}
-            />
-            <input
-              type="text"
-              className="input-field"
-              style={{ padding: '4px', height: 'auto', width: '100%' }}
-              placeholder="Bairro"
-              value={formEndereco?.bairro || ''}
-              onChange={(e) => atualizarCampo('bairro', e.target.value)}
-            />
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="perfil-inline-row">
               <input
                 type="text"
-                className="input-field"
-                style={{ padding: '4px', height: 'auto', width: '100%' }}
+                className="input-field input-field--compact"
+                aria-label="Rua"
+                placeholder="Rua"
+                value={formEndereco?.rua || ''}
+                onChange={(e) => atualizarCampo('rua', e.target.value)}
+              />
+              <input
+                type="text"
+                className="input-field input-field--compact"
+                aria-label="Bairro"
+                placeholder="Bairro"
+                value={formEndereco?.bairro || ''}
+                onChange={(e) => atualizarCampo('bairro', e.target.value)}
+              />
+            </div>
+            <div className="perfil-inline-row">
+              <input
+                type="text"
+                className="input-field input-field--compact"
+                aria-label="Número"
                 placeholder="Número"
                 value={formEndereco?.numero || ''}
                 onChange={(e) => atualizarCampo('numero', e.target.value)}
               />
               <input
                 type="text"
-                className="input-field"
-                style={{ padding: '4px', height: 'auto', width: '100%' }}
+                className="input-field input-field--compact"
+                aria-label="CEP"
                 placeholder="CEP"
                 value={formEndereco?.cep || ''}
                 onChange={(e) => atualizarCampo('cep', e.target.value)}
               />
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
-                className="input-field"
-                style={{ padding: '4px', height: 'auto', width: '100%' }}
+                className="input-field input-field--compact"
+                aria-label="Cidade"
                 placeholder="Cidade"
                 value={formEndereco?.cidade || ''}
                 onChange={(e) => atualizarCampo('cidade', e.target.value)}
               />
               <input
                 type="text"
-                className="input-field"
-                style={{ padding: '4px', height: 'auto', width: '100%' }}
+                className="input-field input-field--compact"
+                aria-label="Estado (UF)"
                 placeholder="UF"
+                maxLength={2}
                 value={formEndereco?.estado || ''}
                 onChange={(e) => atualizarCampo('estado', e.target.value)}
               />
@@ -69,16 +70,18 @@ export const CamposEnderecoPerfil = ({ isEditing, enderecoAtual, formEndereco, o
           <span>
             {enderecoAtual ? (
               <>
-                {enderecoAtual.rua}, {enderecoAtual.numero} - {enderecoAtual.bairro}
+                {enderecoAtual.rua}, {enderecoAtual.numero} — {enderecoAtual.bairro}
                 <br />
-                {enderecoAtual.cidade}/{enderecoAtual.estado} - CEP: {enderecoAtual.cep}
+                <span className="text-muted">
+                  {enderecoAtual.cidade}/{enderecoAtual.estado} • CEP: {enderecoAtual.cep}
+                </span>
               </>
             ) : (
               '—'
             )}
           </span>
         )}
-      </span>
+      </div>
     </div>
   );
 };

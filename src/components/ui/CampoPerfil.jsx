@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 /**
  * CampoPerfil — Campo de exibição/edição reutilizável para formulários de perfil.
  *
  * No modo leitura, exibe `valor` como texto simples.
- * No modo edição, renderiza um <input> com as props fornecidas via `inputProps`.
+ * No modo edição, renderiza um <input> associado via htmlFor/id com as props fornecidas via `inputProps`.
  *
  * Props:
  * @param {string}       label         - Rótulo do campo (obrigatório)
@@ -22,19 +22,24 @@ const CampoPerfil = ({
   readonlyColor,
   somenteLeitura = false,
 }) => {
+  const autoId = useId();
+  const inputId = inputProps.id || `perfil-campo-${autoId.replace(/:/g, '')}`;
   const mostrarInput = isEditing && !somenteLeitura;
 
   return (
     <div className="perfil-campo">
-      <span className="perfil-campo__label">{label}</span>
-      <span
-        className="perfil-campo__valor"
-        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-      >
+      {mostrarInput ? (
+        <label className="perfil-campo__label" htmlFor={inputId}>
+          {label}
+        </label>
+      ) : (
+        <span className="perfil-campo__label">{label}</span>
+      )}
+      <div className="perfil-campo__valor">
         {mostrarInput ? (
           <input
-            className="input-field"
-            style={{ padding: '4px', height: 'auto', width: '100%' }}
+            id={inputId}
+            className="input-field input-field--compact"
             {...inputProps}
           />
         ) : (
@@ -42,10 +47,9 @@ const CampoPerfil = ({
             {valor ?? '—'}
           </span>
         )}
-      </span>
+      </div>
     </div>
   );
 };
 
 export default CampoPerfil;
-

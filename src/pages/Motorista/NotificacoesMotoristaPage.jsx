@@ -7,8 +7,11 @@ import EmptyState from '../../components/ui/EmptyState';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import ModalErro from '../../components/ui/ModalErro';
 import corridasService from '../../services/corridas.service';
-import { Bell, Check, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Bell, Check, CheckCircle, XCircle, Car, Route, UserPlus, ShieldCheck, CheckCircle2, Navigation,
+} from 'lucide-react';
 import { formatarDataHorario } from '../../utils/formatters';
+import { classificarNotificacaoVisual } from '../../utils/notificacaoVisual';
 import { useNotificacoes } from '../../hooks/useNotificacoes';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +20,17 @@ const ACAO_LABELS = {
   ACEITA:    { label: 'Aceita',    color: 'success' },
   RECUSADA:  { label: 'Recusada',  color: 'danger'  },
   CANCELADA: { label: 'Cancelada', color: 'danger'  },
+};
+
+const ICONES_NOTIFICACAO = {
+  car: Car,
+  route: Route,
+  user: UserPlus,
+  shield: ShieldCheck,
+  check: CheckCircle2,
+  cancel: XCircle,
+  navigation: Navigation,
+  bell: Bell,
 };
 
 /**
@@ -77,6 +91,13 @@ const NotificacoesMotoristaPage = () => {
     if (n.tipo === 'ATUALIZACAO_CORRIDA') navigate('/minhas-corridas');
   };
 
+  const handleKeyDown = (e, n) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleNotificacaoClick(n);
+    }
+  };
+
   return (
     <div className="page animate-fade-in">
       <Header
@@ -84,8 +105,8 @@ const NotificacoesMotoristaPage = () => {
         subtitle="Corridas disponíveis e atualizações do sistema"
         actions={
           notificacoes.some((n) => !n.lida) && (
-            <Button onClick={handleLerTodas} variant="ghost" size="sm">
-              <Check size={16} style={{ marginRight: '4px' }} />
+            <Button type="button" onClick={handleLerTodas} variant="outline" size="sm">
+              <Check size={15} aria-hidden="true" />
               Marcar todas como lidas
             </Button>
           )
@@ -96,82 +117,75 @@ const NotificacoesMotoristaPage = () => {
         <Loading message="Carregando notificações..." />
       ) : notificacoes.length === 0 ? (
         <EmptyState
-          icon={<Bell size={48} strokeWidth={1.5} />}
+          icon={<Bell size={32} strokeWidth={1.5} />}
           title="Nenhuma notificação"
           description="Você não tem nenhuma notificação no momento."
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '800px' }}>
+        <div className="notificacoes-list" role="list">
           {notificacoes.map((n) => {
             const isNovaCorrida = n.tipo === 'NOVA_CORRIDA';
             const isPendente = isNovaCorrida && n.acaoMotorista === 'PENDENTE';
             const acaoInfo = isNovaCorrida ? ACAO_LABELS[n.acaoMotorista] : null;
             const emProcessamento = acaoLoading === n.referenciaId;
+            const visual = classificarNotificacaoVisual(n);
+            const IconComp = ICONES_NOTIFICACAO[visual.icone] || Bell;
 
             return (
               <div
                 key={n.id}
-                className="card"
+                role="listitem"
+                tabIndex={0}
+                className={`notificacao-card ${!n.lida ? 'notificacao-card--nao-lida' : 'notificacao-card--lida'}`}
                 onClick={() => handleNotificacaoClick(n)}
-                style={{
-                  padding: '16px',
-                  cursor: 'pointer',
-                  borderLeft: !n.lida
-                    ? '4px solid var(--color-primary)'
-                    : isNovaCorrida
-                      ? '4px solid var(--color-warning)'
-                      : 'none',
-                }}
+                onKeyDown={(e) => handleKeyDown(e, n)}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                      <h4 style={{ margin: 0, fontWeight: !n.lida ? 600 : 400 }}>{n.titulo}</h4>
-                      {!n.lida && <Badge label="Nova" color="primary" />}
-                      {acaoInfo && (
-                        <Badge label={acaoInfo.label} color={acaoInfo.color} />
-                      )}
-                    </div>
-                    <p
-                      style={{
-                        margin: '0 0 8px',
-                        color: 'var(--text-secondary)',
-                        whiteSpace: 'pre-line',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      {n.mensagem}
-                    </p>
-                    <small style={{ color: 'var(--text-muted)' }}>
-                      {formatarDataHorario(n.criadaEm)}
-                    </small>
-                  </div>
+                <span className={`notificacao-card__icon notificacao-card__icon--${visual.cor}`} aria-hidden="true">
+                  <IconComp size={19} />
+                </span>
 
-                  {isPendente && n.referenciaId && (
-                    <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        id={`btn-aceitar-${n.referenciaId}`}
-                        variant="success"
-                        size="sm"
-                        loading={emProcessamento}
-                        onClick={() => setConfirmarAcao({ tipo: 'aceitar', corridaId: n.referenciaId, notifId: n.id })}
-                      >
-                        <CheckCircle size={14} style={{ marginRight: '4px' }} />
-                        Aceitar
-                      </Button>
-                      <Button
-                        id={`btn-recusar-${n.referenciaId}`}
-                        variant="danger"
-                        size="sm"
-                        loading={emProcessamento}
-                        onClick={() => setConfirmarAcao({ tipo: 'recusar', corridaId: n.referenciaId, notifId: n.id })}
-                      >
-                        <XCircle size={14} style={{ marginRight: '4px' }} />
-                        Recusar
-                      </Button>
-                    </div>
-                  )}
+                <div className="notificacao-card__body">
+                  <div className="notificacao-card__top">
+                    {!n.lida && <span className="notificacao-card__unread-dot" aria-label="Não lida" />}
+                    <h3 className="notificacao-card__title">{n.titulo}</h3>
+                    <Badge label={visual.categoria} color={visual.cor} />
+                    {!n.lida && <Badge label="Nova" color="primary" />}
+                    {acaoInfo && <Badge label={acaoInfo.label} color={acaoInfo.color} dot />}
+                  </div>
+                  <p className="notificacao-card__message">{n.mensagem}</p>
+                  <div className="notificacao-card__meta">
+                    <span>{formatarDataHorario(n.criadaEm)}</span>
+                    <span>•</span>
+                    <span>{n.lida ? 'Lida' : 'Não lida'}</span>
+                  </div>
                 </div>
+
+                {isPendente && n.referenciaId && (
+                  <div className="notificacao-card__actions" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      id={`btn-aceitar-${n.referenciaId}`}
+                      type="button"
+                      variant="success"
+                      size="sm"
+                      loading={emProcessamento}
+                      onClick={() => setConfirmarAcao({ tipo: 'aceitar', corridaId: n.referenciaId, notifId: n.id })}
+                    >
+                      <CheckCircle size={15} aria-hidden="true" />
+                      Aceitar
+                    </Button>
+                    <Button
+                      id={`btn-recusar-${n.referenciaId}`}
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      loading={emProcessamento}
+                      onClick={() => setConfirmarAcao({ tipo: 'recusar', corridaId: n.referenciaId, notifId: n.id })}
+                    >
+                      <XCircle size={15} aria-hidden="true" />
+                      Recusar
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}

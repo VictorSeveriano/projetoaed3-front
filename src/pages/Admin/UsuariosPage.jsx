@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilUsuario, ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
@@ -20,14 +21,20 @@ const defaultForm = {
   senha: '', senhaConfirmacao: '', cnh: '',
 };
 
+const PERFIL_BADGE = {
+  ADMINISTRADOR: { label: 'Administrador', color: 'danger' },
+  MOTORISTA:     { label: 'Motorista',     color: 'warning' },
+  USUARIO:       { label: 'Passageiro',    color: 'info' },
+};
+
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modals state
   const [modalUsuarioOpen, setModalUsuarioOpen] = useState(false);
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
-  
+
   const [modalMotoristaOpen, setModalMotoristaOpen] = useState(false);
   const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
 
@@ -111,7 +118,7 @@ const UsuariosPage = () => {
     try {
       await usuariosService.atualizar(id, dados);
       await carregar();
-      setUsuarioSelecionado(prev => ({ ...prev, ...dados }));
+      setUsuarioSelecionado((prev) => ({ ...prev, ...dados }));
     } catch (err) {
       console.error(err);
       setErroModal({
@@ -126,7 +133,20 @@ const UsuariosPage = () => {
     try {
       await motoristasService.atualizar(id, dados);
       await carregar();
-      setMotoristaSelecionado(prev => ({ ...prev, ...dados, usuario: { ...prev.usuario, nome: dados.nome, usuario: dados.usuario, cpf: dados.cpf, email: dados.email, celular: dados.celular, endereco: dados.endereco }, cnh: dados.cnh }));
+      setMotoristaSelecionado((prev) => ({
+        ...prev,
+        ...dados,
+        usuario: {
+          ...prev.usuario,
+          nome: dados.nome,
+          usuario: dados.usuario,
+          cpf: dados.cpf,
+          email: dados.email,
+          celular: dados.celular,
+          endereco: dados.endereco,
+        },
+        cnh: dados.cnh,
+      }));
     } catch (err) {
       console.error(err);
       setErroModal({
@@ -141,7 +161,7 @@ const UsuariosPage = () => {
     try {
       await veiculosService.atualizar(id, dados);
       await carregar();
-      setVeiculoSelecionado(prev => ({ ...prev, ...dados }));
+      setVeiculoSelecionado((prev) => ({ ...prev, ...dados }));
     } catch (err) {
       console.error(err);
       setErroModal({
@@ -173,6 +193,15 @@ const UsuariosPage = () => {
         titulo: 'Erro',
         mensagem: 'Não foi possível carregar o perfil de motorista deste usuário.',
       });
+    }
+  };
+
+  const abrirDetalhesUsuario = (u) => {
+    if (u.perfil === 'MOTORISTA') {
+      abrirMotorista(u.id);
+    } else {
+      setUsuarioSelecionado(u);
+      setModalUsuarioOpen(true);
     }
   };
 
@@ -223,127 +252,146 @@ const UsuariosPage = () => {
 
   return (
     <div className="page animate-fade-in">
-      <Header title="Usuários" subtitle="Gerencie os usuários cadastrados no sistema" />
+      <Header
+        title="Usuários"
+        subtitle="Gerencie os usuários cadastrados no sistema"
+        actions={
+          <Button type="button" variant="primary" onClick={() => setModalEscolhaOpen(true)}>
+            <Plus size={17} aria-hidden="true" />
+            Criar usuário
+          </Button>
+        }
+      />
 
       {/* Barra de Ferramentas / Filtros */}
-      <div className="tools-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <form onSubmit={handleSearchSubmit} className="search-bar" style={{ display: 'flex', gap: '8px', flex: '1', minWidth: '250px' }}>
-          <div className="input-group" style={{ flex: '1', marginBottom: 0 }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <input 
-                type="text" 
-                className="input-field" 
-                placeholder="Pesquisar por nome ou usuário..." 
-                value={filtroPesquisa}
-                onChange={e => setFiltroPesquisa(e.target.value)}
-                style={{ paddingLeft: '40px', marginBottom: 0 }}
-              />
-            </div>
+      <div className="tools-bar">
+        <form onSubmit={handleSearchSubmit} className="tools-bar__search">
+          <div className="input-with-icon" style={{ flex: 1 }}>
+            <span className="input-with-icon__icon" aria-hidden="true"><Search size={17} /></span>
+            <input
+              type="text"
+              className="input-field"
+              aria-label="Pesquisar usuários por nome ou usuário"
+              placeholder="Pesquisar por nome ou usuário..."
+              value={filtroPesquisa}
+              onChange={(e) => setFiltroPesquisa(e.target.value)}
+            />
           </div>
-          <button type="submit" className="btn btn-primary">Buscar</button>
+          <Button type="submit" variant="secondary">Buscar</Button>
         </form>
 
-        <div className="input-group" style={{ marginBottom: 0, minWidth: '200px' }}>
-          <div style={{ position: 'relative' }}>
-            <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)', pointerEvents: 'none' }} />
-            <select 
-              className="input-field" 
-              value={filtroPerfil} 
-              onChange={e => setFiltroPerfil(e.target.value)}
-              style={{ paddingLeft: '40px', marginBottom: 0 }}
+        <div className="tools-bar__field">
+          <div className="input-with-icon">
+            <span className="input-with-icon__icon" aria-hidden="true"><Filter size={16} /></span>
+            <select
+              className="input-field input-field--select"
+              aria-label="Filtrar por perfil"
+              value={filtroPerfil}
+              onChange={(e) => setFiltroPerfil(e.target.value)}
             >
               <option value="">Todos os perfis</option>
-              <option value="USUARIO">Passageiro (USUARIO)</option>
+              <option value="USUARIO">Passageiro</option>
               <option value="MOTORISTA">Motorista</option>
               <option value="ADMINISTRADOR">Administrador</option>
             </select>
           </div>
         </div>
-
-        <button className="btn btn-primary" onClick={() => setModalEscolhaOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Plus size={18} />
-          Criar usuário
-        </button>
       </div>
 
       {loading ? (
         <Loading message="Carregando usuários..." />
       ) : usuarios.length === 0 ? (
         <EmptyState
-          icon={<User size={48} strokeWidth={1.5} />}
+          icon={<User size={32} strokeWidth={1.5} />}
           title="Nenhum usuário encontrado"
           description="Não existem usuários correspondentes aos filtros selecionados."
         />
       ) : (
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Usuário</th>
-                <th>Perfil</th>
-                <th>Cadastro</th>
-                <th style={{ width: '200px' }}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuarios.map(u => (
-                <tr key={u.id} className="data-table__row">
-                  <td className="data-table__cell">
-                    <button 
-                      className="btn-link"
-                      onClick={() => {
-                        if (u.perfil === 'MOTORISTA') {
-                          abrirMotorista(u.id);
-                        } else {
-                          setUsuarioSelecionado(u);
-                          setModalUsuarioOpen(true);
-                        }
-                      }}
-                      style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
-                    >
-                      {u.nome}
-                    </button>
-                  </td>
-                  <td className="data-table__cell">@{u.usuario}</td>
-                  <td className="data-table__cell">
-                    <Badge 
-                      label={u.perfil} 
-                      color={u.perfil === 'ADMINISTRADOR' ? 'danger' : u.perfil === 'MOTORISTA' ? 'warning' : 'info'} 
-                    />
-                  </td>
-                  <td className="data-table__cell">{formatarData(u.criadoEm)}</td>
-                  <td className="data-table__cell">
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn--sm"
-                        onClick={() => {
-                          if (u.perfil === 'MOTORISTA') {
-                            abrirMotorista(u.id);
-                          } else {
-                            setUsuarioSelecionado(u);
-                            setModalUsuarioOpen(true);
-                          }
-                        }}
-                      >
-                        Ver detalhes
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger btn--sm"
-                        onClick={() => abrirConfirmacaoExclusao(u)}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <div className="table-wrapper table-desktop-only">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Nome</th>
+                  <th scope="col">Usuário</th>
+                  <th scope="col">Perfil</th>
+                  <th scope="col">Cadastro</th>
+                  <th scope="col">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {usuarios.map((u) => {
+                  const badgeInfo = PERFIL_BADGE[u.perfil] || { label: u.perfil, color: 'info' };
+                  return (
+                    <tr key={u.id} className="data-table__row">
+                      <td className="data-table__cell">
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => abrirDetalhesUsuario(u)}
+                        >
+                          {u.nome}
+                        </button>
+                      </td>
+                      <td className="data-table__cell text-secondary">@{u.usuario}</td>
+                      <td className="data-table__cell">
+                        <Badge label={badgeInfo.label} color={badgeInfo.color} />
+                      </td>
+                      <td className="data-table__cell tabular-nums">{formatarData(u.criadoEm)}</td>
+                      <td className="data-table__cell">
+                        <div className="btn-group btn-group--nowrap">
+                          <Button type="button" variant="outline" size="sm" onClick={() => abrirDetalhesUsuario(u)}>
+                            Ver detalhes
+                          </Button>
+                          <Button type="button" variant="danger" size="sm" onClick={() => abrirConfirmacaoExclusao(u)}>
+                            Excluir
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mobile-cards-list cards-mobile-only">
+            {usuarios.map((u) => {
+              const badgeInfo = PERFIL_BADGE[u.perfil] || { label: u.perfil, color: 'info' };
+              return (
+                <article key={u.id} className="mobile-data-card">
+                  <div className="mobile-data-card__header">
+                    <div>
+                      <h3 className="mobile-data-card__title">{u.nome}</h3>
+                      <p className="mobile-data-card__subtitle">@{u.usuario}</p>
+                    </div>
+                    <Badge label={badgeInfo.label} color={badgeInfo.color} />
+                  </div>
+                  <div className="mobile-data-card__grid">
+                    <div className="mobile-data-card__field">
+                      <span className="mobile-data-card__label">Cadastro</span>
+                      <span className="mobile-data-card__value tabular-nums">{formatarData(u.criadoEm)}</span>
+                    </div>
+                    {u.email && (
+                      <div className="mobile-data-card__field">
+                        <span className="mobile-data-card__label">E-mail</span>
+                        <span className="mobile-data-card__value">{u.email}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mobile-data-card__actions">
+                    <Button type="button" variant="outline" size="sm" onClick={() => abrirDetalhesUsuario(u)}>
+                      Ver detalhes
+                    </Button>
+                    <Button type="button" variant="danger" size="sm" onClick={() => abrirConfirmacaoExclusao(u)}>
+                      Excluir
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Modais */}
@@ -352,7 +400,7 @@ const UsuariosPage = () => {
         onClose={() => setModalUsuarioOpen(false)}
         usuario={usuarioSelecionado ? {
           ...usuarioSelecionado,
-          onOpenMotorista: () => abrirMotorista(usuarioSelecionado.id)
+          onOpenMotorista: () => abrirMotorista(usuarioSelecionado.id),
         } : null}
         onSave={handleSaveUsuario}
       />
@@ -366,7 +414,7 @@ const UsuariosPage = () => {
             setVeiculoSelecionado(motoristaSelecionado.veiculo);
             setModalVeiculoOpen(true);
             setModalMotoristaOpen(false);
-          }
+          },
         } : null}
         onSave={handleSaveMotorista}
       />
@@ -381,7 +429,7 @@ const UsuariosPage = () => {
 
       <ModalErro
         isOpen={erroModal.aberto}
-        onClose={() => setErroModal(prev => ({ ...prev, aberto: false }))}
+        onClose={() => setErroModal((prev) => ({ ...prev, aberto: false }))}
         titulo={erroModal.titulo}
         mensagem={erroModal.mensagem}
       />

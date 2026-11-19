@@ -171,7 +171,7 @@ const MeuVeiculoPage = () => {
       <Header title="Meu Veículo" subtitle="Informações do veículo vinculado à sua conta" />
 
       {veiculo.statusAprovacao !== 'APROVADO' && (
-        <div className="form-error" role="status" style={{ marginBottom: '16px' }}>
+        <div className="form-warning" role="status">
           O administrador ainda precisa aprovar seu veículo. Até a aprovação, você não receberá nem poderá aceitar corridas.
         </div>
       )}

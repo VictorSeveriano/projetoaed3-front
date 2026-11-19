@@ -1,34 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { CarFront, TriangleAlert } from 'lucide-react';
+import { CarFront, TriangleAlert, CheckCircle2, User, Car } from 'lucide-react';
 import FormularioDadosPessoais from '../../components/ui/FormularioDadosPessoais';
 import Modal from '../../components/ui/Modal';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 
 const LoginPage = () => {
-  const [form, setForm] = useState({ 
-    nome: '', usuario: '', senha: '', perfil: 'USUARIO', 
-    cpf: '', celular: '', email: '', 
+  const [form, setForm] = useState({
+    nome: '', usuario: '', senha: '', perfil: 'USUARIO',
+    cpf: '', celular: '', email: '',
     endereco: { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' },
-    cnh: ''
+    cnh: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [registeredUser, setRegisteredUser] = useState(null);
-  
+
   // Controle do modal de cadastro
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalStep, setModalStep] = useState('ESCOLHA'); // 'ESCOLHA', 1, 2
-  
+  const [modalStep, setModalStep] = useState('ESCOLHA'); // 'ESCOLHA', 1, 2, 3, 'SUCESSO'
+
   const { login, cadastrar } = useAuth();
   const navigate = useNavigate();
 
   const resetCadastro = () => {
-    setForm({ 
-      nome: '', usuario: '', senha: '', perfil: 'USUARIO', 
-      cpf: '', celular: '', email: '', 
+    setForm({
+      nome: '', usuario: '', senha: '', perfil: 'USUARIO',
+      cpf: '', celular: '', email: '',
       endereco: { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' },
-      cnh: ''
+      cnh: '',
     });
     setError('');
     setModalStep('ESCOLHA');
@@ -39,13 +41,8 @@ const LoginPage = () => {
     resetCadastro();
   };
 
-  const handleAvancar = (nextStep) => {
-    setModalStep(nextStep);
-  };
-
-  const handleVoltar = (prevStep) => {
-    setModalStep(prevStep);
-  };
+  const handleAvancar = (nextStep) => setModalStep(nextStep);
+  const handleVoltar = (prevStep) => setModalStep(prevStep);
 
   const handleChange = (e) => {
     setError('');
@@ -57,7 +54,7 @@ const LoginPage = () => {
     setError('');
 
     if (!form.usuario || !form.senha) {
-      setError('Preencha usuario e senha.');
+      setError('Preencha usuário e senha.');
       return;
     }
     setLoading(true);
@@ -70,9 +67,11 @@ const LoginPage = () => {
         default:          navigate('/dashboard'); break;
       }
     } catch (err) {
-      setError(err.response?.status === 401
-        ? 'Usuário ou senha incorretos. Confira seus dados e tente novamente.'
-        : err.response?.data?.message || 'Não foi possível entrar. Tente novamente.');
+      setError(
+        err.response?.status === 401
+          ? 'Usuário ou senha incorretos. Confira seus dados e tente novamente.'
+          : err.response?.data?.message || 'Não foi possível entrar. Tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -80,8 +79,6 @@ const LoginPage = () => {
 
   const handleCadastroSubmit = async () => {
     setError('');
-    // Frontend validation is now handled inside FormularioDadosPessoais
-    // We only need to check profile for CNH
     if (form.perfil === 'MOTORISTA' && !form.cnh) {
       setError('CNH é obrigatória para motoristas.');
       return;
@@ -101,149 +98,169 @@ const LoginPage = () => {
 
   return (
     <div className="login-wrapper">
-      {/* Background animado */}
-      <div className="login-bg">
+      {/* Background decorativo */}
+      <div className="login-bg" aria-hidden="true">
         <div className="login-bg__orb login-bg__orb--1" />
         <div className="login-bg__orb login-bg__orb--2" />
         <div className="login-bg__orb login-bg__orb--3" />
       </div>
 
-      <div className="login-card animate-fade-in">
+      <main className="login-card animate-fade-in">
         {/* Logo */}
         <div className="login-logo">
-          <span className="login-logo__icon"><CarFront size={48} aria-hidden="true" /></span>
+          <div className="login-logo__badge" aria-hidden="true">
+            <CarFront size={32} />
+          </div>
           <h1 className="login-logo__title">ReservaCar</h1>
-          <p className="login-logo__subtitle">Sistema de Reservas | AED3</p>
+          <p className="login-logo__subtitle">Gerenciamento inteligente de corridas</p>
         </div>
 
-        {/* Formulario Login */}
+        {/* Formulário de Login */}
         <form className="login-form" onSubmit={handleLoginSubmit} noValidate>
-          <div className="input-group">
-            <label className="input-label" htmlFor="login-usuario">Usuário</label>
-            <input
-              id="login-usuario"
-              name="usuario"
-              type="text"
-              className="input-field"
-              placeholder=""
-              value={form.usuario}
-              onChange={handleChange}
-              autoComplete="username"
-            />
-          </div>
+          <Input
+            id="login-usuario"
+            name="usuario"
+            label="Usuário"
+            required
+            type="text"
+            placeholder="Digite seu usuário"
+            value={form.usuario}
+            onChange={handleChange}
+            autoComplete="username"
+          />
 
-          <div className="input-group">
-            <label className="input-label" htmlFor="login-senha">Senha</label>
-            <input
-              id="login-senha"
-              name="senha"
-              type="password"
-              className="input-field"
-              placeholder=""
-              value={form.senha}
-              onChange={handleChange}
-              autoComplete="current-password"
-            />
-          </div>
-          
+          <Input
+            id="login-senha"
+            name="senha"
+            label="Senha"
+            required
+            type="password"
+            placeholder="Digite sua senha"
+            value={form.senha}
+            onChange={handleChange}
+            autoComplete="current-password"
+          />
+
           {error && (
-            <div className="login-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <TriangleAlert size={16} /> {error}
+            <div className="login-error" role="alert">
+              <TriangleAlert size={16} aria-hidden="true" />
+              <span>{error}</span>
             </div>
           )}
 
-          <button
+          <Button
             id="btn-entrar"
             type="submit"
-            className="btn btn--lg btn-primary w-full"
-            disabled={loading}
+            variant="primary"
+            size="lg"
+            loading={loading}
+            className="w-full"
           >
-            {loading ? <span className="btn__spinner" /> : 'Entrar'}
-          </button>
+            Entrar
+          </Button>
         </form>
 
-        <div style={{ marginTop: '16px', textAlign: 'center' }}>
-          <button 
-            type="button" 
-            className="btn btn-ghost" 
+        <div className="login-footer">
+          <Button
+            type="button"
+            variant="ghost"
             onClick={() => setModalOpen(true)}
+            className="w-full"
           >
             Não tem uma conta? Cadastre-se
-          </button>
+          </Button>
         </div>
-
-      </div>
+      </main>
 
       {/* MODAL DE CADASTRO */}
-      <Modal 
-        isOpen={modalOpen} 
-        onClose={handleCloseModal} 
-        size={modalStep === 'ESCOLHA' || modalStep === 'SUCESSO' ? 'md' : 'lg'}
+      <Modal
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        size={modalStep === 'ESCOLHA' || modalStep === 'SUCESSO' ? 'sm' : 'lg'}
         title={
-          modalStep === 'SUCESSO' 
-            ? 'Cadastro Concluído!' 
-            : modalStep === 'ESCOLHA' 
-              ? 'Criar uma conta' 
+          modalStep === 'SUCESSO'
+            ? 'Cadastro Concluído!'
+            : modalStep === 'ESCOLHA'
+              ? 'Criar uma conta'
               : `Cadastro de ${form.perfil === 'MOTORISTA' ? 'Motorista' : 'Passageiro'}`
         }
       >
         {modalStep === 'ESCOLHA' ? (
-          <div style={{ textAlign: 'center', padding: '16px' }}>
-            <p style={{ marginBottom: '24px', fontSize: '1.1rem' }}>Como você deseja entrar?</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button 
-                className="btn btn-primary btn--lg" 
+          <div>
+            <p className="text-secondary" style={{ marginBottom: 16 }}>
+              Selecione o tipo de perfil que deseja criar:
+            </p>
+            <div className="profile-select-list">
+              <button
+                type="button"
+                className="profile-select-btn"
                 onClick={() => {
-                  setForm(prev => ({ ...prev, perfil: 'USUARIO' }));
+                  setForm((prev) => ({ ...prev, perfil: 'USUARIO' }));
                   setModalStep(1);
                 }}
               >
-                Passageiro
+                <span className="profile-select-icon" aria-hidden="true">
+                  <User size={22} />
+                </span>
+                <span>
+                  <span className="profile-select-title">Passageiro</span>
+                  <span className="profile-select-desc">Solicite e acompanhe suas viagens</span>
+                </span>
               </button>
-              <button 
-                className="btn btn-secondary btn--lg" 
+              <button
+                type="button"
+                className="profile-select-btn"
                 onClick={() => {
-                  setForm(prev => ({ ...prev, perfil: 'MOTORISTA' }));
+                  setForm((prev) => ({ ...prev, perfil: 'MOTORISTA' }));
                   setModalStep(1);
                 }}
               >
-                Motorista
+                <span className="profile-select-icon" aria-hidden="true">
+                  <Car size={22} />
+                </span>
+                <span>
+                  <span className="profile-select-title">Motorista</span>
+                  <span className="profile-select-desc">Aceite corridas e acompanhe seus ganhos</span>
+                </span>
               </button>
             </div>
-            <button className="btn btn-ghost" style={{ marginTop: '24px' }} onClick={handleCloseModal}>
-              Fechar
-            </button>
+            <div className="form-actions">
+              <Button type="button" variant="ghost" onClick={handleCloseModal}>
+                Fechar
+              </Button>
+            </div>
           </div>
         ) : modalStep === 'SUCESSO' ? (
-          <div style={{ textAlign: 'center', padding: '16px' }}>
-            <div style={{ color: 'var(--color-success)', marginBottom: '16px' }}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}>
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
+          <div className="signup-success">
+            <div className="signup-success__icon" aria-hidden="true">
+              <CheckCircle2 size={56} strokeWidth={1.75} />
             </div>
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>
-              Obrigado por usar o ReservaCar!
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
+            <h3 className="signup-success__title">Obrigado por usar o ReservaCar!</h3>
+            <p className="signup-success__desc">
               Seu cadastro foi realizado com sucesso. Para acessar a plataforma, utilize o login gerado abaixo.
             </p>
-            <div style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)', marginBottom: '24px', border: '1px solid var(--border-active)' }}>
-              <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>SEU LOGIN DE ACESSO</span>
-              <strong style={{ fontSize: '1.5rem', color: 'var(--color-primary-light)', letterSpacing: '1px' }}>{registeredUser?.usuario}</strong>
+            <div className="signup-username-box">
+              <span className="signup-username-box__label">Seu login de acesso</span>
+              <strong className="signup-username-box__value">{registeredUser?.usuario}</strong>
             </div>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '32px' }}>
-              <TriangleAlert size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
-              A sua senha de acesso é a mesma que você acabou de criar na etapa anterior.
+            <p className="signup-success__note">
+              <TriangleAlert size={14} aria-hidden="true" />
+              <span>A sua senha de acesso é a mesma que você criou na etapa anterior.</span>
             </p>
-            <button className="btn btn-primary btn--lg w-full" onClick={() => { handleCloseModal(); navigate('/login'); }}>
-              Ir para o Login →
-            </button>
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => { handleCloseModal(); navigate('/login'); }}
+            >
+              Ir para o Login
+            </Button>
           </div>
         ) : (
-          <FormularioDadosPessoais 
-            form={form} 
-            setForm={setForm} 
+          <FormularioDadosPessoais
+            form={form}
+            setForm={setForm}
             error={error}
             perfil={form.perfil}
             etapa={modalStep}

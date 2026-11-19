@@ -128,9 +128,9 @@ export const ModalPerfilMotorista = ({ isOpen, onClose, motorista, isAdmin = tru
         valor={
           motorista.veiculo ? (
             <button
+              type="button"
               className="btn-link"
               onClick={motorista.onOpenVeiculo}
-              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
             >
               {motorista.veiculo.marca} {motorista.veiculo.modelo} ({motorista.veiculo.placa})
             </button>

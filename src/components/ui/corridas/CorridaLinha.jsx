@@ -3,7 +3,7 @@ import Badge from '../Badge';
 import CorridaAcoes from './CorridaAcoes';
 import { FORMA_PAGAMENTO_LABELS, descreverCancelamento } from './corridaPermissoes';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../../utils/formatters';
-import { MapPin, Route } from 'lucide-react';
+import { Route } from 'lucide-react';
 
 const CorridaLinha = ({
   corrida,
@@ -16,54 +16,70 @@ const CorridaLinha = ({
 }) => {
   const statusInfo = STATUS_LABELS[corrida.status] || { label: corrida.status, color: 'muted' };
   const motivoCancelamentoTexto = descreverCancelamento(corrida);
+  const pagamentoLabel = FORMA_PAGAMENTO_LABELS[corrida.formaPagamento] || corrida.formaPagamento || '—';
 
   return (
     <tr className="data-table__row">
-      <td className="data-table__cell">#{corrida.id.substring(0, 6)}</td>
       <td className="data-table__cell">
-        <span className="corridas-local">
-          <MapPin size={12} aria-hidden="true" />
-          {corrida.origemNome}
-        </span>
+        <span className="data-table__id">#{String(corrida.id).substring(0, 6)}</span>
+        <span className="data-table__sub tabular-nums">{formatarDataHorario(corrida.dataHorario)}</span>
       </td>
+
       <td className="data-table__cell">
-        <span className="corridas-local">
-          <MapPin size={12} aria-hidden="true" />
-          {corrida.destinoNome}
-        </span>
+        <div className="corridas-trajeto">
+          <span className="corridas-local">
+            <span className="corridas-pin corridas-pin--origem" aria-hidden="true" />
+            <span>{corrida.origemNome}</span>
+          </span>
+          <span className="corridas-local corridas-local--destino">
+            <span className="corridas-pin corridas-pin--destino" aria-hidden="true" />
+            <span>{corrida.destinoNome}</span>
+          </span>
+          {corrida.distanciaKm != null && (
+            <span className="corridas-metric">
+              <Route size={12} aria-hidden="true" />
+              {corrida.distanciaKm} km
+            </span>
+          )}
+        </div>
       </td>
-      <td className="data-table__cell">{formatarDataHorario(corrida.dataHorario)}</td>
+
       <td className="data-table__cell">
-        <span className="corridas-metric">
-          <Route size={12} aria-hidden="true" />
-          {corrida.distanciaKm} km
-        </span>
+        <div>{nomeVeiculo}</div>
+        <div style={{ marginTop: 4 }}>
+          <Badge
+            label={corrida.classe || 'NORMAL'}
+            color={corrida.classe === 'PREMIUM' ? 'warning' : corrida.classe === 'BASICO' ? 'muted' : 'info'}
+          />
+        </div>
       </td>
-      <td className="data-table__cell">{formatarMoeda(corrida.valor)}</td>
+
       <td className="data-table__cell">
-        <Badge
-          label={corrida.classe || 'NORMAL'}
-          color={corrida.classe === 'PREMIUM' ? 'warning' : corrida.classe === 'BASICO' ? 'muted' : 'info'}
-        />
+        <span className="data-table__value">{formatarMoeda(corrida.valor)}</span>
+        <span className="data-table__sub">{pagamentoLabel}</span>
       </td>
-      <td className="data-table__cell" style={{ fontSize: '0.82rem' }}>
-        {FORMA_PAGAMENTO_LABELS[corrida.formaPagamento] || corrida.formaPagamento || '—'}
-      </td>
-      <td className="data-table__cell">{nomeVeiculo}</td>
+
       <td className="data-table__cell">
-        <Badge label={statusInfo.label} color={statusInfo.color} />
-        {corrida.status === 'CONFIRMADA' && corrida.situacaoMotorista === 'A_CAMINHO' && (
-          <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--color-warning)' }}>Motorista a caminho</div>
-        )}
-        {corrida.status === 'EM_ANDAMENTO' && corrida.embarqueMotoristaConfirmado && (
-          <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--text-secondary)' }}>Embarque confirmado</div>
-        )}
-        {motivoCancelamentoTexto && (
-          <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--text-secondary)', maxWidth: 240 }}>
-            {motivoCancelamentoTexto}
-          </div>
-        )}
+        <div className="corrida-status-col">
+          <Badge label={statusInfo.label} color={statusInfo.color} dot />
+          {corrida.status === 'CONFIRMADA' && corrida.situacaoMotorista === 'A_CAMINHO' && (
+            <span className="corrida-status-note corrida-status-note--warning">
+              Motorista a caminho
+            </span>
+          )}
+          {corrida.status === 'EM_ANDAMENTO' && corrida.embarqueMotoristaConfirmado && (
+            <span className="corrida-status-note">
+              Embarque confirmado
+            </span>
+          )}
+          {motivoCancelamentoTexto && (
+            <span className="corrida-status-note">
+              {motivoCancelamentoTexto}
+            </span>
+          )}
+        </div>
       </td>
+
       {exibirColunaAcoes && (
         <td className="data-table__cell">
           <CorridaAcoes

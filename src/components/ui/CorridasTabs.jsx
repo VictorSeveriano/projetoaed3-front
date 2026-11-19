@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import ConfirmationModal from './ConfirmationModal';
+import Loading from './Loading';
 import CorridasFiltros from './corridas/CorridasFiltros';
 import CorridasTabela from './corridas/CorridasTabela';
 import ModalCancelamentoCorrida from './corridas/ModalCancelamentoCorrida';
@@ -45,12 +46,7 @@ const CorridasTabs = ({
   const acoes = useCorridasAcoes({ corridas, ehMotorista, onAcao });
 
   if (loading) {
-    return (
-      <div className="loading-wrapper" role="status" aria-live="polite">
-        <div className="loading-spinner" aria-hidden="true" />
-        <p className="loading-text">Carregando corridas...</p>
-      </div>
-    );
+    return <Loading message="Carregando corridas..." />;
   }
 
   if (error) {

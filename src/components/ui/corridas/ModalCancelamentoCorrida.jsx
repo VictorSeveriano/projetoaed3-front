@@ -3,7 +3,7 @@ import Modal from '../Modal';
 import Button from '../Button';
 import { MOTIVO_MAX } from '../../../utils/confirmacaoEmbarque';
 import { formatarDataHorario, formatarMoeda } from '../../../utils/formatters';
-import { MapPin } from 'lucide-react';
+import { MapPin, TriangleAlert } from 'lucide-react';
 
 const ModalCancelamentoCorrida = ({
   corrida,
@@ -21,11 +21,12 @@ const ModalCancelamentoCorrida = ({
     title="Cancelar corrida?"
     size="sm"
     footer={
-      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', width: '100%' }}>
-        <Button variant="ghost" disabled={loading} onClick={onClose}>
+      <div className="modal-actions">
+        <Button type="button" variant="outline" disabled={loading} onClick={onClose}>
           Voltar
         </Button>
         <Button
+          type="button"
           variant="danger"
           loading={loading}
           disabled={ehMotorista && !motivo.trim()}
@@ -39,54 +40,57 @@ const ModalCancelamentoCorrida = ({
     {corrida && (
       <div>
         {corrida.origemNome && (
-          <div style={{ background: 'var(--bg-secondary, rgba(255,255,255,0.04))', borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 14 }}>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+          <div className="modal-summary">
+            <div className="modal-summary__title">
               Corrida #{String(corrida.id).substring(0, 6)}
             </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <MapPin size={14} aria-hidden="true" /> {corrida.origemNome}
+            <div className="modal-summary__row">
+              <MapPin size={14} aria-hidden="true" />
+              <span>{corrida.origemNome}</span>
             </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
-              <MapPin size={14} aria-hidden="true" /> {corrida.destinoNome}
+            <div className="modal-summary__row">
+              <MapPin size={14} aria-hidden="true" />
+              <span>{corrida.destinoNome}</span>
             </div>
-            <div style={{ marginTop: 6, color: 'var(--text-secondary)' }}>
+            <div className="modal-summary__meta">
               {formatarDataHorario(corrida.dataHorario)} • {formatarMoeda(corrida.valor)}
             </div>
           </div>
         )}
 
-        <label htmlFor="motivo-cancelamento-corrida" style={{ display: 'block', marginBottom: 6, fontSize: 14 }}>
-          {ehMotorista ? 'Motivo do cancelamento *' : 'Motivo do cancelamento (opcional)'}
-        </label>
-        <textarea
-          id="motivo-cancelamento-corrida"
-          value={motivo}
-          maxLength={MOTIVO_MAX}
-          rows={3}
-          disabled={loading}
-          placeholder={ehMotorista ? 'Informe o motivo do cancelamento (mínimo 5 caracteres)...' : 'Informe o motivo caso deseje...'}
-          onChange={(e) => onChangeMotivo(e.target.value)}
-          style={{
-            width: '100%',
-            resize: 'vertical',
-            padding: 10,
-            borderRadius: 8,
-            background: 'transparent',
-            color: 'inherit',
-            border: '1px solid var(--border-color, rgba(255,255,255,0.2))',
-          }}
-        />
-        <small style={{ color: 'var(--text-secondary)' }}>
-          {MOTIVO_MAX - motivo.length} caracteres restantes
-        </small>
+        <div className="input-group">
+          <label className="input-label" htmlFor="motivo-cancelamento-corrida">
+            {ehMotorista ? 'Motivo do cancelamento' : 'Motivo do cancelamento (opcional)'}
+            {ehMotorista && <span className="input-required" aria-hidden="true">*</span>}
+          </label>
+          <textarea
+            id="motivo-cancelamento-corrida"
+            className={`input-textarea ${error ? 'input-field--error' : ''}`.trim()}
+            value={motivo}
+            maxLength={MOTIVO_MAX}
+            rows={3}
+            disabled={loading}
+            aria-invalid={error ? true : undefined}
+            placeholder={
+              ehMotorista
+                ? 'Informe o motivo do cancelamento (mínimo 5 caracteres)...'
+                : 'Informe o motivo caso deseje...'
+            }
+            onChange={(e) => onChangeMotivo(e.target.value)}
+          />
+          <small className="char-counter">
+            {MOTIVO_MAX - motivo.length} caracteres restantes
+          </small>
+        </div>
 
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>
+        <p className="text-secondary" style={{ fontSize: 'var(--font-sm)', marginTop: 12, lineHeight: 1.55 }}>
           Tem certeza que deseja cancelar esta corrida? Essa ação não pode ser desfeita.
         </p>
 
         {error && (
-          <p role="alert" className="form-error" style={{ marginTop: 10 }}>
-            {error}
+          <p role="alert" className="form-error" style={{ marginTop: 12 }}>
+            <TriangleAlert size={16} aria-hidden="true" />
+            <span>{error}</span>
           </p>
         )}
       </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
-import { Menu } from 'lucide-react';
+import { Menu, Car } from 'lucide-react';
 import GerenciadorConfirmacaoEmbarque from '../ui/GerenciadorConfirmacaoEmbarque';
 
 const Layout = ({ children }) => {
@@ -9,22 +9,37 @@ const Layout = ({ children }) => {
 
   return (
     <div className={`app-layout ${desktopMenuClosed ? 'app-layout--sidebar-closed' : ''}`}>
-      {/* Barra superior no mobile */}
-      <div className="mobile-top-bar">
-        <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu">
-          <Menu size={24} />
-        </button>
-        <span className="mobile-top-bar__title">ReservaCar</span>
-      </div>
+      <a href="#main-content" className="skip-link">
+        Ir para o conteúdo principal
+      </a>
 
-      <Sidebar 
-        isOpen={mobileMenuOpen} 
-        onClose={() => setMobileMenuOpen(false)} 
+      {/* Barra superior no mobile */}
+      <header className="mobile-top-bar">
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(true)}
+          aria-label="Abrir menu de navegação"
+          aria-expanded={mobileMenuOpen}
+        >
+          <Menu size={22} aria-hidden="true" />
+        </button>
+        <div className="mobile-top-bar__brand">
+          <span className="mobile-top-bar__icon" aria-hidden="true">
+            <Car size={20} />
+          </span>
+          <span className="mobile-top-bar__title">ReservaCar</span>
+        </div>
+      </header>
+
+      <Sidebar
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
         isDesktopClosed={desktopMenuClosed}
         onToggleDesktop={() => setDesktopMenuClosed(!desktopMenuClosed)}
       />
-      
-      <main className="app-main">
+
+      <main id="main-content" className="app-main" tabIndex={-1}>
         <div className="app-content">
           {children}
         </div>

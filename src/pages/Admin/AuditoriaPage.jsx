@@ -26,7 +26,7 @@ const AuditoriaPage = () => {
     dataInicio: '',
     dataFim: '',
   });
-  
+
   const [registroSelecionado, setRegistroSelecionado] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -49,7 +49,7 @@ const AuditoriaPage = () => {
     if (usuario?.perfil === 'ADMINISTRADOR') {
       carregar(page, filtros);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, usuario?.perfil]);
 
   if (usuario?.perfil !== 'ADMINISTRADOR') {
@@ -58,13 +58,18 @@ const AuditoriaPage = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFiltros(prev => ({ ...prev, [name]: value }));
+    setFiltros((prev) => ({ ...prev, [name]: value }));
   };
 
   const aplicarFiltros = (e) => {
     e.preventDefault();
     setPage(1);
     carregar(1, filtros);
+  };
+
+  const abrirDetalhes = (r) => {
+    setRegistroSelecionado(r);
+    setModalOpen(true);
   };
 
   const getPerfilBadge = (perfil) => {
@@ -75,8 +80,8 @@ const AuditoriaPage = () => {
   };
 
   const getResultadoBadge = (resultado) => {
-    if (resultado === 'SUCESSO') return <Badge label="Sucesso" color="success" />;
-    if (resultado === 'FALHA') return <Badge label="Falha" color="danger" />;
+    if (resultado === 'SUCESSO') return <Badge label="Sucesso" color="success" dot />;
+    if (resultado === 'FALHA') return <Badge label="Falha" color="danger" dot />;
     return <Badge label={resultado} color="muted" />;
   };
 
@@ -85,27 +90,33 @@ const AuditoriaPage = () => {
       <Header title="Auditoria" subtitle="Acompanhe as ações realizadas no sistema" />
 
       {/* Ferramentas e Filtros */}
-      <div className="tools-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <form onSubmit={aplicarFiltros} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', width: '100%', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '280px', flex: '1 1 320px' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+      <div className="tools-bar">
+        <form onSubmit={aplicarFiltros} className="tools-bar__form">
+          <div className="tools-bar__field--grow">
+            <div className="input-with-icon">
+              <span className="input-with-icon__icon" aria-hidden="true"><Search size={17} /></span>
               <input
                 type="text"
                 name="search"
                 value={filtros.search}
                 onChange={handleFilterChange}
                 className="input-field"
-                placeholder="Pesquisar por nome do usuário"
-                style={{ paddingLeft: '40px', marginBottom: 0 }}
+                aria-label="Pesquisar por nome do usuário"
+                placeholder="Pesquisar por nome do usuário..."
               />
             </div>
           </div>
 
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
-            <div style={{ position: 'relative' }}>
-              <Filter size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <select name="perfil" value={filtros.perfil} onChange={handleFilterChange} className="input-field" style={{ paddingLeft: '40px', marginBottom: 0 }}>
+          <div className="tools-bar__field">
+            <div className="input-with-icon">
+              <span className="input-with-icon__icon" aria-hidden="true"><Filter size={16} /></span>
+              <select
+                name="perfil"
+                aria-label="Filtrar por perfil"
+                value={filtros.perfil}
+                onChange={handleFilterChange}
+                className="input-field input-field--select"
+              >
                 <option value="">Todos os perfis</option>
                 <option value="ADMINISTRADOR">Administrador</option>
                 <option value="MOTORISTA">Motorista</option>
@@ -114,50 +125,67 @@ const AuditoriaPage = () => {
             </div>
           </div>
 
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '180px' }}>
-            <select name="resultado" value={filtros.resultado} onChange={handleFilterChange} className="input-field" style={{ marginBottom: 0 }}>
+          <div className="tools-bar__field">
+            <select
+              name="resultado"
+              aria-label="Filtrar por resultado"
+              value={filtros.resultado}
+              onChange={handleFilterChange}
+              className="input-field input-field--select"
+            >
               <option value="">Todos os resultados</option>
               <option value="SUCESSO">Sucesso</option>
               <option value="FALHA">Falha</option>
             </select>
           </div>
 
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
+          <div className="tools-bar__field--date">
             <input
               type="date"
               name="dataInicio"
+              aria-label="Data inicial"
+              title="Data inicial"
               value={filtros.dataInicio}
               onChange={handleFilterChange}
               className="input-field"
-              style={{ marginBottom: 0 }}
             />
           </div>
 
-          <div className="input-group" style={{ marginBottom: 0, minWidth: '160px' }}>
+          <div className="tools-bar__field--date">
             <input
               type="date"
               name="dataFim"
+              aria-label="Data final"
+              title="Data final"
               value={filtros.dataFim}
               onChange={handleFilterChange}
               className="input-field"
-              style={{ marginBottom: 0 }}
             />
           </div>
 
-          <Button type="submit" variant="primary">Filtrar</Button>
-          <Button type="button" variant="ghost" onClick={() => {
-            const filtrosVazios = {
-              usuarioId: '',
-              perfil: '',
-              resultado: '',
-              search: '',
-              dataInicio: '',
-              dataFim: '',
-            };
-            setFiltros(filtrosVazios);
-            setPage(1);
-            carregar(1, filtrosVazios);
-          }}>Limpar</Button>
+          <div className="tools-bar__actions">
+            <Button type="submit" variant="primary" size="sm">Filtrar</Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const filtrosVazios = {
+                  usuarioId: '',
+                  perfil: '',
+                  resultado: '',
+                  search: '',
+                  dataInicio: '',
+                  dataFim: '',
+                };
+                setFiltros(filtrosVazios);
+                setPage(1);
+                carregar(1, filtrosVazios);
+              }}
+            >
+              Limpar
+            </Button>
+          </div>
         </form>
       </div>
 
@@ -165,32 +193,43 @@ const AuditoriaPage = () => {
         <Loading message="Buscando registros..." />
       ) : registros.length === 0 ? (
         <EmptyState
-          icon={<ShieldAlert size={48} strokeWidth={1.5} />}
+          icon={<ShieldAlert size={32} strokeWidth={1.5} />}
           title="Nenhum evento encontrado"
           description="A auditoria não possui registros para os filtros informados."
         />
       ) : (
         <>
-          <div className="table-wrapper">
+          <div className="table-wrapper table-desktop-only">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Data/Hora</th>
-                  <th>Usuário</th>
-                  <th>Perfil</th>
-                  <th>Módulo</th>
-                  <th>Ação</th>
-                  <th>Resultado</th>
+                  <th scope="col">Data / Hora</th>
+                  <th scope="col">Usuário</th>
+                  <th scope="col">Perfil</th>
+                  <th scope="col">Módulo</th>
+                  <th scope="col">Ação</th>
+                  <th scope="col">Resultado</th>
                 </tr>
               </thead>
               <tbody>
-                {registros.map(r => (
-                  <tr key={r.id} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => { setRegistroSelecionado(r); setModalOpen(true); }}>
-                    <td className="data-table__cell">{formatarDataHorario(r.criadoEm)}</td>
+                {registros.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="data-table__row data-table__row--clickable"
+                    tabIndex={0}
+                    onClick={() => abrirDetalhes(r)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        abrirDetalhes(r);
+                      }
+                    }}
+                  >
+                    <td className="data-table__cell tabular-nums">{formatarDataHorario(r.criadoEm)}</td>
                     <td className="data-table__cell">{r.usuario?.nome || '—'}</td>
                     <td className="data-table__cell">{getPerfilBadge(r.perfil)}</td>
                     <td className="data-table__cell"><strong>{r.modulo}</strong></td>
-                    <td className="data-table__cell">{r.acao}</td>
+                    <td className="data-table__cell text-secondary">{r.acao}</td>
                     <td className="data-table__cell">{getResultadoBadge(r.resultado)}</td>
                   </tr>
                 ))}
@@ -198,94 +237,166 @@ const AuditoriaPage = () => {
             </table>
           </div>
 
+          <div className="mobile-cards-list cards-mobile-only">
+            {registros.map((r) => (
+              <article
+                key={r.id}
+                className="mobile-data-card mobile-data-card--clickable"
+                tabIndex={0}
+                onClick={() => abrirDetalhes(r)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    abrirDetalhes(r);
+                  }
+                }}
+              >
+                <div className="mobile-data-card__header">
+                  <div>
+                    <h3 className="mobile-data-card__title">{r.modulo} • {r.acao}</h3>
+                    <p className="mobile-data-card__subtitle tabular-nums">{formatarDataHorario(r.criadoEm)}</p>
+                  </div>
+                  {getResultadoBadge(r.resultado)}
+                </div>
+                <div className="mobile-data-card__grid">
+                  <div className="mobile-data-card__field">
+                    <span className="mobile-data-card__label">Usuário</span>
+                    <span className="mobile-data-card__value">{r.usuario?.nome || '—'}</span>
+                  </div>
+                  <div className="mobile-data-card__field">
+                    <span className="mobile-data-card__label">Perfil</span>
+                    <div>{getPerfilBadge(r.perfil)}</div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
           {/* Paginação */}
           {meta && meta.totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '24px', gap: '16px' }}>
-              <Button size="sm" variant="secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                <ChevronLeft size={16} /> Anterior
+            <nav className="pagination-bar" aria-label="Paginação de auditoria">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+                Anterior
               </Button>
-              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+              <span className="pagination-bar__info">
                 Página {page} de {meta.totalPages} (Total: {meta.total})
               </span>
-              <Button size="sm" variant="secondary" onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))} disabled={page === meta.totalPages}>
-                Próxima <ChevronRight size={16} />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
+                disabled={page === meta.totalPages}
+              >
+                Próxima
+                <ChevronRight size={16} aria-hidden="true" />
               </Button>
-            </div>
+            </nav>
           )}
         </>
       )}
 
       {/* Modal de Detalhes */}
       {modalOpen && registroSelecionado && (
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Detalhes da Auditoria" size="md">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div><small style={{ color: 'var(--text-muted)' }}>Data/Hora:</small><div>{formatarDataHorario(registroSelecionado.criadoEm)}</div></div>
-              <div><small style={{ color: 'var(--text-muted)' }}>Módulo / Ação:</small><div>{registroSelecionado.modulo} / {registroSelecionado.acao}</div></div>
-              <div><small style={{ color: 'var(--text-muted)' }}>Resultado:</small><div>{getResultadoBadge(registroSelecionado.resultado)}</div></div>
-              <div><small style={{ color: 'var(--text-muted)' }}>Perfil Autenticado:</small><div>{getPerfilBadge(registroSelecionado.perfil)}</div></div>
+        <Modal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Detalhes da Auditoria"
+          size="md"
+          footer={
+            <div className="modal-actions">
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+                Fechar
+              </Button>
+            </div>
+          }
+        >
+          <div className="auditoria-details">
+            <div className="auditoria-meta-grid">
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Data / Hora</span>
+                <div className="tabular-nums">{formatarDataHorario(registroSelecionado.criadoEm)}</div>
+              </div>
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Módulo / Ação</span>
+                <div>{registroSelecionado.modulo} / {registroSelecionado.acao}</div>
+              </div>
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Resultado</span>
+                <div>{getResultadoBadge(registroSelecionado.resultado)}</div>
+              </div>
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Perfil Autenticado</span>
+                <div>{getPerfilBadge(registroSelecionado.perfil)}</div>
+              </div>
             </div>
 
-            <div style={{ padding: '12px', background: 'var(--bg-800)', borderRadius: 'var(--radius-md)' }}>
-              <small style={{ color: 'var(--text-muted)' }}>Usuário (Quem):</small>
-              <div style={{ fontWeight: '600' }}>{registroSelecionado.usuario?.nome || 'Não identificado / Excluído'}</div>
-              {registroSelecionado.usuario && <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>@{registroSelecionado.usuario.usuario} | {registroSelecionado.usuario.email}</div>}
+            <div className="auditoria-block">
+              <span className="auditoria-block__label">Usuário (Responsável)</span>
+              <div style={{ fontWeight: 600 }}>{registroSelecionado.usuario?.nome || 'Não identificado / Excluído'}</div>
+              {registroSelecionado.usuario && (
+                <div className="text-secondary" style={{ fontSize: 'var(--font-xs)', marginTop: 2 }}>
+                  @{registroSelecionado.usuario.usuario} • {registroSelecionado.usuario.email}
+                </div>
+              )}
             </div>
 
             {registroSelecionado.entidade && (
-              <div style={{ padding: '12px', background: 'var(--bg-800)', borderRadius: 'var(--radius-md)' }}>
-                <small style={{ color: 'var(--text-muted)' }}>Entidade / Registro:</small>
-                <div style={{ fontWeight: '600' }}>{registroSelecionado.entidade}</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>ID: {registroSelecionado.entidadeId || 'N/A'}</div>
-              </div>
-            )}
-
-            {registroSelecionado.descricao && (
-              <div>
-                <small style={{ color: 'var(--text-muted)' }}>Descrição do Evento:</small>
-                <div style={{ background: 'var(--bg-900)', padding: '12px', borderRadius: 'var(--radius-sm)', marginTop: '4px', fontSize: '14px' }}>
-                  {registroSelecionado.descricao}
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Entidade / Registro</span>
+                <div style={{ fontWeight: 600 }}>{registroSelecionado.entidade}</div>
+                <div className="text-secondary" style={{ fontSize: 'var(--font-xs)', marginTop: 2 }}>
+                  ID: {registroSelecionado.entidadeId || 'N/A'}
                 </div>
               </div>
             )}
 
-            {/* Contexto Técnico / HTTP */}
+            {registroSelecionado.descricao && (
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Descrição do Evento</span>
+                <div>{registroSelecionado.descricao}</div>
+              </div>
+            )}
+
             {registroSelecionado.metodoHttp && (
-               <div>
-                 <small style={{ color: 'var(--text-muted)' }}>Contexto HTTP:</small>
-                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                   {registroSelecionado.metodoHttp} {registroSelecionado.rota} <br/>
-                   IP: {registroSelecionado.ip || '—'} <br/>
-                   Status HTTP Retornado: {registroSelecionado.statusHttp || '—'}
-                 </div>
-               </div>
+              <div className="auditoria-block">
+                <span className="auditoria-block__label">Contexto HTTP</span>
+                <div className="text-secondary" style={{ fontSize: 'var(--font-xs)', lineHeight: 1.6 }}>
+                  {registroSelecionado.metodoHttp} {registroSelecionado.rota}<br />
+                  IP: {registroSelecionado.ip || '—'}<br />
+                  Status HTTP: {registroSelecionado.statusHttp || '—'}
+                </div>
+              </div>
             )}
 
             {(registroSelecionado.dadosAnteriores || registroSelecionado.dadosNovos) && (
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
-                <strong style={{ fontSize: '14px', display: 'block', marginBottom: '8px' }}>Payload de Alterações:</strong>
+              <div className="perfil-section">
+                <strong style={{ fontSize: 'var(--font-sm)' }}>Payload de Alterações</strong>
                 {registroSelecionado.dadosAnteriores && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <small style={{ color: 'var(--color-danger)' }}>Dados Anteriores:</small>
-                    <pre style={{ background: 'var(--bg-900)', padding: '12px', borderRadius: '4px', fontSize: '12px', overflowX: 'auto' }}>
+                  <div>
+                    <small style={{ color: 'var(--color-danger-light)' }}>Dados Anteriores</small>
+                    <pre className="auditoria-code">
                       {JSON.stringify(registroSelecionado.dadosAnteriores, null, 2)}
                     </pre>
                   </div>
                 )}
                 {registroSelecionado.dadosNovos && (
                   <div>
-                    <small style={{ color: 'var(--color-success)' }}>Dados Novos:</small>
-                    <pre style={{ background: 'var(--bg-900)', padding: '12px', borderRadius: '4px', fontSize: '12px', overflowX: 'auto' }}>
+                    <small style={{ color: 'var(--color-success-light)' }}>Dados Novos</small>
+                    <pre className="auditoria-code">
                       {JSON.stringify(registroSelecionado.dadosNovos, null, 2)}
                     </pre>
                   </div>
                 )}
               </div>
             )}
-
-          </div>
-          <div className="modal__footer" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>Fechar</Button>
           </div>
         </Modal>
       )}

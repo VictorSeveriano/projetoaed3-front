@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from './Modal';
+import Button from './Button';
 
 /**
  * ModalFeedback — Componente base de feedback (composição sobre Modal).
@@ -23,43 +24,33 @@ const ModalFeedback = ({
       title={titulo}
       size={tamanho}
       footer={
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-          <button
+        <div className="modal-actions modal-actions--center">
+          <Button
             id={closeButtonId}
-            className="btn btn-primary"
+            type="button"
+            variant="primary"
             onClick={onClose}
             autoFocus
           >
             {textoBotao}
-          </button>
+          </Button>
         </div>
       }
     >
-      <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+      <div className="modal-feedback">
         {IconComponent && (
-          <div style={{ marginBottom: '20px' }}>
+          <div className="modal-feedback__icon">
             <IconComponent
-              size={56}
+              size={32}
               color={iconColor}
               aria-hidden="true"
-              style={{ display: 'block', margin: '0 auto' }}
             />
           </div>
         )}
-        <p
-          style={{
-            fontSize: '15px',
-            color: 'var(--text-secondary)',
-            lineHeight: '1.6',
-            whiteSpace: 'pre-line',
-          }}
-        >
-          {mensagem}
-        </p>
+        <p className="modal-feedback__message">{mensagem}</p>
       </div>
     </Modal>
   );
 };
 
 export default ModalFeedback;
-

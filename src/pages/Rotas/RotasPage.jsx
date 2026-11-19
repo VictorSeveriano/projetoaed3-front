@@ -5,28 +5,29 @@ import CorridaModal from '../../components/ui/CorridaModal';
 import rotasService from '../../services/rotas.service';
 import localizacaoService from '../../services/localizacao.service';
 import useLocationSearch from '../../hooks/useLocationSearch';
+import { formatarMoeda } from '../../utils/formatters';
 import {
   possuiCoordenadasValidas,
   normalizarLatitudeOpcional,
   normalizarLongitudeOpcional,
 } from '../../utils/corridaPayload';
-import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check } from 'lucide-react';
+import { MapPin, Navigation, Route, Car, Clock, ArrowRight, Check, TriangleAlert } from 'lucide-react';
 import { LocalizacaoInput } from '../../components/ui/LocalizacaoInput';
 
 /**
- * RotasPage — Pagina de solicitacao de corrida.
+ * RotasPage — Página de solicitação de corrida.
  *
  * Fluxo:
- * 1. Usuario digita origem (>= 3 chars) -> debounce 400ms -> sugestoes aparecem
- * 2. Usuario seleciona sugestao -> origemSelecionada = { ..., latitude, longitude }
+ * 1. Usuário digita origem (>= 3 chars) -> debounce 400ms -> sugestões aparecem
+ * 2. Usuário seleciona sugestão -> origemSelecionada = { ..., latitude, longitude }
  * 3. Repete para destino
  * 4. Clica "Calcular Rotas" -> backend recebe coordenadas -> Routes API -> rotas reais
- * 5. Usuario seleciona rota alternativa -> mapa atualiza
- * 6. Usuario confirma corrida no modal
+ * 5. Usuário seleciona rota alternativa -> mapa atualiza
+ * 6. Usuário confirma corrida no modal
  *
  * Regras:
- * - "Calcular Rotas" so funciona com origem e destino selecionados/validados
- * - Editar o texto apos selecionar invalida a selecao (handled pelo hook)
+ * - "Calcular Rotas" só funciona com origem e destino selecionados/validados
+ * - Editar o texto após selecionar invalida a seleção (tratado pelo hook)
  * - GPS preenche a origem diretamente sem autocomplete
  */
 const RotasPage = () => {
@@ -156,7 +157,7 @@ const RotasPage = () => {
     if (isMapInitRef.current) renderizarMapa(rotaSelecionada?.polyline);
   }, [rotaSelecionada, renderizarMapa]);
 
-  // --- Fechar sugestoes ao clicar fora ---
+  // --- Fechar sugestões ao clicar fora ---
   useEffect(() => {
     const handleClickFora = (e) => {
       if (origemListRef.current && !origemListRef.current.contains(e.target)) {
@@ -211,11 +212,11 @@ const RotasPage = () => {
   // --- Calcular rotas ---
   const calcularRotas = async () => {
     if (!origem.selecionada) {
-      setError('Nao foi selecionada uma localizacao valida para a origem.');
+      setError('Não foi selecionada uma localização válida para a origem.');
       return;
     }
     if (!destino.selecionada) {
-      setError('Nao foi selecionada uma localizacao valida para o destino.');
+      setError('Não foi selecionada uma localização válida para o destino.');
       return;
     }
 
@@ -245,20 +246,23 @@ const RotasPage = () => {
       return;
     }
 
-    setLoading(true); setError(''); setRotas([]); setRotaSelecionada(null);
+    setLoading(true);
+    setError('');
+    setRotas([]);
+    setRotaSelecionada(null);
     try {
       const resultado = await rotasService.calcularCorrida(origemPayload, destinoPayload);
       setRotas(resultado.rotas || []);
       if (resultado.rotas && resultado.rotas.length > 0) {
         setRotaSelecionada(resultado.rotas[0]);
       } else {
-        setError('Nenhuma rota encontrada entre os enderecos informados.');
+        setError('Nenhuma rota encontrada entre os endereços informados.');
       }
     } catch (err) {
       setError(
         err.response?.data?.message ||
         err.message ||
-        'Nao foi possivel calcular a rota agora. Tente novamente.',
+        'Não foi possível calcular a rota agora. Tente novamente.',
       );
     } finally { setLoading(false); }
   };
@@ -275,26 +279,34 @@ const RotasPage = () => {
     <div className="page animate-fade-in">
       <Header
         title="Solicitar Corrida"
-        subtitle="Digite origem e destino, selecione uma sugestao e calcule a rota"
+        subtitle="Informe origem e destino, escolha uma sugestão e compare as rotas disponíveis"
       />
 
       <div className="rotas-layout">
         {/* Painel esquerdo */}
         <div className="rotas-panel">
-
           {/* Campo Origem com autocomplete */}
           <LocalizacaoInput
             campo={origem}
             id="input-origem"
             label="Origem"
-            placeholder="Digite a origem..."
+            stepNumber={1}
+            placeholder="Digite o endereço de partida..."
             listRef={origemListRef}
             handleKeyDown={handleKeyDown}
             setError={setError}
             carregandoExterno={loadingGps}
             extraAcoes={
-              <Button id="btn-gps" variant="ghost" size="sm" onClick={usarGps} loading={loadingGps} title="Usar minha localizacao atual">
-                <Navigation size={16} aria-hidden="true" />
+              <Button
+                id="btn-gps"
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={usarGps}
+                loading={loadingGps}
+                title="Usar minha localização atual via GPS"
+              >
+                <Navigation size={15} aria-hidden="true" />
                 GPS
               </Button>
             }
@@ -305,25 +317,37 @@ const RotasPage = () => {
             campo={destino}
             id="input-destino"
             label="Destino"
-            placeholder="Digite o destino..."
+            stepNumber={2}
+            placeholder="Digite o endereço de destino..."
             listRef={destinoListRef}
             handleKeyDown={handleKeyDown}
             setError={setError}
           />
 
-          <Button id="btn-calcular-rotas" onClick={calcularRotas} loading={loading} className="w-full">
-            <Route size={16} aria-hidden="true" />
-            {loading ? 'Calculando...' : 'Calcular Rotas'}
+          <Button
+            id="btn-calcular-rotas"
+            type="button"
+            size="lg"
+            onClick={calcularRotas}
+            loading={loading}
+            className="w-full"
+          >
+            <Route size={17} aria-hidden="true" />
+            Calcular Rotas
           </Button>
 
           {error && (
-            <div className="form-error" role="alert">{error}</div>
+            <div className="form-error" role="alert">
+              <TriangleAlert size={16} aria-hidden="true" />
+              <span>{error}</span>
+            </div>
           )}
 
           {/* Cards de rotas alternativas */}
           {rotas.length > 0 && (
-            <section className="rotas-resultados">
+            <section className="rotas-resultados" aria-label="Rotas alternativas">
               <h2 className="rotas-section__title">
+                <span className="rotas-step-num" aria-hidden="true">3</span>
                 Rotas Alternativas ({rotas.length})
               </h2>
               <div className="rotas-cards">
@@ -343,17 +367,22 @@ const RotasPage = () => {
                           {idx === 0 ? 'Rota Recomendada' : 'Rota ' + rota.id}
                         </span>
                         {idx === 0 && <span className="rota-card__badge">Melhor</span>}
-                        {ativa && <Check size={14} className="rota-card__check" aria-hidden="true" />}
+                        {ativa && <Check size={15} className="rota-card__check" aria-hidden="true" />}
                       </div>
                       <div className="rota-card__metrics">
                         <span className="rota-card__metric">
-                          <Route size={12} aria-hidden="true" />
+                          <Route size={13} aria-hidden="true" />
                           {rota.distanciaFormatada}
                         </span>
                         <span className="rota-card__metric">
-                          <Clock size={12} aria-hidden="true" />
+                          <Clock size={13} aria-hidden="true" />
                           {rota.duracaoFormatada}
                         </span>
+                        {typeof rota.valorEstimado === 'number' && Number.isFinite(rota.valorEstimado) && (
+                          <span className="rota-card__metric rota-card__metric--price">
+                            Est. {formatarMoeda(rota.valorEstimado)}
+                          </span>
+                        )}
                       </div>
                       <div className="rota-card__caminho">
                         {rota.caminho.map((loc, i) => (
@@ -364,7 +393,7 @@ const RotasPage = () => {
                         ))}
                       </div>
                       {rota.fonte === 'google_maps' && (
-                        <span className="rota-card__fonte">Rota pela malha viaria real</span>
+                        <span className="rota-card__fonte">Rota pela malha viária real</span>
                       )}
                     </button>
                   );
@@ -373,11 +402,13 @@ const RotasPage = () => {
 
               <Button
                 id="btn-solicitar-corrida"
+                type="button"
+                size="lg"
                 onClick={abrirCorridaModal}
                 disabled={!rotaSelecionada}
                 className="w-full"
               >
-                <Car size={16} aria-hidden="true" />
+                <Car size={17} aria-hidden="true" />
                 Solicitar Corrida
               </Button>
             </section>

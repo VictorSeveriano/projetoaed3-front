@@ -11,48 +11,50 @@ const ConfirmationModal = ({
   message,
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
-  variant = 'warning', // 'warning', 'danger', 'info'
+  variant = 'warning', // 'warning', 'danger', 'info', 'primary'
   icon,
   loading = false,
 }) => {
   let IconComponent = Info;
-  let iconColor = 'var(--text-secondary)';
+  let iconColor = 'var(--color-info-light)';
   let confirmBtnVariant = 'primary';
 
   if (variant === 'warning') {
     IconComponent = TriangleAlert;
-    iconColor = 'var(--color-warning)';
+    iconColor = 'var(--color-warning-light)';
     confirmBtnVariant = 'primary';
   } else if (variant === 'danger') {
     IconComponent = Trash2;
-    iconColor = 'var(--color-danger)';
+    iconColor = 'var(--color-danger-light)';
     confirmBtnVariant = 'danger';
   }
 
   const FinalIcon = icon || IconComponent;
 
   const footer = (
-    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', width: '100%' }}>
-      <Button variant="ghost" onClick={onClose} disabled={loading}>{cancelText}</Button>
-      <Button variant={confirmBtnVariant} onClick={onConfirm} loading={loading}>{confirmText}</Button>
+    <div className="modal-actions">
+      <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+        {cancelText}
+      </Button>
+      <Button type="button" variant={confirmBtnVariant} onClick={onConfirm} loading={loading}>
+        {confirmText}
+      </Button>
     </div>
   );
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={!loading ? onClose : () => {}} 
-      title={title} 
-      size="sm" 
+    <Modal
+      isOpen={isOpen}
+      onClose={!loading ? onClose : () => {}}
+      title={title}
+      size="sm"
       footer={footer}
     >
-      <div style={{ textAlign: 'center', padding: '16px 0 24px' }}>
-        <div style={{ marginBottom: '20px' }}>
-          <FinalIcon size={56} color={iconColor} aria-hidden="true" />
+      <div className="modal-feedback">
+        <div className="modal-feedback__icon">
+          <FinalIcon size={32} color={iconColor} aria-hidden="true" />
         </div>
-        <p style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-          {message}
-        </p>
+        <p className="modal-feedback__message">{message}</p>
       </div>
     </Modal>
   );

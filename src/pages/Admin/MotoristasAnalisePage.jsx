@@ -67,44 +67,74 @@ const MotoristasAnalisePage = () => {
           <Loading message="Buscando solicitações..." />
         ) : pendentes.length === 0 ? (
           <EmptyState
-            icon={<UserCheck size={48} strokeWidth={1.5} />}
+            icon={<UserCheck size={32} strokeWidth={1.5} />}
             title="Tudo em dia!"
             description="Não há nenhuma solicitação pendente no momento."
           />
         ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Usuário</th>
-                  <th>CNH</th>
-                  <th>Data Solicitação</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendentes.map(m => (
-                  <tr key={m.id} className="data-table__row">
-                    <td className="data-table__cell">{m.usuario?.nome || '—'}</td>
-                    <td className="data-table__cell">@{m.usuario?.usuario || '—'}</td>
-                    <td className="data-table__cell">{m.cnh}</td>
-                    <td className="data-table__cell">{formatarData(m.criadoEm)}</td>
-                    <td className="data-table__cell">
-                      <Badge label="Pendente" color="warning" />
-                    </td>
-                    <td className="data-table__cell">
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button size="sm" variant="success" onClick={() => setAcao({ tipo: 'aprovar', motorista: m })}>Aprovar</Button>
-                        <Button size="sm" variant="danger" onClick={() => setAcao({ tipo: 'rejeitar', motorista: m })}>Rejeitar</Button>
-                      </div>
-                    </td>
+          <>
+            <div className="table-wrapper table-desktop-only">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Nome</th>
+                    <th scope="col">Usuário</th>
+                    <th scope="col">CNH</th>
+                    <th scope="col">Data Solicitação</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {pendentes.map((m) => (
+                    <tr key={m.id} className="data-table__row">
+                      <td className="data-table__cell">{m.usuario?.nome || '—'}</td>
+                      <td className="data-table__cell text-secondary">@{m.usuario?.usuario || '—'}</td>
+                      <td className="data-table__cell tabular-nums">{m.cnh}</td>
+                      <td className="data-table__cell tabular-nums">{formatarData(m.criadoEm)}</td>
+                      <td className="data-table__cell">
+                        <Badge label="Pendente" color="warning" dot />
+                      </td>
+                      <td className="data-table__cell">
+                        <div className="btn-group">
+                          <Button type="button" size="sm" variant="success" onClick={() => setAcao({ tipo: 'aprovar', motorista: m })}>Aprovar</Button>
+                          <Button type="button" size="sm" variant="danger" onClick={() => setAcao({ tipo: 'rejeitar', motorista: m })}>Rejeitar</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mobile-cards-list cards-mobile-only">
+              {pendentes.map((m) => (
+                <article key={m.id} className="mobile-data-card">
+                  <div className="mobile-data-card__header">
+                    <div>
+                      <h3 className="mobile-data-card__title">{m.usuario?.nome || '—'}</h3>
+                      <p className="mobile-data-card__subtitle">@{m.usuario?.usuario || '—'}</p>
+                    </div>
+                    <Badge label="Pendente" color="warning" dot />
+                  </div>
+                  <div className="mobile-data-card__grid">
+                    <div className="mobile-data-card__field">
+                      <span className="mobile-data-card__label">CNH</span>
+                      <span className="mobile-data-card__value tabular-nums">{m.cnh}</span>
+                    </div>
+                    <div className="mobile-data-card__field">
+                      <span className="mobile-data-card__label">Solicitação</span>
+                      <span className="mobile-data-card__value tabular-nums">{formatarData(m.criadoEm)}</span>
+                    </div>
+                  </div>
+                  <div className="mobile-data-card__actions">
+                    <Button type="button" size="sm" variant="success" onClick={() => setAcao({ tipo: 'aprovar', motorista: m })}>Aprovar</Button>
+                    <Button type="button" size="sm" variant="danger" onClick={() => setAcao({ tipo: 'rejeitar', motorista: m })}>Rejeitar</Button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

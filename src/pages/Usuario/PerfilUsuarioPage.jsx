@@ -27,7 +27,7 @@ const PerfilUsuarioPage = () => {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const {
     isEditing, setIsEditing,
     showConfirm, setShowConfirm,
@@ -36,10 +36,10 @@ const PerfilUsuarioPage = () => {
     formData, setFormData,
     isAddressDifferent,
     handleCancelClick,
-    resetForm
-  } = usePerfilEdicao({ 
-    nome: '', usuario: '', cpf: '', email: '', celular: '', 
-    endereco: { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
+    resetForm,
+  } = usePerfilEdicao({
+    nome: '', usuario: '', cpf: '', email: '', celular: '',
+    endereco: { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' },
   });
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const PerfilUsuarioPage = () => {
           cpf: dados.cpf || '',
           email: dados.email || '',
           celular: dados.celular || '',
-          endereco: dados.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
+          endereco: dados.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' },
         });
       })
       .catch((err) => setError(err.response?.data?.message || 'Erro ao carregar perfil.'))
@@ -93,25 +93,25 @@ const PerfilUsuarioPage = () => {
         label="Nome Completo"
         valor={perfil?.nome || '—'}
         isEditing={isEditing}
-        inputProps={{ type: 'text', value: formData.nome, onChange: e => setFormData({ ...formData, nome: e.target.value }) }}
+        inputProps={{ type: 'text', value: formData.nome, onChange: (e) => setFormData({ ...formData, nome: e.target.value }) }}
       />
       <CampoPerfil
         label="Usuário"
         valor={`@${perfil?.usuario || '—'}`}
         isEditing={isEditing}
-        inputProps={{ type: 'text', value: formData.usuario, onChange: e => setFormData({ ...formData, usuario: e.target.value }) }}
+        inputProps={{ type: 'text', value: formData.usuario, onChange: (e) => setFormData({ ...formData, usuario: e.target.value }) }}
       />
       <CampoPerfil
         label="E-mail"
         valor={perfil?.email || '—'}
         isEditing={isEditing}
-        inputProps={{ type: 'email', value: formData.email, onChange: e => setFormData({ ...formData, email: e.target.value }) }}
+        inputProps={{ type: 'email', value: formData.email, onChange: (e) => setFormData({ ...formData, email: e.target.value }) }}
       />
       <CampoPerfil
         label="Celular"
         valor={perfil?.celular || '—'}
         isEditing={isEditing}
-        inputProps={{ type: 'text', value: formData.celular, onChange: e => setFormData({ ...formData, celular: e.target.value }) }}
+        inputProps={{ type: 'text', value: formData.celular, onChange: (e) => setFormData({ ...formData, celular: e.target.value }) }}
       />
       <CamposEnderecoPerfil
         isEditing={isEditing}
@@ -126,17 +126,24 @@ const PerfilUsuarioPage = () => {
     <>
       <div className="perfil-campo">
         <span className="perfil-campo__label">CPF</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{perfil?.cpf || '—'}</span>
-      </div>
-      <div className="perfil-campo">
-        <span className="perfil-campo__label">Perfil</span>
-        <span className="perfil-campo__valor">
-          <Badge label={PERFIL_LABELS[perfil?.perfil] || perfil?.perfil || '—'} color={perfil?.perfil === 'ADMINISTRADOR' ? 'danger' : perfil?.perfil === 'MOTORISTA' ? 'warning' : 'info'} />
+        <span className={`perfil-campo__valor tabular-nums ${isEditing ? 'text-muted' : ''}`.trim()}>
+          {perfil?.cpf || '—'}
         </span>
       </div>
       <div className="perfil-campo">
+        <span className="perfil-campo__label">Perfil</span>
+        <div className="perfil-campo__valor">
+          <Badge
+            label={PERFIL_LABELS[perfil?.perfil] || perfil?.perfil || '—'}
+            color={perfil?.perfil === 'ADMINISTRADOR' ? 'danger' : perfil?.perfil === 'MOTORISTA' ? 'warning' : 'info'}
+          />
+        </div>
+      </div>
+      <div className="perfil-campo">
         <span className="perfil-campo__label">Cadastro</span>
-        <span className="perfil-campo__valor" style={{ color: isEditing ? 'var(--text-muted)' : 'inherit' }}>{perfil?.criadoEm ? formatarData(perfil.criadoEm) : '—'}</span>
+        <span className={`perfil-campo__valor tabular-nums ${isEditing ? 'text-muted' : ''}`.trim()}>
+          {perfil?.criadoEm ? formatarData(perfil.criadoEm) : '—'}
+        </span>
       </div>
     </>
   );
@@ -149,36 +156,30 @@ const PerfilUsuarioPage = () => {
         <div className="form-error" role="alert">{error}</div>
       ) : (
         <div className="card">
-          <div className="card__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="card__header">
             <h2 className="card-section-title">Informações da conta</h2>
             {isEditing ? (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Button size="sm" variant="success" onClick={handleSave}>Salvar</Button>
-                <Button size="sm" variant="outline" onClick={() => handleCancelClick(hasChanges)}>Cancelar</Button>
+              <div className="btn-group">
+                <Button type="button" size="sm" variant="outline" onClick={() => handleCancelClick(hasChanges)}>Cancelar</Button>
+                <Button type="button" size="sm" variant="success" onClick={handleSave}>Salvar</Button>
               </div>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setIsEditing(true)}>Editar Dados</Button>
             )}
           </div>
-          <div className="card__body">
+          <div className="card__body perfil-stack">
             {isEditing ? (
               <>
                 <div className="perfil-section">
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                    Campos Editáveis
-                  </h3>
-                  <div className="perfil-grid" style={{ marginBottom: '24px' }}>
-                    {editableFields}
-                  </div>
+                  <h3 className="perfil-section__title">Campos Editáveis</h3>
+                  <div className="perfil-grid">{editableFields}</div>
                 </div>
 
-                <div className="perfil-section" style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>
+                <div className="perfil-section perfil-section--readonly">
+                  <h3 className="perfil-section__title perfil-section__title--muted">
                     Campos Somente Leitura
                   </h3>
-                  <div className="perfil-grid">
-                    {readonlyFields}
-                  </div>
+                  <div className="perfil-grid">{readonlyFields}</div>
                 </div>
               </>
             ) : (
@@ -190,18 +191,19 @@ const PerfilUsuarioPage = () => {
           </div>
         </div>
       )}
-      <ConfirmationModal 
-        isOpen={showConfirm} 
-        title="Descartar alterações?" 
-        message="Você possui alterações não salvas. Deseja perder essas alterações?" 
+
+      <ConfirmationModal
+        isOpen={showConfirm}
+        title="Descartar alterações?"
+        message="Você possui alterações não salvas. Deseja perder essas alterações?"
         onConfirm={() => {
           resetForm({
             nome: perfil.nome || '', usuario: perfil.usuario || '', cpf: perfil.cpf || '',
             email: perfil.email || '', celular: perfil.celular || '',
-            endereco: perfil.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' }
+            endereco: perfil.endereco || { rua: '', bairro: '', cidade: '', estado: '', numero: '', cep: '' },
           });
-        }} 
-        onClose={() => setShowConfirm(false)} 
+        }}
+        onClose={() => setShowConfirm(false)}
       />
       <ModalErro
         isOpen={erroModal.aberto}

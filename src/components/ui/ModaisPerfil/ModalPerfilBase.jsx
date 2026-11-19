@@ -47,20 +47,20 @@ export const ModalPerfilBase = ({
   return (
     <>
       <Modal isOpen={isOpen} onClose={handleClose} title={title} size="md">
-        <div className="perfil-grid" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="perfil-stack">
           {canEdit && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+            <div className="form-actions" style={{ marginTop: 0 }}>
               {isEditing ? (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button size="sm" variant="success" onClick={handleSaveClick}>
-                    Salvar
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={onCancelEdit}>
+                <div className="btn-group">
+                  <Button type="button" size="sm" variant="outline" onClick={onCancelEdit}>
                     Cancelar
+                  </Button>
+                  <Button type="button" size="sm" variant="success" onClick={handleSaveClick}>
+                    Salvar
                   </Button>
                 </div>
               ) : (
-                <Button size="sm" variant="outline" onClick={onStartEdit}>
+                <Button type="button" size="sm" variant="outline" onClick={onStartEdit}>
                   Editar Dados
                 </Button>
               )}
@@ -70,14 +70,12 @@ export const ModalPerfilBase = ({
           {editableFields || readonlyFields ? (
             isEditing ? (
               <>
-                <div>
-                  <h3 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                    Campos Editáveis
-                  </h3>
+                <div className="perfil-section">
+                  <h3 className="perfil-section__title">Campos Editáveis</h3>
                   <div className="perfil-grid">{editableFields}</div>
                 </div>
-                <div style={{ background: 'var(--bg-800)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
-                  <h3 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-muted)' }}>
+                <div className="perfil-section perfil-section--readonly">
+                  <h3 className="perfil-section__title perfil-section__title--muted">
                     Campos Somente Leitura
                   </h3>
                   <div className="perfil-grid">{readonlyFields}</div>

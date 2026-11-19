@@ -71,15 +71,20 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
       <CampoPerfil label="Placa"  valor={veiculo.placa  || '—'} isEditing={isEditing} inputProps={{ type: 'text',   value: formData.placa,  onChange: e => setFormData({ ...formData, placa:  e.target.value }) }} />
       <CampoPerfil label="Cor"    valor={veiculo.cor    || '—'} isEditing={isEditing} inputProps={{ type: 'text',   value: formData.cor,    onChange: e => setFormData({ ...formData, cor:    e.target.value }) }} />
       <div className="perfil-campo">
-        <span className="perfil-campo__label">Porte</span>
-        <span className="perfil-campo__valor">
+        <label className="perfil-campo__label" htmlFor="modal-veiculo-porte">Porte</label>
+        <div className="perfil-campo__valor">
           {isEditing && isAdmin ? (
-            <select className="input-field" style={{ padding: '4px', height: 'auto' }} value={formData.porte} onChange={e => setFormData({ ...formData, porte: e.target.value })}>
+            <select
+              id="modal-veiculo-porte"
+              className="input-field input-field--compact input-field--select"
+              value={formData.porte}
+              onChange={e => setFormData({ ...formData, porte: e.target.value })}
+            >
               <option value="" disabled>Selecione o porte...</option>
               {PORTES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           ) : <span>{PORTES.find(p => p.value === veiculo.porte)?.label || veiculo.porte || '—'}</span>}
-        </span>
+        </div>
       </div>
     </>
   );
@@ -104,7 +109,7 @@ export const ModalPerfilVeiculo = ({ isOpen, onClose, veiculo, isAdmin = false, 
             <span style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span>{veiculo.motorista.nome}</span>
               {onVerMotorista && (
-                <button className="btn-link" onClick={onVerMotorista} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', textAlign: 'left' }}>
+                <button type="button" className="btn-link" onClick={onVerMotorista}>
                   Ver perfil
                 </button>
               )}
