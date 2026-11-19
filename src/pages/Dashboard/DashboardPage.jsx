@@ -17,42 +17,61 @@ const truncarRotulo = (texto, max = 18) => {
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({ totalCorridas: 0, corridasAtivas: 0, veiculosDisponiveis: 0, faturamentoTotal: 0 });
-  const [graficos, setGraficos] = useState({ corridas: [], origens: [], destinos: [], rotas: [], veiculos: [], faturamento: [] });
-  const [loading, setLoading] = useState(true);
+  const [graficos, setGraficos] = useState({ corridas: [], origens: [], rotas: [], veiculos: [], faturamento: [] });
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingCharts, setLoadingCharts] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
+    let ativo = true;
+
+    const carregarResumo = async () => {
       try {
-        setLoading(true);
+        setLoadingStats(true);
+        const resumoRes = await dashboardService.getResumo();
+        if (ativo) setStats(resumoRes.data || {});
+      } catch (err) {
+        console.error('Erro ao carregar resumo do dashboard:', err);
+      } finally {
+        if (ativo) setLoadingStats(false);
+      }
+    };
+
+    const carregarGraficos = async () => {
+      try {
+        setLoadingCharts(true);
         setError(false);
-        const [resumoRes, corridasRes, origensRes, destinosRes, rotasRes, veiculosRes, faturamentoRes] = await Promise.all([
-          dashboardService.getResumo(),
+        const [corridasRes, origensRes, rotasRes, veiculosRes, faturamentoRes] = await Promise.all([
           dashboardService.getCorridas(),
           dashboardService.getOrigens(),
-          dashboardService.getDestinos(),
           dashboardService.getRotas(),
           dashboardService.getVeiculos(),
           dashboardService.getFaturamento(),
         ]);
 
-        setStats(resumoRes.data || {});
-        setGraficos({
-          corridas: corridasRes.data || [],
-          origens: origensRes.data || [],
-          destinos: destinosRes.data || [],
-          rotas: rotasRes.data || [],
-          veiculos: veiculosRes.data || [],
-          faturamento: faturamentoRes.data || [],
-        });
+        if (ativo) {
+          setGraficos({
+            corridas: corridasRes.data || [],
+            origens: origensRes.data || [],
+            rotas: rotasRes.data || [],
+            veiculos: veiculosRes.data || [],
+            faturamento: faturamentoRes.data || [],
+          });
+        }
       } catch (err) {
         console.error('Erro ao carregar dashboard:', err);
-        setError(true);
+        if (ativo) setError(true);
       } finally {
-        setLoading(false);
+        if (ativo) setLoadingCharts(false);
       }
     };
-    load();
+
+    carregarResumo();
+    carregarGraficos();
+
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   return (
@@ -68,7 +87,7 @@ const DashboardPage = () => {
           label="Faturamento Total"
           value={formatarMoeda(stats.faturamentoTotal || 0)}
           color="success"
-          loading={loading}
+          loading={loadingStats}
           featured
         />
         <StatCard
@@ -76,21 +95,21 @@ const DashboardPage = () => {
           label="Total de Corridas"
           value={stats.totalCorridas}
           color="primary"
-          loading={loading}
+          loading={loadingStats}
         />
         <StatCard
           icon={<Target size={22} />}
           label="Corridas Ativas"
           value={stats.corridasAtivas}
           color="warning"
-          loading={loading}
+          loading={loadingStats}
         />
         <StatCard
           icon={<Car size={22} />}
           label="Veículos Disponíveis"
           value={stats.veiculosDisponiveis}
           color="accent"
-          loading={loading}
+          loading={loadingStats}
         />
       </div>
 
@@ -98,7 +117,7 @@ const DashboardPage = () => {
         <ChartCard
           title="Faturamento Mensal"
           subtitle="Evolução do recebimento mensal das corridas concluídas"
-          loading={loading}
+          loading={loadingCharts}
           error={error}
           empty={!graficos.faturamento.some((d) => d.valor > 0)}
           className="dashboard-grid__full"
@@ -130,7 +149,7 @@ const DashboardPage = () => {
         <ChartCard
           title="Corridas por Mês"
           subtitle="Volume mensal de reservas registradas"
-          loading={loading}
+          loading={loadingCharts}
           error={error}
           empty={!graficos.corridas.some((d) => d.quantidade > 0)}
         >
@@ -148,7 +167,7 @@ const DashboardPage = () => {
         <ChartCard
           title="Rotas mais Utilizadas"
           subtitle="Trajetos com maior frequência"
-          loading={loading}
+          loading={loadingCharts}
           error={error}
           empty={graficos.rotas.length === 0}
         >
@@ -175,7 +194,7 @@ const DashboardPage = () => {
         <ChartCard
           title="Origens mais Solicitadas"
           subtitle="Locais com maior demanda de embarque"
-          loading={loading}
+          loading={loadingCharts}
           error={error}
           empty={graficos.origens.length === 0}
         >
@@ -202,7 +221,7 @@ const DashboardPage = () => {
         <ChartCard
           title="Veículos mais Alocados"
           subtitle="Carros com maior número de corridas"
-          loading={loading}
+          loading={loadingCharts}
           error={error}
           empty={graficos.veiculos.length === 0}
         >

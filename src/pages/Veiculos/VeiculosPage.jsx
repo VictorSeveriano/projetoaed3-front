@@ -109,7 +109,14 @@ const VeiculosPage = () => {
     } catch { setVeiculos([]); } finally { setLoading(false); }
   };
 
+  const primeiraCargaRef = React.useRef(true);
+
   useEffect(() => {
+    if (primeiraCargaRef.current) {
+      primeiraCargaRef.current = false;
+      carregar();
+      return undefined;
+    }
     const timer = setTimeout(() => carregar(), 250);
     return () => clearTimeout(timer);
   }, [porte, status, classe, search]);

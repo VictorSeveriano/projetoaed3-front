@@ -1,14 +1,29 @@
 import api from './api';
 
+const listarEmAndamento = new Map();
+
 /**
  * CorridasService — Centraliza toda comunicação com os endpoints de corridas.
  */
 const corridasService = {
   async listarPorPerfil(status = '') {
+    const chave = String(status || '');
+    if (listarEmAndamento.has(chave)) {
+      return listarEmAndamento.get(chave);
+    }
+
     const params = new URLSearchParams();
     if (status) params.append('status', status);
-    const { data } = await api.get(`/corridas/minhas?${params.toString()}`);
-    return data.data;
+
+    const requisicao = api
+      .get(`/corridas/minhas?${params.toString()}`)
+      .then(({ data }) => data.data)
+      .finally(() => {
+        listarEmAndamento.delete(chave);
+      });
+
+    listarEmAndamento.set(chave, requisicao);
+    return requisicao;
   },
 
   async criar(dados) {
@@ -18,7 +33,7 @@ const corridasService = {
 
   async calcularValorPrevia({ distanciaKm, classe, dataHorario }) {
     const { data } = await api.post('/corridas/calcular-valor', { distanciaKm, classe, dataHorario });
-    return data.data; // should return { valor: number }
+    return data.data;
   },
 
   /**

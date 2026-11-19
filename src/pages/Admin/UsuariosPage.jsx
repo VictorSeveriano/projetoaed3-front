@@ -73,7 +73,14 @@ const UsuariosPage = () => {
     }
   };
 
+  const primeiraCargaRef = React.useRef(true);
+
   useEffect(() => {
+    if (primeiraCargaRef.current) {
+      primeiraCargaRef.current = false;
+      carregar();
+      return undefined;
+    }
     const timer = setTimeout(() => {
       carregar();
     }, 300);
