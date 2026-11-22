@@ -159,7 +159,7 @@ const Sidebar = React.memo(({ isOpen, onClose, isDesktopClosed, onToggleDesktop 
               <Car size={20} />
             </span>
             <div className="sidebar__brand-text">
-              <span className="sidebar__brand-name">ReservaCar</span>
+              <span className="sidebar__brand-name">Corridas UCL</span>
               <span className="sidebar__brand-sub">
                 {PERFIL_LABELS[usuario?.perfil] || 'Sistema'}
               </span>

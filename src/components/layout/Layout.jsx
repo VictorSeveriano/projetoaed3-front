@@ -31,7 +31,7 @@ const Layout = ({ children }) => {
           <span className="mobile-top-bar__icon" aria-hidden="true">
             <Car size={20} />
           </span>
-          <span className="mobile-top-bar__title">ReservaCar</span>
+          <span className="mobile-top-bar__title">Corridas UCL</span>
         </div>
       </header>
 

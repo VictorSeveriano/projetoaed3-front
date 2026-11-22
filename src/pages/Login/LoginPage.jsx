@@ -111,7 +111,7 @@ const LoginPage = () => {
           <div className="login-logo__badge" aria-hidden="true">
             <CarFront size={32} />
           </div>
-          <h1 className="login-logo__title">ReservaCar</h1>
+          <h1 className="login-logo__title">Corridas UCL</h1>
           <p className="login-logo__subtitle">Gerenciamento inteligente de corridas</p>
         </div>
 
@@ -135,6 +135,7 @@ const LoginPage = () => {
             label="Senha"
             required
             type="password"
+            showPasswordToggle
             placeholder="Digite sua senha"
             value={form.senha}
             onChange={handleChange}
@@ -235,7 +236,7 @@ const LoginPage = () => {
             <div className="signup-success__icon" aria-hidden="true">
               <CheckCircle2 size={56} strokeWidth={1.75} />
             </div>
-            <h3 className="signup-success__title">Obrigado por usar o ReservaCar!</h3>
+            <h3 className="signup-success__title">Obrigado por usar o Corridas UCL!</h3>
             <p className="signup-success__desc">
               Seu cadastro foi realizado com sucesso. Para acessar a plataforma, utilize o login gerado abaixo.
             </p>

@@ -1,5 +1,5 @@
 /* ============================================================
-   RESERVACAR — COMPONENTES COMPARTILHADOS
+   CORRIDAS UCL — COMPONENTES COMPARTILHADOS
    Buttons, Badges, Cards, StatCards, ChartCards, Forms,
    Tables + Responsive Mobile Cards, Modals, EmptyState, Loading
    ============================================================ */
@@ -583,6 +583,49 @@
 
 .input-with-icon .input-field {
   padding-left: 34px;
+}
+
+.input-password-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.input-field--with-toggle {
+  padding-right: 42px;
+}
+
+.input-field--with-toggle::-ms-reveal,
+.input-field--with-toggle::-ms-clear {
+  display: none;
+}
+
+.input-password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color var(--transition), background-color var(--transition);
+}
+
+.input-password-toggle:hover {
+  color: var(--text-primary);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.input-password-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  color: var(--text-primary);
 }
 
 .input-error {
