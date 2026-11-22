@@ -21,34 +21,38 @@ const CorridasPage = () => {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async ({ forcar = false } = {}) => {
     if (!usuario?.id) return;
     setLoading(true);
     setError('');
     try {
-      const corridasRes = await corridasService.listarPorPerfil('');
+      const corridasRes = await corridasService.listarPorPerfil('', { forcar });
       setCorridas(corridasRes || []);
       const mapa = {};
-      (corridasRes || []).forEach((c) => { 
+      (corridasRes || []).forEach((c) => {
         if (c.veiculo) {
-          mapa[c.veiculoId] = c.veiculo; 
+          mapa[c.veiculoId] = c.veiculo;
         }
       });
       setCarrosMap(mapa);
-    } catch (err) {
+    } catch {
       setError('Erro ao carregar corridas.');
       setCorridas([]);
-    } finally { setLoading(false); }
-  }, [usuario]);
+    } finally {
+      setLoading(false);
+    }
+  }, [usuario?.id]);
+
+  const recarregarForcado = useCallback(() => carregar({ forcar: true }), [carregar]);
 
   useEffect(() => {
-    carregar();
-    return escutarEvento(APP_EVENTS.CORRIDAS_ATUALIZADAS, carregar);
-  }, [carregar]);
+    carregar({ forcar: false });
+    return escutarEvento(APP_EVENTS.CORRIDAS_ATUALIZADAS, recarregarForcado);
+  }, [carregar, recarregarForcado]);
 
-  const isAdmin    = usuario?.perfil === 'ADMINISTRADOR';
+  const isAdmin     = usuario?.perfil === 'ADMINISTRADOR';
   const isMotorista = usuario?.perfil === 'MOTORISTA';
-  const isUsuario  = usuario?.perfil === 'USUARIO';
+  const isUsuario   = usuario?.perfil === 'USUARIO';
 
   const subtitulo = isAdmin
     ? 'Gerencie as corridas de todos os perfis'
@@ -69,7 +73,7 @@ const CorridasPage = () => {
         podeFinalizar={isAdmin}
         podeConfirmarPagamento={isMotorista}
         perfil={usuario?.perfil}
-        onAcao={carregar}
+        onAcao={recarregarForcado}
       />
     </div>
   );

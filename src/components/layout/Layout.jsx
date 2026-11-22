@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import { Menu, Car } from 'lucide-react';
 import GerenciadorConfirmacaoEmbarque from '../ui/GerenciadorConfirmacaoEmbarque';
@@ -6,6 +6,9 @@ import GerenciadorConfirmacaoEmbarque from '../ui/GerenciadorConfirmacaoEmbarque
 const Layout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopMenuClosed, setDesktopMenuClosed] = useState(false);
+
+  const handleCloseMobile = useCallback(() => setMobileMenuOpen(false), []);
+  const handleToggleDesktop = useCallback(() => setDesktopMenuClosed((prev) => !prev), []);
 
   return (
     <div className={`app-layout ${desktopMenuClosed ? 'app-layout--sidebar-closed' : ''}`}>
@@ -34,9 +37,9 @@ const Layout = ({ children }) => {
 
       <Sidebar
         isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
+        onClose={handleCloseMobile}
         isDesktopClosed={desktopMenuClosed}
-        onToggleDesktop={() => setDesktopMenuClosed(!desktopMenuClosed)}
+        onToggleDesktop={handleToggleDesktop}
       />
 
       <main id="main-content" className="app-main" tabIndex={-1}>

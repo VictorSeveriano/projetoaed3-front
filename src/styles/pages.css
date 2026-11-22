@@ -435,7 +435,7 @@
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: all var(--transition);
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
 }
 
 .corridas-tab:hover {
@@ -754,7 +754,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all var(--transition);
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
 }
 
 .autocomplete-clear-btn:hover {
@@ -857,7 +857,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: all var(--transition);
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
 }
 
 .rota-card:hover {

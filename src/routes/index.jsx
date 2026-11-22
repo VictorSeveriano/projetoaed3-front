@@ -1,31 +1,33 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PrivateRoute from './PrivateRoute';
 import Layout from '../components/layout/Layout';
+import Loading from '../components/ui/Loading';
 
-// Páginas existentes (admin)
+// Login mantido eagerly carregado para primeira abertura imediata sem round-trip extra de chunk
 import LoginPage from '../pages/Login/LoginPage';
-import DashboardPage from '../pages/Dashboard/DashboardPage';
-import VeiculosPage from '../pages/Veiculos/VeiculosPage';
-import CorridasPage from '../pages/Corridas/CorridasPage';
-import RotasPage from '../pages/Rotas/RotasPage';
 
-// Roteador de perfil
-import PerfilRouter from '../pages/PerfilRouter';
+// Code-splitting por rota: páginas pesadas (ex.: Dashboard/Relatório com Recharts, Rotas com Maps)
+// só são baixadas quando realmente acessadas pelo perfil correspondente.
+const DashboardPage = lazy(() => import('../pages/Dashboard/DashboardPage'));
+const VeiculosPage = lazy(() => import('../pages/Veiculos/VeiculosPage'));
+const CorridasPage = lazy(() => import('../pages/Corridas/CorridasPage'));
+const RotasPage = lazy(() => import('../pages/Rotas/RotasPage'));
+const PerfilRouter = lazy(() => import('../pages/PerfilRouter'));
 
 // Páginas do motorista
-import InicioMotoristaPage from '../pages/Motorista/InicioMotoristaPage';
-import RelatorioMotoristaPage from '../pages/Motorista/RelatorioMotoristaPage';
-import MeuVeiculoPage from '../pages/Motorista/MeuVeiculoPage';
-import NotificacoesMotoristaPage from '../pages/Motorista/NotificacoesMotoristaPage';
+const InicioMotoristaPage = lazy(() => import('../pages/Motorista/InicioMotoristaPage'));
+const RelatorioMotoristaPage = lazy(() => import('../pages/Motorista/RelatorioMotoristaPage'));
+const MeuVeiculoPage = lazy(() => import('../pages/Motorista/MeuVeiculoPage'));
+const NotificacoesMotoristaPage = lazy(() => import('../pages/Motorista/NotificacoesMotoristaPage'));
 
 // Páginas Admin
-import UsuariosPage from '../pages/Admin/UsuariosPage';
-import MotoristasAnalisePage from '../pages/Admin/MotoristasAnalisePage';
-import VeiculosAnalisePage from '../pages/Admin/VeiculosAnalisePage';
-import NotificacoesPage from '../pages/Admin/NotificacoesPage';
-import AuditoriaPage from '../pages/Admin/AuditoriaPage';
+const UsuariosPage = lazy(() => import('../pages/Admin/UsuariosPage'));
+const MotoristasAnalisePage = lazy(() => import('../pages/Admin/MotoristasAnalisePage'));
+const VeiculosAnalisePage = lazy(() => import('../pages/Admin/VeiculosAnalisePage'));
+const NotificacoesPage = lazy(() => import('../pages/Admin/NotificacoesPage'));
+const AuditoriaPage = lazy(() => import('../pages/Admin/AuditoriaPage'));
 
 /**
  * RedirectInicial — Redireciona para a rota home correta conforme perfil.
@@ -39,6 +41,12 @@ const RedirectInicial = () => {
     default:          return <Navigate to="/dashboard" replace />;
   }
 };
+
+const FallbackPagina = () => (
+  <div className="page">
+    <Loading message="Carregando página..." />
+  </div>
+);
 
 /**
  * AppRoutes — Rotas dinâmicas por perfil.
@@ -57,32 +65,34 @@ const AppRoutes = () => (
       element={
         <PrivateRoute>
           <Layout>
-            <Routes>
-              {/* --- Administrador --- */}
-              <Route path="/dashboard"         element={<DashboardPage />} />
-              <Route path="/corridas"          element={<CorridasPage />} />
-              <Route path="/veiculos"          element={<VeiculosPage />} />
-              <Route path="/veiculos/analise"  element={<VeiculosAnalisePage />} />
-              <Route path="/rotas"             element={<RotasPage />} />
-              <Route path="/usuarios"          element={<UsuariosPage />} />
-              <Route path="/motoristas/analise" element={<MotoristasAnalisePage />} />
-              <Route path="/notificacoes"      element={<NotificacoesPage />} />
-              <Route path="/auditoria"         element={<AuditoriaPage />} />
+            <Suspense fallback={<FallbackPagina />}>
+              <Routes>
+                {/* --- Administrador --- */}
+                <Route path="/dashboard"         element={<DashboardPage />} />
+                <Route path="/corridas"          element={<CorridasPage />} />
+                <Route path="/veiculos"          element={<VeiculosPage />} />
+                <Route path="/veiculos/analise"  element={<VeiculosAnalisePage />} />
+                <Route path="/rotas"             element={<RotasPage />} />
+                <Route path="/usuarios"          element={<UsuariosPage />} />
+                <Route path="/motoristas/analise" element={<MotoristasAnalisePage />} />
+                <Route path="/notificacoes"      element={<NotificacoesPage />} />
+                <Route path="/auditoria"         element={<AuditoriaPage />} />
 
-              {/* --- Usuário/Passageiro e Compartilhadas --- */}
-              <Route path="/solicitar-corrida" element={<RotasPage />} />
-              <Route path="/minhas-corridas"   element={<CorridasPage />} />
-              <Route path="/perfil"            element={<PerfilRouter />} />
+                {/* --- Usuário/Passageiro e Compartilhadas --- */}
+                <Route path="/solicitar-corrida" element={<RotasPage />} />
+                <Route path="/minhas-corridas"   element={<CorridasPage />} />
+                <Route path="/perfil"            element={<PerfilRouter />} />
 
-              {/* --- Motorista --- */}
-              <Route path="/inicio"            element={<InicioMotoristaPage />} />
-              <Route path="/relatorio"         element={<RelatorioMotoristaPage />} />
-              <Route path="/meu-veiculo"       element={<MeuVeiculoPage />} />
-              <Route path="/notificacoes-motorista" element={<NotificacoesMotoristaPage />} />
+                {/* --- Motorista --- */}
+                <Route path="/inicio"            element={<InicioMotoristaPage />} />
+                <Route path="/relatorio"         element={<RelatorioMotoristaPage />} />
+                <Route path="/meu-veiculo"       element={<MeuVeiculoPage />} />
+                <Route path="/notificacoes-motorista" element={<NotificacoesMotoristaPage />} />
 
-              {/* Rota padrão — redireciona conforme perfil */}
-              <Route path="*" element={<RedirectInicial />} />
-            </Routes>
+                {/* Rota padrão — redireciona conforme perfil */}
+                <Route path="*" element={<RedirectInicial />} />
+              </Routes>
+            </Suspense>
           </Layout>
         </PrivateRoute>
       }

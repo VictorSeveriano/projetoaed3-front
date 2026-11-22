@@ -33,9 +33,9 @@ const GerenciadorConfirmacaoEmbarque = () => {
   const adiadas = useRef(new Map());
   const [versaoAdiadas, setVersaoAdiadas] = useState(0);
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async ({ forcar = false } = {}) => {
     try {
-      const lista = await corridasService.listarPorPerfil();
+      const lista = await corridasService.listarPorPerfil('', { forcar });
       setCorridas(Array.isArray(lista) ? lista : []);
     } catch {
       /* silencioso: tenta novamente no próximo ciclo */
@@ -44,22 +44,41 @@ const GerenciadorConfirmacaoEmbarque = () => {
 
   useEffect(() => {
     if (!habilitado || !usuario?.id) return undefined;
-    carregar();
-    const busca = setInterval(carregar, INTERVALO_BUSCA_MS);
-    const relogio = setInterval(() => setAgora(Date.now()), INTERVALO_RELOGIO_MS);
+    carregar({ forcar: false });
+
+    const busca = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      carregar({ forcar: true });
+    }, INTERVALO_BUSCA_MS);
+
+    const relogio = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      setAgora(Date.now());
+    }, INTERVALO_RELOGIO_MS);
+
+    const aoFicarVisivel = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        setAgora(Date.now());
+        carregar({ forcar: true });
+      }
+    };
+
     const abrirManual = (e) => {
       if (e?.detail?.id) {
         adiadas.current.delete(e.detail.id);
         setCorridaManual(e.detail);
       }
     };
-    const pararNotif = escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, carregar);
+    const pararNotif = escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, () => carregar({ forcar: true }));
     const pararAbrir = escutarEvento(APP_EVENTS.ABRIR_MODAL_EMBARQUE, abrirManual);
+    document.addEventListener('visibilitychange', aoFicarVisivel);
+
     return () => {
       clearInterval(busca);
       clearInterval(relogio);
       pararNotif();
       pararAbrir();
+      document.removeEventListener('visibilitychange', aoFicarVisivel);
     };
   }, [habilitado, usuario?.id, carregar]);
 
@@ -87,7 +106,7 @@ const GerenciadorConfirmacaoEmbarque = () => {
       onClose={fechar}
       onConcluido={() => {
         setCorridaManual(null);
-        carregar();
+        carregar({ forcar: true });
         emitirCorridasAtualizadas();
       }}
     />

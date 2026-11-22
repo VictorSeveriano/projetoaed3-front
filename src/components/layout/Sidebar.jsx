@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import notificacoesService from '../../services/notificacoes.service';
@@ -52,12 +52,11 @@ const PERFIL_LABELS = {
   MOTORISTA: 'Motorista',
 };
 
-const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
+const Sidebar = React.memo(({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [naoLidas, setNaoLidas] = useState(0);
-  const [notificacoesLista, setNotificacoesLista] = useState([]);
+  const [resumoNotificacoes, setResumoNotificacoes] = useState({ naoLidas: 0, porTipo: {} });
 
   // Seleciona itens pelo campo perfil — nunca por nome/id
   const navItems = useMemo(() => {
@@ -70,30 +69,37 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
   }, [usuario?.perfil]);
 
   useEffect(() => {
-    if (usuario?.id) {
-      const carregarNotificacoes = () => {
-        notificacoesService.listar()
-          .then((dados) => {
-            const lista = dados?.notificacoes || [];
-            setNotificacoesLista(lista);
-            setNaoLidas(dados?.naoLidas ?? lista.filter((n) => !n.lida).length);
-          })
-          .catch(() => {
-            setNotificacoesLista([]);
-            setNaoLidas(0);
+    if (!usuario?.id) return undefined;
+    let ativo = true;
+
+    const carregarResumo = (forcar = false) => {
+      notificacoesService
+        .obterResumo({ forcar })
+        .then((dados) => {
+          if (!ativo) return;
+          setResumoNotificacoes({
+            naoLidas: Number(dados?.naoLidas || 0),
+            porTipo: dados?.porTipo || {},
           });
-      };
+        })
+        .catch(() => {
+          if (ativo) setResumoNotificacoes({ naoLidas: 0, porTipo: {} });
+        });
+    };
 
-      carregarNotificacoes();
+    carregarResumo(false);
 
-      return escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, carregarNotificacoes);
-    }
+    const pararEscuta = escutarEvento(APP_EVENTS.NOTIFICACOES_ATUALIZADAS, () => carregarResumo(true));
+    return () => {
+      ativo = false;
+      pararEscuta();
+    };
   }, [usuario?.id]);
 
   const contadoresPorRota = useMemo(() => {
-    const naoLidasLista = notificacoesLista.filter((n) => !n.lida);
+    const { naoLidas, porTipo } = resumoNotificacoes;
     const contarPorTipo = (...tipos) =>
-      naoLidasLista.filter((n) => tipos.includes(n.tipo)).length;
+      tipos.reduce((soma, tipo) => soma + Number(porTipo[tipo] || 0), 0);
 
     if (usuario?.perfil === 'ADMINISTRADOR') {
       return {
@@ -120,20 +126,21 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
     }
 
     return {};
-  }, [notificacoesLista, naoLidas, usuario?.perfil]);
+  }, [resumoNotificacoes, usuario?.perfil]);
 
   useEffect(() => {
+    if (!isOpen) return undefined;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/login');
-  };
+  }, [logout, navigate]);
 
   return (
     <>
@@ -242,6 +249,8 @@ const Sidebar = ({ isOpen, onClose, isDesktopClosed, onToggleDesktop }) => {
       </aside>
     </>
   );
-};
+});
+
+Sidebar.displayName = 'Sidebar';
 
 export default Sidebar;

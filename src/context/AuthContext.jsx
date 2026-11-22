@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import authService from '../services/auth.service';
 import { AUTH_STORAGE_KEYS, clearAuthSession } from '../services/api';
 
@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (usuarioInput, senha) => {
     const response = await authService.login(usuarioInput, senha);
     const { token, usuario: userData } = response.data;
+    clearAuthSession();
     sessionStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, token);
     sessionStorage.setItem(AUTH_STORAGE_KEYS.USUARIO, JSON.stringify(userData));
     setUsuario(userData);
@@ -38,8 +39,13 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(usuario);
 
+  const value = useMemo(
+    () => ({ usuario, isAuthenticated, login, cadastrar, logout }),
+    [usuario, isAuthenticated, login, cadastrar, logout]
+  );
+
   return (
-    <AuthContext.Provider value={{ usuario, isAuthenticated, login, cadastrar, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

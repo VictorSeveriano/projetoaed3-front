@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Header from '../../components/layout/Header';
 import StatCard from '../../components/ui/StatCard';
 import Button from '../../components/ui/Button';
@@ -29,32 +29,74 @@ const InicioMotoristaPage = () => {
   const [loadingResumo, setLoadingResumo] = useState(false);
   const [error, setError] = useState('');
 
-  const carregarPerfil = async () => {
+  const carregarDados = useCallback(async ({ forcar = false } = {}) => {
     if (!usuario?.id) return;
-    try {
-      const data = await motoristasService.buscarPorUsuarioId(usuario.id);
-      setMotoristaPerfil(data); // pode ser null se não solicitou
-    } catch (err) {
-      console.error(err);
-      setMotoristaPerfil(null);
-    }
-  };
+    const hoje = new Date();
+    setLoadingResumo(true);
+    setError('');
 
-  useEffect(() => {
-    carregarPerfil();
+    // Carrega perfil e relatório mensal em paralelo para eliminar waterfall sequencial
+    const [perfilRes, relatorioRes] = await Promise.allSettled([
+      motoristasService.buscarPorUsuarioId(usuario.id, { forcar }),
+      motoristasService.getRelatorio(usuario.id, hoje.getMonth() + 1, hoje.getFullYear(), { forcar }),
+    ]);
+
+    const perfil = perfilRes.status === 'fulfilled' ? perfilRes.value : null;
+    if (perfilRes.status === 'rejected') {
+      console.error(perfilRes.reason);
+    }
+    setMotoristaPerfil(perfil);
+
+    if (perfil?.statusCadastro === 'APROVADO') {
+      if (relatorioRes.status === 'fulfilled') {
+        setResumo(relatorioRes.value);
+      } else {
+        setError(relatorioRes.reason?.response?.data?.message || 'Erro ao carregar resumo.');
+      }
+    } else {
+      setResumo(null);
+    }
+    setLoadingResumo(false);
   }, [usuario?.id]);
 
   useEffect(() => {
-    if (motoristaPerfil?.statusCadastro === 'APROVADO') {
+    let ativo = true;
+    const iniciar = async () => {
+      if (!usuario?.id) return;
       const hoje = new Date();
       setLoadingResumo(true);
-      motoristasService
-        .getRelatorio(usuario.id, hoje.getMonth() + 1, hoje.getFullYear())
-        .then((dados) => setResumo(dados))
-        .catch((err) => setError(err.response?.data?.message || 'Erro ao carregar resumo.'))
-        .finally(() => setLoadingResumo(false));
-    }
-  }, [motoristaPerfil, usuario?.id]);
+      setError('');
+
+      const [perfilRes, relatorioRes] = await Promise.allSettled([
+        motoristasService.buscarPorUsuarioId(usuario.id),
+        motoristasService.getRelatorio(usuario.id, hoje.getMonth() + 1, hoje.getFullYear()),
+      ]);
+
+      if (!ativo) return;
+
+      const perfil = perfilRes.status === 'fulfilled' ? perfilRes.value : null;
+      if (perfilRes.status === 'rejected') {
+        console.error(perfilRes.reason);
+      }
+      setMotoristaPerfil(perfil);
+
+      if (perfil?.statusCadastro === 'APROVADO') {
+        if (relatorioRes.status === 'fulfilled') {
+          setResumo(relatorioRes.value);
+        } else {
+          setError(relatorioRes.reason?.response?.data?.message || 'Erro ao carregar resumo.');
+        }
+      } else {
+        setResumo(null);
+      }
+      setLoadingResumo(false);
+    };
+
+    iniciar();
+    return () => {
+      ativo = false;
+    };
+  }, [usuario?.id]);
 
   const handleSolicitar = async (e) => {
     e.preventDefault();
@@ -66,7 +108,7 @@ const InicioMotoristaPage = () => {
     setError('');
     try {
       await motoristasService.solicitar({ cnh: cnhForm });
-      await carregarPerfil();
+      await carregarDados({ forcar: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao enviar solicitação.');
     } finally {

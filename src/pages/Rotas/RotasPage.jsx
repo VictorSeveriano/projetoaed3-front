@@ -117,7 +117,7 @@ const RotasPage = () => {
   }, [rotaSelecionada, limparMarcadores, limparPolyline]);
 
   const inicializarMapa = useCallback(() => {
-    if (!containerRef.current || isMapInitRef.current) return;
+    if (!containerRef.current || isMapInitRef.current || !window.google?.maps) return;
     mapRef.current = new window.google.maps.Map(containerRef.current, {
       center: CENTER_ES, zoom: 11,
       mapTypeId: 'roadmap', mapTypeControl: false, streetViewControl: false,
