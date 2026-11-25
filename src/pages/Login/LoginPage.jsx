@@ -112,7 +112,7 @@ const LoginPage = () => {
             <CarFront size={32} />
           </div>
           <h1 className="login-logo__title">Corridas UCL</h1>
-          <p className="login-logo__subtitle">Gerenciamento inteligente de corridas</p>
+          <p className="login-logo__subtitle">Agendamento e Gerenciamento de Corridas</p>
         </div>
 
         {/* Formulário de Login */}
