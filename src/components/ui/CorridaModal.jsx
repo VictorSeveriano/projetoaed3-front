@@ -158,6 +158,22 @@ const CorridaModal = ({
     }
     if (!rota) { setError('Selecione uma rota primeiro.'); return; }
 
+    // Valida se a data/horário informados não estão no passado
+    try {
+      const dataISO = converterDataHorarioComercialParaISO(dataHorario);
+      const agora = Date.now();
+      if (new Date(dataISO).getTime() <= agora) {
+        setErroModal({
+          open: true,
+          mensagem: 'Data ou Horário inválidos. Tente novamente!',
+        });
+        return;
+      }
+    } catch {
+      setError('Data ou horário inválidos. Verifique e tente novamente.');
+      return;
+    }
+
     let payload;
     try {
       payload = montarPayloadCriacaoCorrida({
