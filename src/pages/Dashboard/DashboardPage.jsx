@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Header from '../../components/layout/Header';
 import StatCard from '../../components/ui/StatCard';
+import Button from '../../components/ui/Button';
+import BotoesExportacao from '../../components/ui/BotoesExportacao';
 import ChartCard, { ChartTooltip } from '../../components/ui/ChartCard';
 import dashboardService from '../../services/dashboard.service';
 import { formatarMoeda } from '../../utils/formatters';
-import { Car, Calendar, DollarSign, Target } from 'lucide-react';
+import { Car, Calendar, DollarSign, Target, Filter, RotateCcw } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from 'recharts';
@@ -31,46 +33,86 @@ const truncarRotulo18 = (v) => truncarRotulo(v, 18);
 
 const STATS_INICIAL = { totalCorridas: 0, corridasAtivas: 0, veiculosDisponiveis: 0, faturamentoTotal: 0 };
 const GRAFICOS_INICIAL = { corridas: [], origens: [], rotas: [], veiculos: [], faturamento: [] };
+const FILTROS_INICIAIS = { dataInicio: '', dataFim: '', status: '', classe: '' };
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(STATS_INICIAL);
   const [graficos, setGraficos] = useState(GRAFICOS_INICIAL);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [mensagemErroFiltro, setMensagemErroFiltro] = useState('');
+
+  const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
+  const [exportandoFormato, setExportandoFormato] = useState('');
+  const [erroExportacao, setErroExportacao] = useState('');
+
+  const possuiFiltroAtivo = Boolean(
+    filtros.dataInicio || filtros.dataFim || filtros.status || filtros.classe
+  );
+
+  const carregarDashboard = useCallback(async (filtrosAtuais) => {
+    try {
+      setLoading(true);
+      setError(false);
+      setMensagemErroFiltro('');
+      const res = await dashboardService.getCompleto(filtrosAtuais);
+      const dados = res?.data || {};
+      setStats(dados.resumo || STATS_INICIAL);
+      setGraficos({
+        corridas: dados.corridas || [],
+        origens: dados.origens || [],
+        rotas: dados.rotas || [],
+        veiculos: dados.veiculos || [],
+        faturamento: dados.faturamento || [],
+      });
+    } catch (err) {
+      console.error('Erro ao carregar dashboard:', err);
+      const msg = err?.response?.data?.message || '';
+      if (msg) {
+        setMensagemErroFiltro(msg);
+      } else {
+        setError(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let ativo = true;
+    if (filtros.dataInicio && filtros.dataFim && filtros.dataInicio > filtros.dataFim) {
+      setMensagemErroFiltro('A data inicial não pode ser posterior à data final.');
+      return;
+    }
+    carregarDashboard(filtros);
+  }, [filtros, carregarDashboard]);
 
-    const carregarDashboard = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        const res = await dashboardService.getCompleto();
-        const dados = res?.data || {};
-        if (ativo) {
-          setStats(dados.resumo || STATS_INICIAL);
-          setGraficos({
-            corridas: dados.corridas || [],
-            origens: dados.origens || [],
-            rotas: dados.rotas || [],
-            veiculos: dados.veiculos || [],
-            faturamento: dados.faturamento || [],
-          });
-        }
-      } catch (err) {
-        console.error('Erro ao carregar dashboard:', err);
-        if (ativo) setError(true);
-      } finally {
-        if (ativo) setLoading(false);
-      }
-    };
+  const handleChangeFiltro = (e) => {
+    const { name, value } = e.target;
+    setErroExportacao('');
+    setFiltros((prev) => ({ ...prev, [name]: value }));
+  };
 
-    carregarDashboard();
+  const limparFiltros = () => {
+    setErroExportacao('');
+    setMensagemErroFiltro('');
+    setFiltros(FILTROS_INICIAIS);
+  };
 
-    return () => {
-      ativo = false;
-    };
-  }, []);
+  const handleExportar = async (formato) => {
+    if (filtros.dataInicio && filtros.dataFim && filtros.dataInicio > filtros.dataFim) {
+      setErroExportacao('Corrija o intervalo de datas antes de exportar o relatório.');
+      return;
+    }
+    setErroExportacao('');
+    setExportandoFormato(formato);
+    try {
+      await dashboardService.exportarRelatorio(formato, filtros);
+    } catch (err) {
+      setErroExportacao(err?.message || 'Não foi possível exportar o relatório do dashboard.');
+    } finally {
+      setExportandoFormato('');
+    }
+  };
 
   const temFaturamento = useMemo(() => graficos.faturamento.some((d) => d.valor > 0), [graficos.faturamento]);
   const temCorridas = useMemo(() => graficos.corridas.some((d) => d.quantidade > 0), [graficos.corridas]);
@@ -80,7 +122,89 @@ const DashboardPage = () => {
       <Header
         title="Dashboard de Corridas"
         subtitle="Visão geral das corridas solicitadas, faturamento e operação"
+        actions={
+          <BotoesExportacao
+            idPrefix="btn-exportar-dashboard"
+            exportandoFormato={exportandoFormato}
+            onExportar={handleExportar}
+          />
+        }
       />
+
+      {/* Barra de filtros sincronizada com indicadores, gráficos e exportação */}
+      <div className="filters-bar" role="search" aria-label="Filtrar métricas do dashboard">
+        <div className="tools-bar__field--date">
+          <input
+            type="date"
+            name="dataInicio"
+            aria-label="Data inicial do dashboard"
+            title="Data inicial"
+            value={filtros.dataInicio}
+            onChange={handleChangeFiltro}
+            className="input-field"
+          />
+        </div>
+
+        <div className="tools-bar__field--date">
+          <input
+            type="date"
+            name="dataFim"
+            aria-label="Data final do dashboard"
+            title="Data final"
+            value={filtros.dataFim}
+            onChange={handleChangeFiltro}
+            className="input-field"
+          />
+        </div>
+
+        <div className="tools-bar__field">
+          <div className="input-with-icon">
+            <span className="input-with-icon__icon" aria-hidden="true"><Filter size={16} /></span>
+            <select
+              name="status"
+              aria-label="Filtrar dashboard por status"
+              value={filtros.status}
+              onChange={handleChangeFiltro}
+              className="input-field input-field--select"
+            >
+              <option value="">Todos os status</option>
+              <option value="SOLICITADA">Solicitada</option>
+              <option value="CONFIRMADA">Confirmada</option>
+              <option value="EM_ANDAMENTO">Em andamento</option>
+              <option value="FINALIZADA">Finalizada</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="tools-bar__field">
+          <select
+            name="classe"
+            aria-label="Filtrar dashboard por classe"
+            value={filtros.classe}
+            onChange={handleChangeFiltro}
+            className="input-field input-field--select"
+          >
+            <option value="">Todas as classes</option>
+            <option value="BASICO">Básico</option>
+            <option value="NORMAL">Normal</option>
+            <option value="PREMIUM">Premium</option>
+          </select>
+        </div>
+
+        {possuiFiltroAtivo && (
+          <Button type="button" variant="ghost" size="sm" onClick={limparFiltros}>
+            <RotateCcw size={14} aria-hidden="true" />
+            Limpar
+          </Button>
+        )}
+      </div>
+
+      {(mensagemErroFiltro || erroExportacao) && (
+        <div className="form-error" role="alert">
+          <span>{mensagemErroFiltro || erroExportacao}</span>
+        </div>
+      )}
 
       <div className="stats-grid">
         <StatCard

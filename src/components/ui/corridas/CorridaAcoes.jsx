@@ -2,10 +2,12 @@ import React from 'react';
 import Button from '../Button';
 import { obterAcoesDisponiveisCorrida } from './corridaPermissoes';
 import { emitirAbrirModalEmbarque } from '../../../utils/appEvents';
+import { Eye } from 'lucide-react';
 
 const CorridaAcoes = ({
   corrida,
   permissoes,
+  onAbrirDetalhes,
   onAbrirCancelar,
   onAbrirConfirmarPagamento,
   onAbrirFinalizar,
@@ -18,7 +20,10 @@ const CorridaAcoes = ({
     podeConfirmarEmbarque,
   } = obterAcoesDisponiveisCorrida(corrida, permissoes);
 
+  const podeVerDetalhes = typeof onAbrirDetalhes === 'function';
+
   const possuiAlgumaAcao =
+    podeVerDetalhes ||
     podeConfirmarEmbarque ||
     podeAcaoConfirmarPagamento ||
     podeAcaoCancelar ||
@@ -28,6 +33,19 @@ const CorridaAcoes = ({
 
   return (
     <div className="corrida-acoes">
+      {podeVerDetalhes && (
+        <Button
+          id={`btn-detalhes-${corrida.id}`}
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onAbrirDetalhes(corrida)}
+          title="Consultar detalhes e linha do tempo da corrida"
+        >
+          <Eye size={14} aria-hidden="true" />
+          Detalhes
+        </Button>
+      )}
       {podeConfirmarEmbarque && (
         <Button
           id={`btn-embarque-${corrida.id}`}

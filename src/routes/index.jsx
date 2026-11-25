@@ -69,7 +69,8 @@ const AppRoutes = () => (
               <Routes>
                 {/* --- Administrador --- */}
                 <Route path="/dashboard"         element={<DashboardPage />} />
-                <Route path="/corridas"          element={<CorridasPage />} />
+                <Route path="/corridas"          element={<CorridasPage escopoPadrao="TODAS" />} />
+                <Route path="/historico"         element={<CorridasPage escopoPadrao="HISTORICO" />} />
                 <Route path="/veiculos"          element={<VeiculosPage />} />
                 <Route path="/veiculos/analise"  element={<VeiculosAnalisePage />} />
                 <Route path="/rotas"             element={<RotasPage />} />
@@ -80,7 +81,7 @@ const AppRoutes = () => (
 
                 {/* --- Usuário/Passageiro e Compartilhadas --- */}
                 <Route path="/solicitar-corrida" element={<RotasPage />} />
-                <Route path="/minhas-corridas"   element={<CorridasPage />} />
+                <Route path="/minhas-corridas"   element={<CorridasPage escopoPadrao="ATIVAS" />} />
                 <Route path="/perfil"            element={<PerfilRouter />} />
 
                 {/* --- Motorista --- */}

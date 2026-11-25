@@ -1,5 +1,6 @@
 import api from './api';
 import cacheSessao from './cacheSessao';
+import { baixarRelatorioApi } from '../utils/downloadArquivo';
 
 const TTL_VEICULOS_MS = 15000;
 
@@ -27,6 +28,15 @@ const veiculosService = {
       TTL_VEICULOS_MS,
       () => api.get(url).then(({ data }) => data.data),
       { forcar }
+    );
+  },
+
+  async exportarRelatorio(formato = 'csv', filtros = {}) {
+    return baixarRelatorioApi(
+      '/veiculos/exportar',
+      formato,
+      filtros,
+      'relatorio-veiculos-corridas-ucl'
     );
   },
 

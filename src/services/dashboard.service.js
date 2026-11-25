@@ -1,21 +1,36 @@
 import api from './api';
 import cacheSessao from './cacheSessao';
+import { baixarRelatorioApi, construirParamsFiltroLimpos } from '../utils/downloadArquivo';
 
 const TTL_DASHBOARD_MS = 25000;
 
 class DashboardService {
   /**
-   * Busca resumo e todas as séries de gráficos em uma única requisição consolidada.
+   * Busca resumo e todas as séries de gráficos em uma única requisição consolidada,
+   * respeitando filtros opcionais (`dataInicio`, `dataFim`, `status`, `classe`).
    */
-  async getCompleto({ forcar = false } = {}) {
+  async getCompleto(filtros = {}, { forcar = false } = {}) {
+    const params = construirParamsFiltroLimpos(filtros);
+    const query = params.toString();
+    const url = query ? `/dashboard/completo?${query}` : '/dashboard/completo';
+
     return cacheSessao.obterOuCarregar(
-      'dashboard:completo',
+      `dashboard:completo:${query}`,
       TTL_DASHBOARD_MS,
       async () => {
-        const response = await api.get('/dashboard/completo');
+        const response = await api.get(url);
         return response.data;
       },
       { forcar }
+    );
+  }
+
+  async exportarRelatorio(formato = 'csv', filtros = {}) {
+    return baixarRelatorioApi(
+      '/dashboard/exportar',
+      formato,
+      filtros,
+      'relatorio-dashboard-corridas-ucl'
     );
   }
 

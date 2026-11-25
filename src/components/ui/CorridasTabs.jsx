@@ -4,6 +4,7 @@ import Loading from './Loading';
 import CorridasFiltros from './corridas/CorridasFiltros';
 import CorridasTabela from './corridas/CorridasTabela';
 import ModalCancelamentoCorrida from './corridas/ModalCancelamentoCorrida';
+import ModalDetalhesCorrida from './corridas/ModalDetalhesCorrida';
 import {
   podeExibirBotaoCancelar,
   resolverPapeisCorrida,
@@ -15,8 +16,10 @@ import { useCorridasAcoes } from '../../hooks/useCorridasAcoes';
 export { podeExibirBotaoCancelar };
 
 /**
- * CorridasTabs — Coordenador da listagem em abas, filtros por status e modais
- * de ação de corridas (cancelamento, finalização e confirmação de pagamento).
+ * CorridasTabs — Coordenador da listagem, modais de ação e modal de detalhes/linha do tempo.
+ *
+ * Aceita `ocultarAbasLocais` quando a filtragem e a paginação são conduzidas pelo backend
+ * (como em `CorridasPage` / Histórico), mantendo total retrocompatibilidade quando usado isoladamente.
  */
 const CorridasTabs = ({
   corridas = [],
@@ -27,9 +30,13 @@ const CorridasTabs = ({
   podeFinalizar = false,
   podeConfirmarPagamento = false,
   perfil = '',
+  ocultarAbasLocais = false,
+  emptyTitle,
+  emptyDescription,
   onAcao,
 }) => {
   const [abaAtiva, setAbaAtiva] = useState('TODAS');
+  const [corridaDetalheSelecionada, setCorridaDetalheSelecionada] = useState(null);
 
   const permissoes = useMemo(
     () => ({ podeCancelar, podeFinalizar, podeConfirmarPagamento, perfil }),
@@ -38,8 +45,8 @@ const CorridasTabs = ({
   const { ehMotorista } = resolverPapeisCorrida(permissoes);
 
   const corridasFiltradas = useMemo(
-    () => filtrarCorridasPorAba(corridas, abaAtiva),
-    [corridas, abaAtiva]
+    () => (ocultarAbasLocais ? corridas : filtrarCorridasPorAba(corridas, abaAtiva)),
+    [corridas, abaAtiva, ocultarAbasLocais]
   );
   const contadores = useMemo(() => contarCorridasPorAba(corridas), [corridas]);
 
@@ -59,20 +66,32 @@ const CorridasTabs = ({
 
   return (
     <>
-      <CorridasFiltros
-        abaAtiva={abaAtiva}
-        contadores={contadores}
-        onSelecionarAba={setAbaAtiva}
-      />
+      {!ocultarAbasLocais && (
+        <CorridasFiltros
+          abaAtiva={abaAtiva}
+          contadores={contadores}
+          onSelecionarAba={setAbaAtiva}
+        />
+      )}
 
       <CorridasTabela
         corridas={corridasFiltradas}
-        abaAtiva={abaAtiva}
+        abaAtiva={ocultarAbasLocais ? 'TODAS' : abaAtiva}
         carrosMap={carrosMap}
         permissoes={permissoes}
+        emptyTitle={emptyTitle}
+        emptyDescription={emptyDescription}
+        onAbrirDetalhes={(corrida) => setCorridaDetalheSelecionada(corrida)}
         onAbrirCancelar={acoes.abrirCancelamento}
         onAbrirConfirmarPagamento={acoes.abrirConfirmarPagamento}
         onAbrirFinalizar={acoes.abrirFinalizacao}
+      />
+
+      <ModalDetalhesCorrida
+        corridaId={corridaDetalheSelecionada?.id || null}
+        corridaInicial={corridaDetalheSelecionada}
+        isOpen={Boolean(corridaDetalheSelecionada)}
+        onClose={() => setCorridaDetalheSelecionada(null)}
       />
 
       <ModalCancelamentoCorrida

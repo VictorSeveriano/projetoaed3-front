@@ -4,6 +4,7 @@ import Badge from '../../components/ui/Badge';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import Button from '../../components/ui/Button';
+import BotoesExportacao from '../../components/ui/BotoesExportacao';
 import ModalErro from '../../components/ui/ModalErro';
 import veiculosService from '../../services/veiculos.service';
 import motoristasService from '../../services/motoristas.service';
@@ -86,6 +87,7 @@ const VeiculosPage = () => {
   const [status, setStatus]     = useState('');
   const [classe, setClasse]     = useState('');
   const [search, setSearch]     = useState('');
+  const [exportandoFormato, setExportandoFormato] = useState('');
   const [erroModal, setErroModal] = useState({ aberto: false, mensagem: '' });
 
   // Modal veículo
@@ -133,6 +135,25 @@ const VeiculosPage = () => {
     setSearch('');
   };
 
+  const handleExportar = async (formato) => {
+    setExportandoFormato(formato);
+    try {
+      const filtrosAtivos = {};
+      if (porte) filtrosAtivos.porte = porte;
+      if (status) filtrosAtivos.status = status;
+      if (classe) filtrosAtivos.classe = classe;
+      if (search.trim()) filtrosAtivos.search = search.trim();
+      await veiculosService.exportarRelatorio(formato, filtrosAtivos);
+    } catch (err) {
+      setErroModal({
+        aberto: true,
+        mensagem: err?.message || 'Não foi possível exportar os veículos filtrados.',
+      });
+    } finally {
+      setExportandoFormato('');
+    }
+  };
+
   const handleSalvarVeiculo = async (id, dados) => {
     try {
       await veiculosService.atualizar(id, { ...dados, ano: parseInt(dados.ano, 10) });
@@ -159,7 +180,17 @@ const VeiculosPage = () => {
 
   return (
     <div className="page animate-fade-in">
-      <Header title="Veículos" subtitle="Frota disponível para alocação em corridas" />
+      <Header
+        title="Veículos"
+        subtitle="Frota disponível para alocação em corridas"
+        actions={
+          <BotoesExportacao
+            idPrefix="btn-exportar-veiculos"
+            exportandoFormato={exportandoFormato}
+            onExportar={handleExportar}
+          />
+        }
+      />
 
       <div className="filters-bar" role="search" aria-label="Filtrar veículos">
         <div className="tools-bar__field--grow">

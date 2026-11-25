@@ -1,23 +1,25 @@
 import React from 'react';
 import Badge from '../Badge';
 import CorridaAcoes from './CorridaAcoes';
+import BadgePontualidade from './BadgePontualidade';
 import {
   FORMA_PAGAMENTO_LABELS,
   descreverCancelamento,
   obterAcoesDisponiveisCorrida,
 } from './corridaPermissoes';
 import { formatarDataHorario, formatarMoeda, STATUS_LABELS } from '../../../utils/formatters';
+import { calcularDuracaoEfetivaMin } from '../../../utils/indicadorAtrasoCorrida';
 import { Route } from 'lucide-react';
 
 /**
- * CorridaCard — Apresentação mobile responsiva de uma corrida.
- * Reutiliza integralmente as mesmas regras de permissão, formatação e ações da tabela desktop.
+ * CorridaCard — Apresentação mobile responsiva de uma corrida e seu histórico.
  */
 const CorridaCard = ({
   corrida,
   nomeVeiculo,
   permissoes,
   exibirColunaAcoes,
+  onAbrirDetalhes,
   onAbrirCancelar,
   onAbrirConfirmarPagamento,
   onAbrirFinalizar,
@@ -26,12 +28,22 @@ const CorridaCard = ({
   const motivoCancelamentoTexto = descreverCancelamento(corrida);
   const pagamentoLabel = FORMA_PAGAMENTO_LABELS[corrida.formaPagamento] || corrida.formaPagamento || '—';
   const acoesDisp = obterAcoesDisponiveisCorrida(corrida, permissoes);
+  const duracaoEfetiva =
+    corrida.duracaoEfetivaMin != null
+      ? corrida.duracaoEfetivaMin
+      : calcularDuracaoEfetivaMin(corrida);
+
   const temAcoes =
     exibirColunaAcoes &&
-    (acoesDisp.podeConfirmarEmbarque ||
+    (typeof onAbrirDetalhes === 'function' ||
+      acoesDisp.podeConfirmarEmbarque ||
       acoesDisp.podeAcaoConfirmarPagamento ||
       acoesDisp.podeAcaoFinalizar ||
       acoesDisp.podeAcaoCancelar);
+
+  const ehAdmin = permissoes?.perfil === 'ADMINISTRADOR';
+  const ehMotorista = permissoes?.perfil === 'MOTORISTA';
+  const ehPassageiro = permissoes?.perfil === 'USUARIO';
 
   return (
     <article className="corrida-card" aria-label={`Corrida ${String(corrida.id).substring(0, 6)}`}>
@@ -40,7 +52,10 @@ const CorridaCard = ({
           <span className="corrida-card__id">Corrida #{String(corrida.id).substring(0, 6)}</span>
           <span className="corrida-card__date">{formatarDataHorario(corrida.dataHorario)}</span>
         </div>
-        <Badge label={statusInfo.label} color={statusInfo.color} dot />
+        <div className="corrida-status-badges">
+          <Badge label={statusInfo.label} color={statusInfo.color} dot />
+          <BadgePontualidade corrida={corrida} />
+        </div>
       </div>
 
       <div className="corrida-card__route">
@@ -67,17 +82,37 @@ const CorridaCard = ({
         </div>
         <div className="corrida-card__meta-item">
           <span className="corrida-card__meta-label">Veículo</span>
-          <span className="corrida-card__meta-value">{nomeVeiculo}</span>
+          <span className="corrida-card__meta-value">
+            {nomeVeiculo}
+            {corrida.veiculo?.placa ? ` (${corrida.veiculo.placa})` : ''}
+          </span>
         </div>
         <div className="corrida-card__meta-item">
-          <span className="corrida-card__meta-label">Distância / Classe</span>
+          <span className="corrida-card__meta-label">Distância / Duração</span>
           <span className="corrida-card__meta-value">
             <span className="corridas-metric" style={{ marginTop: 0 }}>
               <Route size={12} aria-hidden="true" />
-              {corrida.distanciaKm} km • {corrida.classe || 'NORMAL'}
+              {corrida.distanciaKm} km •{' '}
+              {duracaoEfetiva != null
+                ? `${duracaoEfetiva} min efet.`
+                : corrida.duracaoMin != null
+                  ? `${corrida.duracaoMin} min prev.`
+                  : corrida.classe || 'NORMAL'}
             </span>
           </span>
         </div>
+        {(ehAdmin || ehPassageiro) && corrida.motorista?.nome && (
+          <div className="corrida-card__meta-item">
+            <span className="corrida-card__meta-label">Motorista</span>
+            <span className="corrida-card__meta-value">{corrida.motorista.nome}</span>
+          </div>
+        )}
+        {(ehAdmin || ehMotorista) && corrida.passageiro?.nome && (
+          <div className="corrida-card__meta-item">
+            <span className="corrida-card__meta-label">Passageiro</span>
+            <span className="corrida-card__meta-value">{corrida.passageiro.nome}</span>
+          </div>
+        )}
       </div>
 
       {(corrida.status === 'CONFIRMADA' && corrida.situacaoMotorista === 'A_CAMINHO') ||
@@ -107,6 +142,7 @@ const CorridaCard = ({
           <CorridaAcoes
             corrida={corrida}
             permissoes={permissoes}
+            onAbrirDetalhes={onAbrirDetalhes}
             onAbrirCancelar={onAbrirCancelar}
             onAbrirConfirmarPagamento={onAbrirConfirmarPagamento}
             onAbrirFinalizar={onAbrirFinalizar}

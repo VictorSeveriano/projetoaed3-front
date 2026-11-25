@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Header from '../../components/layout/Header';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import BotoesExportacao from '../../components/ui/BotoesExportacao';
 import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import { ModalPerfilUsuario, ModalPerfilMotorista, ModalPerfilVeiculo } from '../../components/ui/ModaisPerfil';
@@ -55,6 +56,7 @@ const UsuariosPage = () => {
   // Filters state
   const [filtroPesquisa, setFiltroPesquisa] = useState('');
   const [filtroPerfil, setFiltroPerfil] = useState('');
+  const [exportandoFormato, setExportandoFormato] = useState('');
 
   const [usuarioParaExcluir, setUsuarioParaExcluir] = useState(null);
   const [confirmacaoExclusaoOpen, setConfirmacaoExclusaoOpen] = useState(false);
@@ -91,6 +93,29 @@ const UsuariosPage = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     carregar();
+  };
+
+  const limparFiltrosUsuarios = () => {
+    setFiltroPesquisa('');
+    setFiltroPerfil('');
+  };
+
+  const handleExportarUsuarios = async (formato) => {
+    setExportandoFormato(formato);
+    try {
+      const filtrosAtivos = {};
+      if (filtroPesquisa.trim()) filtrosAtivos.search = filtroPesquisa.trim();
+      if (filtroPerfil) filtrosAtivos.perfil = filtroPerfil;
+      await usuariosService.exportarRelatorio(formato, filtrosAtivos);
+    } catch (err) {
+      setErroModal({
+        aberto: true,
+        titulo: 'Erro na exportação',
+        mensagem: err?.message || 'Não foi possível exportar os usuários filtrados.',
+      });
+    } finally {
+      setExportandoFormato('');
+    }
   };
 
   const abrirConfirmacaoExclusao = (usuario) => {
@@ -263,10 +288,17 @@ const UsuariosPage = () => {
         title="Usuários"
         subtitle="Gerencie os usuários cadastrados no sistema"
         actions={
-          <Button type="button" variant="primary" onClick={() => setModalEscolhaOpen(true)}>
-            <Plus size={17} aria-hidden="true" />
-            Criar usuário
-          </Button>
+          <div className="btn-group">
+            <BotoesExportacao
+              idPrefix="btn-exportar-usuarios"
+              exportandoFormato={exportandoFormato}
+              onExportar={handleExportarUsuarios}
+            />
+            <Button type="button" variant="primary" onClick={() => setModalEscolhaOpen(true)}>
+              <Plus size={17} aria-hidden="true" />
+              Criar usuário
+            </Button>
+          </div>
         }
       />
 
@@ -303,6 +335,12 @@ const UsuariosPage = () => {
             </select>
           </div>
         </div>
+
+        {(filtroPesquisa || filtroPerfil) && (
+          <Button type="button" variant="ghost" size="sm" onClick={limparFiltrosUsuarios}>
+            Limpar
+          </Button>
+        )}
       </div>
 
       {loading ? (

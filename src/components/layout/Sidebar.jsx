@@ -5,22 +5,23 @@ import notificacoesService from '../../services/notificacoes.service';
 import { APP_EVENTS, escutarEvento } from '../../utils/appEvents';
 
 import {
-  LayoutDashboard, Car, CalendarDays, Network, LogOut,
+  LayoutDashboard, Car, CalendarDays, History, Network, LogOut,
   ChevronLeft, ChevronRight, Map, Home, BarChart2, User, Bell, ShieldAlert, X
 } from 'lucide-react';
 
 /**
  * Itens de navegação por perfil.
  *
- * ADMINISTRADOR: mantém tudo que já existia (sem regressão).
- * USUARIO: solicitar corrida, minhas corridas, notificações, perfil.
- * MOTORISTA: início, corridas disponíveis, minhas corridas, relatório, perfil, meu veículo.
+ * ADMINISTRADOR: mantém tudo que já existia + acesso direto ao Histórico.
+ * USUARIO: solicitar corrida, minhas corridas, histórico, notificações, perfil.
+ * MOTORISTA: início, corridas disponíveis, minhas corridas, histórico, relatório, perfil, meu veículo.
  *
  * Termos internos (Grafo, ABB, Dijkstra) não aparecem na UI.
  */
 const NAV_ITEMS_ADMIN = [
   { to: '/dashboard',          icon: <LayoutDashboard size={19} />, label: 'Dashboard'             },
   { to: '/corridas',           icon: <CalendarDays size={19} />,    label: 'Corridas'              },
+  { to: '/historico',          icon: <History size={19} />,         label: 'Histórico'             },
   { to: '/veiculos',           icon: <Car size={19} />,             label: 'Veículos'              },
   { to: '/veiculos/analise',   icon: <Car size={19} />,             label: 'Análise de Veículos'   },
   { to: '/rotas',              icon: <Network size={19} />,         label: 'Solicitar Corrida'     },
@@ -33,6 +34,7 @@ const NAV_ITEMS_ADMIN = [
 const NAV_ITEMS_USUARIO = [
   { to: '/solicitar-corrida', icon: <Map size={19} />,          label: 'Solicitar corrida' },
   { to: '/minhas-corridas',   icon: <CalendarDays size={19} />, label: 'Minhas corridas'   },
+  { to: '/historico',         icon: <History size={19} />,      label: 'Histórico'         },
   { to: '/notificacoes',      icon: <Bell size={19} />,         label: 'Notificações'      },
   { to: '/perfil',            icon: <User size={19} />,         label: 'Meu perfil'        },
 ];
@@ -41,6 +43,7 @@ const NAV_ITEMS_MOTORISTA = [
   { to: '/inicio',                 icon: <Home size={19} />,         label: 'Início'               },
   { to: '/notificacoes-motorista', icon: <Bell size={19} />,         label: 'Corridas disponíveis' },
   { to: '/minhas-corridas',        icon: <CalendarDays size={19} />, label: 'Minhas corridas'      },
+  { to: '/historico',              icon: <History size={19} />,      label: 'Histórico'            },
   { to: '/relatorio',              icon: <BarChart2 size={19} />,    label: 'Relatório mensal'     },
   { to: '/perfil',                 icon: <User size={19} />,         label: 'Meu perfil'           },
   { to: '/meu-veiculo',            icon: <Car size={19} />,          label: 'Meu veículo'          },

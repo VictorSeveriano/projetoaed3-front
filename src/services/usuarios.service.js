@@ -1,5 +1,6 @@
 import api from './api';
 import cacheSessao from './cacheSessao';
+import { baixarRelatorioApi } from '../utils/downloadArquivo';
 
 const TTL_USUARIOS_MS = 15000;
 
@@ -10,7 +11,7 @@ function invalidarPosMutacaoUsuario() {
 }
 
 /**
- * UsuariosService — Centraliza comunicação com endpoints de usuários.
+ * UsuariosService — Centraliza comunicação com endpoints de usuários e exportação filtrada.
  */
 const usuariosService = {
   async buscarPorId(id) {
@@ -31,6 +32,15 @@ const usuariosService = {
       TTL_USUARIOS_MS,
       () => api.get(url).then(({ data }) => data.data),
       { forcar }
+    );
+  },
+
+  async exportarRelatorio(formato = 'csv', filtros = {}) {
+    return baixarRelatorioApi(
+      '/usuarios/exportar',
+      formato,
+      filtros,
+      'relatorio-usuarios-corridas-ucl'
     );
   },
 
