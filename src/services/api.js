@@ -3,7 +3,8 @@ import axios from 'axios';
 const hostPadrao = typeof window !== 'undefined' && window.location?.hostname
   ? window.location.hostname
   : 'localhost';
-const API_BASE_URL = import.meta.env?.VITE_API_URL || `http://${hostPadrao}:3001/api`;
+const base = import.meta.env?.VITE_API_URL || `http://${hostPadrao}:3001`;
+const API_BASE_URL = base.replace(/\/$/, '') + '/api';
 
 export const AUTH_STORAGE_KEYS = Object.freeze({
   TOKEN: 'auth_token',
