@@ -15,6 +15,16 @@ const authService = {
     const { data } = await api.post('/auth/cadastrar', dados);
     return data;
   },
+
+  async verificarIdentidade(usuario, cpf) {
+    const { data } = await api.post('/auth/verificar-identidade', { usuario, cpf });
+    return data;
+  },
+
+  async redefinirSenha(usuario, cpf, novaSenha) {
+    const { data } = await api.post('/auth/redefinir-senha', { usuario, cpf, novaSenha });
+    return data;
+  },
 };
 
 export default authService;

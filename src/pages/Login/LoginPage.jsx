@@ -6,6 +6,7 @@ import FormularioDadosPessoais from '../../components/ui/FormularioDadosPessoais
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import ModalRedefinirSenha from '../../components/ui/ModalRedefinirSenha';
 
 const LoginPage = () => {
   const [form, setForm] = useState({
@@ -21,6 +22,7 @@ const LoginPage = () => {
   // Controle do modal de cadastro
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState('ESCOLHA'); // 'ESCOLHA', 1, 2, 3, 'SUCESSO'
+  const [redefinirOpen, setRedefinirOpen] = useState(false);
 
   const { login, cadastrar } = useAuth();
   const navigate = useNavigate();
@@ -170,8 +172,20 @@ const LoginPage = () => {
           >
             Não tem uma conta? Cadastre-se
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setRedefinirOpen(true)}
+            className="w-full"
+            style={{ marginTop: 4, opacity: 0.75 }}
+          >
+            Esqueceu sua senha? Redefinir
+          </Button>
         </div>
       </main>
+
+      {/* MODAL REDEFINIR SENHA */}
+      <ModalRedefinirSenha isOpen={redefinirOpen} onClose={() => setRedefinirOpen(false)} />
 
       {/* MODAL DE CADASTRO */}
       <Modal
