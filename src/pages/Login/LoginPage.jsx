@@ -4,8 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { CarFront, TriangleAlert, CheckCircle2, User, Car } from 'lucide-react';
 import FormularioDadosPessoais from '../../components/ui/FormularioDadosPessoais';
 import Modal from '../../components/ui/Modal';
+import ModalRecuperacaoSenha from '../../components/ui/ModalRecuperacaoSenha';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { limparCamposLoginAposRedefinicao } from '../../utils/recuperacaoSenha';
 
 const LoginPage = () => {
   const [form, setForm] = useState({
@@ -21,6 +23,7 @@ const LoginPage = () => {
   // Controle do modal de cadastro
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState('ESCOLHA'); // 'ESCOLHA', 1, 2, 3, 'SUCESSO'
+  const [recuperacaoOpen, setRecuperacaoOpen] = useState(false);
 
   const { login, cadastrar } = useAuth();
   const navigate = useNavigate();
@@ -142,6 +145,17 @@ const LoginPage = () => {
             autoComplete="current-password"
           />
 
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6 }}>
+            <button
+              id="btn-esqueci-senha"
+              type="button"
+              className="btn-link"
+              onClick={() => setRecuperacaoOpen(true)}
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+
           {error && (
             <div className="login-error" role="alert">
               <TriangleAlert size={16} aria-hidden="true" />
@@ -172,6 +186,16 @@ const LoginPage = () => {
           </Button>
         </div>
       </main>
+
+      {/* MODAL DE RECUPERAÇÃO DE SENHA */}
+      <ModalRecuperacaoSenha
+        isOpen={recuperacaoOpen}
+        onClose={() => setRecuperacaoOpen(false)}
+        onSuccess={() => {
+          setError('');
+          setForm((prev) => limparCamposLoginAposRedefinicao(prev));
+        }}
+      />
 
       {/* MODAL DE CADASTRO */}
       <Modal

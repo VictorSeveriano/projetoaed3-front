@@ -1,4 +1,4 @@
-import api from './api';
+import api from './api.js';
 
 const authService = {
   async login(usuario, senha) {
@@ -13,6 +13,16 @@ const authService = {
 
   async cadastrar(dados) {
     const { data } = await api.post('/auth/cadastrar', dados);
+    return data;
+  },
+
+  async verificarIdentidadeRedefinicao(usuario, cpf) {
+    const { data } = await api.post('/auth/verificar-identidade-redefinicao', { usuario, cpf });
+    return data;
+  },
+
+  async redefinirSenha(usuario, cpf, novaSenha) {
+    const { data } = await api.post('/auth/redefinir-senha', { usuario, cpf, novaSenha });
     return data;
   },
 };
