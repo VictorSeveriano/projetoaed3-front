@@ -3,8 +3,16 @@ import axios from 'axios';
 const hostPadrao = typeof window !== 'undefined' && window.location?.hostname
   ? window.location.hostname
   : 'localhost';
-const base = import.meta.env?.VITE_API_URL || `http://${hostPadrao}:3001`;
-const API_BASE_URL = base.replace(/\/$/, '') + '/api';
+
+export const resolverApiBaseUrl = (viteApiUrl, hostFallback = 'localhost') => {
+  const bruto = typeof viteApiUrl === 'string' && viteApiUrl.trim()
+    ? viteApiUrl.trim()
+    : `http://${hostFallback}:3001`;
+  const semBarraFinal = bruto.replace(/\/+$/, '');
+  return semBarraFinal.endsWith('/api') ? semBarraFinal : `${semBarraFinal}/api`;
+};
+
+const API_BASE_URL = resolverApiBaseUrl(import.meta.env?.VITE_API_URL, hostPadrao);
 
 export const AUTH_STORAGE_KEYS = Object.freeze({
   TOKEN: 'auth_token',

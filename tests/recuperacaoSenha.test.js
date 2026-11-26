@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import api from '../src/services/api.js';
+import api, { resolverApiBaseUrl } from '../src/services/api.js';
 import authService from '../src/services/auth.service.js';
 import { pushModal, popModal, isTopModal, hasOpenModals, _resetStack } from '../src/utils/modalStack.js';
 import {
@@ -257,4 +257,13 @@ test('fluxo completo: bloqueia carregamento duplicado, trata erros sem perder da
   await assert.rejects(() => servicoMock.login('anasilva', 'SenhaAntiga#1'));
   const loginSucesso = await servicoMock.login('anasilva', 'Nova#2026Forte');
   assert.equal(loginSucesso.data.token, 'jwt-valido-pos-redefinicao');
+});
+
+test('resolverApiBaseUrl evita duplicação /api/api tanto com VITE_API_URL local (/api) quanto de produção (sem /api)', () => {
+  assert.equal(resolverApiBaseUrl('http://localhost:3001/api'), 'http://localhost:3001/api');
+  assert.equal(resolverApiBaseUrl('http://localhost:3001/api/'), 'http://localhost:3001/api');
+  assert.equal(resolverApiBaseUrl('https://projetoaed3-api.vercel.app'), 'https://projetoaed3-api.vercel.app/api');
+  assert.equal(resolverApiBaseUrl('https://projetoaed3-api.vercel.app/'), 'https://projetoaed3-api.vercel.app/api');
+  assert.equal(resolverApiBaseUrl('https://projetoaed3-api.vercel.app/api'), 'https://projetoaed3-api.vercel.app/api');
+  assert.equal(resolverApiBaseUrl(undefined, 'localhost'), 'http://localhost:3001/api');
 });
