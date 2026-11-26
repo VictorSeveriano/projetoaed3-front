@@ -145,17 +145,6 @@ const LoginPage = () => {
             autoComplete="current-password"
           />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -6 }}>
-            <button
-              id="btn-esqueci-senha"
-              type="button"
-              className="btn-link"
-              onClick={() => setRecuperacaoOpen(true)}
-            >
-              Esqueci minha senha
-            </button>
-          </div>
-
           {error && (
             <div className="login-error" role="alert">
               <TriangleAlert size={16} aria-hidden="true" />
@@ -183,6 +172,16 @@ const LoginPage = () => {
             className="w-full"
           >
             Não tem uma conta? Cadastre-se
+          </Button>
+          <Button
+            id="btn-esqueci-senha"
+            type="button"
+            variant="ghost"
+            onClick={() => setRecuperacaoOpen(true)}
+            className="w-full"
+            style={{ marginTop: 4 }}
+          >
+            Esqueci minha senha
           </Button>
         </div>
       </main>
