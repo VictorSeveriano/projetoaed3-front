@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, TriangleAlert } from 'lucide-react';
 import Modal from './Modal';
+import ConfirmationModal from './ConfirmationModal';
 import ModalFeedback from './ModalFeedback';
 import Input from './Input';
 import Button from './Button';
@@ -11,6 +12,7 @@ import {
   MENSAGEM_SUCESSO_REDEFINICAO,
   REQUISITOS_SENHA_RECUPERACAO,
   criarEstadoInicialRecuperacao,
+  deveExigirConfirmacaoSaidaRecuperacao,
   submeterVerificacaoIdentidade,
   submeterRedefinicaoSenha,
 } from '../../utils/recuperacaoSenha';
@@ -23,19 +25,31 @@ import {
  */
 const ModalRecuperacaoSenha = ({ isOpen, onClose, onSuccess }) => {
   const [estado, setEstado] = useState(criarEstadoInicialRecuperacao);
+  const [confirmarSaidaOpen, setConfirmarSaidaOpen] = useState(false);
   const emEnvioRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) {
       emEnvioRef.current = false;
+      setConfirmarSaidaOpen(false);
       setEstado(criarEstadoInicialRecuperacao());
     }
   }, [isOpen]);
 
-  const handleFechar = () => {
-    if (emEnvioRef.current) return;
+  const confirmarSaidaDefinitiva = () => {
+    if (emEnvioRef.current || estado.loading) return;
+    setConfirmarSaidaOpen(false);
     setEstado(criarEstadoInicialRecuperacao());
     onClose();
+  };
+
+  const solicitarFechamento = () => {
+    if (emEnvioRef.current || estado.loading) return;
+    if (deveExigirConfirmacaoSaidaRecuperacao(estado)) {
+      setConfirmarSaidaOpen(true);
+      return;
+    }
+    confirmarSaidaDefinitiva();
   };
 
   const handleCampoChange = (e) => {
@@ -115,7 +129,7 @@ const ModalRecuperacaoSenha = ({ isOpen, onClose, onSuccess }) => {
     return (
       <ModalFeedback
         isOpen={isOpen}
-        onClose={handleFechar}
+        onClose={confirmarSaidaDefinitiva}
         titulo="Senha redefinida"
         mensagem={estado.mensagemSucesso || MENSAGEM_SUCESSO_REDEFINICAO}
         tamanho="sm"
@@ -133,151 +147,164 @@ const ModalRecuperacaoSenha = ({ isOpen, onClose, onSuccess }) => {
       : 'Recuperar senha';
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleFechar}
-      title={tituloModal}
-      size="sm"
-    >
-      {estado.etapa === ETAPAS_RECUPERACAO.IDENTIDADE ? (
-        <form className="login-form" onSubmit={handleContinuarIdentidade} noValidate>
-          <p className="wizard-header__desc">
-            Informe seu usuário e o CPF cadastrado para validar sua identidade.
-          </p>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={solicitarFechamento}
+        title={tituloModal}
+        size="sm"
+      >
+        {estado.etapa === ETAPAS_RECUPERACAO.IDENTIDADE ? (
+          <form className="login-form" onSubmit={handleContinuarIdentidade} noValidate>
+            <p className="wizard-header__desc">
+              Informe seu usuário e o CPF cadastrado para validar sua identidade.
+            </p>
 
-          <Input
-            id="recuperacao-usuario"
-            name="usuario"
-            label="Usuário"
-            required
-            type="text"
-            placeholder="Digite seu usuário cadastrado"
-            value={estado.usuario}
-            onChange={handleCampoChange}
-            error={estado.fieldErrors.usuario}
-            disabled={estado.loading}
-            autoComplete="username"
-            autoFocus
-          />
-
-          <Input
-            id="recuperacao-cpf"
-            name="cpf"
-            label="CPF"
-            required
-            type="text"
-            inputMode="numeric"
-            maxLength={14}
-            placeholder="000.000.000-00"
-            value={estado.cpf}
-            onChange={handleCampoChange}
-            error={estado.fieldErrors.cpf}
-            disabled={estado.loading}
-            autoComplete="off"
-          />
-
-          {estado.erroGeral && (
-            <div className="login-error" role="alert">
-              <TriangleAlert size={16} aria-hidden="true" />
-              <span>{estado.erroGeral}</span>
-            </div>
-          )}
-
-          <div className="form-actions form-actions--between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleFechar}
-              disabled={estado.loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              id="btn-continuar-recuperacao"
-              type="submit"
-              variant="primary"
-              loading={estado.loading}
-            >
-              Continuar
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <form className="login-form" onSubmit={handleConfirmarNovaSenha} noValidate>
-          <p className="wizard-header__desc">
-            Identidade confirmada. Defina e confirme sua nova senha abaixo.
-          </p>
-
-          <div>
             <Input
-              id="recuperacao-nova-senha"
-              name="novaSenha"
-              label="Nova senha"
+              id="recuperacao-usuario"
+              name="usuario"
+              label="Usuário"
               required
-              type="password"
-              showPasswordToggle
-              placeholder="Digite sua nova senha"
-              value={estado.novaSenha}
+              type="text"
+              placeholder="Digite seu usuário cadastrado"
+              value={estado.usuario}
               onChange={handleCampoChange}
-              error={estado.fieldErrors.novaSenha}
+              error={estado.fieldErrors.usuario}
               disabled={estado.loading}
-              autoComplete="new-password"
+              autoComplete="username"
               autoFocus
             />
 
-            <div className="password-rules">
-              <p className="password-rules__title">Requisitos da senha:</p>
-              <ul className="password-rules__list">
-                {REQUISITOS_SENHA_RECUPERACAO.map((regra) => (
-                  <li key={regra}>{regra}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <Input
-            id="recuperacao-confirmar-senha"
-            name="confirmarSenha"
-            label="Confirmar nova senha"
-            required
-            type="password"
-            showPasswordToggle
-            placeholder="Repita sua nova senha"
-            value={estado.confirmarSenha}
-            onChange={handleCampoChange}
-            error={estado.fieldErrors.confirmarSenha}
-            disabled={estado.loading}
-            autoComplete="new-password"
-          />
-
-          {estado.erroGeral && (
-            <div className="login-error" role="alert">
-              <TriangleAlert size={16} aria-hidden="true" />
-              <span>{estado.erroGeral}</span>
-            </div>
-          )}
-
-          <div className="form-actions form-actions--between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleVoltarParaIdentidade}
+            <Input
+              id="recuperacao-cpf"
+              name="cpf"
+              label="CPF"
+              required
+              type="text"
+              inputMode="numeric"
+              maxLength={14}
+              placeholder="000.000.000-00"
+              value={estado.cpf}
+              onChange={handleCampoChange}
+              error={estado.fieldErrors.cpf}
               disabled={estado.loading}
-            >
-              Voltar
-            </Button>
-            <Button
-              id="btn-redefinir-senha"
-              type="submit"
-              variant="primary"
-              loading={estado.loading}
-            >
-              Redefinir senha
-            </Button>
-          </div>
-        </form>
-      )}
-    </Modal>
+              autoComplete="off"
+            />
+
+            {estado.erroGeral && (
+              <div className="login-error" role="alert">
+                <TriangleAlert size={16} aria-hidden="true" />
+                <span>{estado.erroGeral}</span>
+              </div>
+            )}
+
+            <div className="form-actions form-actions--between">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={solicitarFechamento}
+                disabled={estado.loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                id="btn-continuar-recuperacao"
+                type="submit"
+                variant="primary"
+                loading={estado.loading}
+              >
+                Continuar
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form className="login-form" onSubmit={handleConfirmarNovaSenha} noValidate>
+            <p className="wizard-header__desc">
+              Identidade confirmada. Defina e confirme sua nova senha abaixo.
+            </p>
+
+            <div>
+              <Input
+                id="recuperacao-nova-senha"
+                name="novaSenha"
+                label="Nova senha"
+                required
+                type="password"
+                showPasswordToggle
+                placeholder="Digite sua nova senha"
+                value={estado.novaSenha}
+                onChange={handleCampoChange}
+                error={estado.fieldErrors.novaSenha}
+                disabled={estado.loading}
+                autoComplete="new-password"
+                autoFocus
+              />
+
+              <div className="password-rules">
+                <p className="password-rules__title">Requisitos da senha:</p>
+                <ul className="password-rules__list">
+                  {REQUISITOS_SENHA_RECUPERACAO.map((regra) => (
+                    <li key={regra}>{regra}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <Input
+              id="recuperacao-confirmar-senha"
+              name="confirmarSenha"
+              label="Confirmar nova senha"
+              required
+              type="password"
+              showPasswordToggle
+              placeholder="Repita sua nova senha"
+              value={estado.confirmarSenha}
+              onChange={handleCampoChange}
+              error={estado.fieldErrors.confirmarSenha}
+              disabled={estado.loading}
+              autoComplete="new-password"
+            />
+
+            {estado.erroGeral && (
+              <div className="login-error" role="alert">
+                <TriangleAlert size={16} aria-hidden="true" />
+                <span>{estado.erroGeral}</span>
+              </div>
+            )}
+
+            <div className="form-actions form-actions--between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleVoltarParaIdentidade}
+                disabled={estado.loading}
+              >
+                Voltar
+              </Button>
+              <Button
+                id="btn-redefinir-senha"
+                type="submit"
+                variant="primary"
+                loading={estado.loading}
+              >
+                Redefinir senha
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      <ConfirmationModal
+        isOpen={confirmarSaidaOpen}
+        onClose={() => setConfirmarSaidaOpen(false)}
+        onConfirm={confirmarSaidaDefinitiva}
+        title="Sair da redefinição de senha?"
+        message="Se sair agora, a redefinição de senha será cancelada e os dados informados serão descartados."
+        confirmText="Sim, voltar ao login"
+        cancelText="Continuar redefinindo"
+        variant="warning"
+      />
+    </>
   );
 };
 

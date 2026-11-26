@@ -41,6 +41,14 @@ export const limparCamposLoginAposRedefinicao = (formLoginAtual) => ({
   senha: '',
 });
 
+export const deveExigirConfirmacaoSaidaRecuperacao = (estado) => {
+  if (!estado || estado.loading) return false;
+  return (
+    estado.etapa === ETAPAS_RECUPERACAO.IDENTIDADE ||
+    estado.etapa === ETAPAS_RECUPERACAO.NOVA_SENHA
+  );
+};
+
 export const validarEtapaIdentidade = ({ usuario, cpf }) => {
   const usuarioLimpo = typeof usuario === 'string' ? usuario.trim() : '';
   const cpfLimpo = normalizarCpfRecuperacao(cpf);

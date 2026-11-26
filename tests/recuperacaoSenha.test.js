@@ -9,6 +9,7 @@ import {
   MENSAGEM_SUCESSO_REDEFINICAO,
   REQUISITOS_SENHA_RECUPERACAO,
   criarEstadoInicialRecuperacao,
+  deveExigirConfirmacaoSaidaRecuperacao,
   limparCamposLoginAposRedefinicao,
   normalizarCpfRecuperacao,
   validarEtapaIdentidade,
@@ -266,4 +267,35 @@ test('resolverApiBaseUrl evita duplicação /api/api tanto com VITE_API_URL loca
   assert.equal(resolverApiBaseUrl('https://projetoaed3-api.vercel.app/'), 'https://projetoaed3-api.vercel.app/api');
   assert.equal(resolverApiBaseUrl('https://projetoaed3-api.vercel.app/api'), 'https://projetoaed3-api.vercel.app/api');
   assert.equal(resolverApiBaseUrl(undefined, 'localhost'), 'http://localhost:3001/api');
+});
+
+test('tentar sair durante IDENTIDADE ou NOVA_SENHA exige confirmação e só fecha se o usuário confirmar', () => {
+  _resetStack();
+
+  const emIdentidade = criarEstadoInicialRecuperacao();
+  assert.equal(deveExigirConfirmacaoSaidaRecuperacao(emIdentidade), true);
+
+  const emNovaSenha = { ...emIdentidade, etapa: ETAPAS_RECUPERACAO.NOVA_SENHA };
+  assert.equal(deveExigirConfirmacaoSaidaRecuperacao(emNovaSenha), true);
+
+  const emLoading = { ...emIdentidade, loading: true };
+  assert.equal(deveExigirConfirmacaoSaidaRecuperacao(emLoading), false);
+
+  const emSucesso = { ...emIdentidade, etapa: ETAPAS_RECUPERACAO.SUCESSO };
+  assert.equal(deveExigirConfirmacaoSaidaRecuperacao(emSucesso), false);
+
+  // Simula empilhamento: modal de recuperação aberto + modal de confirmação de saída no topo
+  const idRecuperacao = pushModal();
+  const idAvisoSaida = pushModal();
+  assert.equal(isTopModal(idAvisoSaida), true);
+  assert.equal(isTopModal(idRecuperacao), false);
+
+  // Usuário cancela a saída ("Continuar redefinindo"): fecha só o aviso e mantém a recuperação aberta
+  popModal(idAvisoSaida);
+  assert.equal(hasOpenModals(), true);
+  assert.equal(isTopModal(idRecuperacao), true);
+
+  // Usuário confirma saída ("Sim, voltar ao login"): fecha definitivamente
+  popModal(idRecuperacao);
+  assert.equal(hasOpenModals(), false);
 });
