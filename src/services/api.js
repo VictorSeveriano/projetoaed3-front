@@ -63,15 +63,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const url = error.config?.url?.replace(/\/+$/, '') || '';
-    const isAuthPublicRequest =
-      url.endsWith('/auth/login') ||
-      url.endsWith('/auth/cadastrar') ||
-      url.endsWith('/auth/verificar-disponibilidade-cadastro') ||
-      url.endsWith('/auth/verificar-identidade') ||
-      url.endsWith('/auth/redefinir-senha');
+    const url = error.config?.url?.replace(/\/+$/, '');
+    const isLoginRequest = url?.endsWith('/auth/login');
 
-    if (error.response?.status === 401 && !isAuthPublicRequest) {
+    if (error.response?.status === 401 && !isLoginRequest) {
       clearAuthSession();
       window.location.href = '/login';
     }
