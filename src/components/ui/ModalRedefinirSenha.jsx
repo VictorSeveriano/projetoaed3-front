@@ -13,7 +13,7 @@ const REGRAS_SENHA = [
   { id: 'upper', label: 'Pelo menos uma letra maiúscula (A–Z)', test: (v) => /[A-Z]/.test(v) },
   { id: 'lower', label: 'Pelo menos uma letra minúscula (a–z)', test: (v) => /[a-z]/.test(v) },
   { id: 'num', label: 'Pelo menos um número (0–9)', test: (v) => /\d/.test(v) },
-  { id: 'special', label: 'Pelo menos um caractere especial (!@#$%…)', test: (v) => /[^A-Za-z0-9]/.test(v) },
+  { id: 'special', label: 'Pelo menos um caractere especial (!@#$%&*?)', test: (v) => /[!@#$%&*?]/.test(v) },
 ];
 
 /**
